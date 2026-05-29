@@ -1,6 +1,6 @@
 # PRD — OCT Signal Intelligence Trading Dashboard
 
-**Versi Dokumen:** 2.0 (final, keputusan teknis terkunci)
+**Versi Dokumen:** 2.1 (tambah autentikasi/login via Supabase Auth)
 **Tanggal:** 29 Mei 2026
 **Status:** Disetujui untuk masuk tahap perencanaan implementasi
 **Audiens:** Internal tim dev / agensi (spec teknis)
@@ -14,7 +14,7 @@
 
 OCT Signal Intelligence adalah dashboard trading internal yang memusatkan seluruh data pengambilan keputusan untuk token **Octra (OCT)** dalam satu layar: harga live on-chain (DexScreener / Uniswap V4 Ethereum), kalkulator Fibonacci otomatis, feed sentimen Twitter/X yang dikurasi AI (Claude), berita crypto, tracker portfolio + exit plan, dan satu indikator rekomendasi gabungan (**BUY / HOLD / SELL**).
 
-Sudah ada prototype HTML client-side (`octra-dashboard-v3 (3).html`, v3.1) sebagai bukti konsep. Prototype ini punya **celah keamanan kritikal** (API Key Claude ditembak langsung dari browser) dan **tanpa caching**, jadi belum layak operasional 24/7. PRD ini mendefinisikan pembangunan **backend Node.js yang aman + caching SQLite** dan finalisasi dashboard agar siap produksi untuk maksimal 5 user internal.
+Sudah ada prototype HTML client-side (`octra-dashboard-v3 (3).html`, v3.1) sebagai bukti konsep. Prototype ini punya **celah keamanan kritikal** (API Key Claude ditembak langsung dari browser) dan **tanpa caching**, jadi belum layak operasional 24/7. PRD ini mendefinisikan pembangunan **backend Node.js yang aman + caching SQLite + gerbang login (Supabase Auth)** dan finalisasi dashboard agar siap produksi untuk maksimal 5 user internal.
 
 ---
 
@@ -65,6 +65,15 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 
 ### 5.1 Fitur Utama (Functional Requirements)
 
+#### F0 — Autentikasi / Login (Supabase Auth)
+- Dashboard berada di belakang gerbang login. Belum login → diarahkan ke **halaman login** (email + password).
+- Autentikasi ditangani **Supabase Auth**; login sukses mengembalikan **JWT** yang disimpan di sesi browser.
+- **Tidak ada self-signup** — signup publik dimatikan. Admin membuat ≤5 akun trader manual via dashboard Supabase.
+- Satu peran (`trader`); semua user akses sama (tanpa sistem role kompleks).
+- **Backend Node.js memvalidasi JWT Supabase di setiap endpoint** `/api/*`; token invalid/kadaluarsa → 401, data sinyal tidak keluar.
+- Tombol **Logout** menghapus sesi.
+- **Acceptance:** Tanpa login, tidak ada data sinyal yang bisa diakses (UI maupun endpoint). Login valid membuka dashboard; logout mengunci kembali. Akun hanya bisa dibuat admin.
+
 #### F1 — Live Chart Terintegrasi
 - Menampilkan chart **OCT/ETH** & **OCT/USD** dari DexScreener (Uniswap V4 Ethereum) via embed.
 - Pilihan interval timeframe.
@@ -110,7 +119,7 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 
 | Kategori | Persyaratan |
 | :--- | :--- |
-| **Keamanan** | Semua API Key di server backend (env vars). Tidak ada key di client. HTTPS wajib. |
+| **Keamanan** | Semua API Key di server backend (env vars). Tidak ada key di client. HTTPS wajib. Seluruh endpoint data dilindungi auth (JWT Supabase); tidak ada akses tanpa login. |
 | **Performa** | Data disajikan dari cache SQLite; muat awal < 2 detik. |
 | **Ketersediaan** | 24/7, uptime ≥ 99%. |
 | **Biaya** | ≤ Rp 1.000.000/bulan via caching & free tier yang aman. |
@@ -123,14 +132,17 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 
 ### 7.1 Keputusan Stack (terkunci)
 - **Backend:** **Node.js custom** (Express/Fastify). Server API sendiri yang memegang semua kredensial; dashboard hanya bicara ke endpoint internal ini.
-- **Database / Cache:** **SQLite** (file-based). Cron menulis hasil API ke tabel cache; endpoint membaca dari cache. Nol biaya, cukup untuk 5 user, ringan di VPS basic.
+- **Autentikasi:** **Supabase Auth** (email + password, akun dibuat admin, tanpa self-signup). Backend Node.js memvalidasi JWT Supabase di setiap endpoint `/api/*`. `anon key` dipakai client untuk login; `service_role key` (jika perlu) hanya di env backend.
+- **Database / Cache:** **SQLite** (file-based) untuk data aplikasi (cache harga/tweet/news). Identitas & sesi user dikelola Supabase, **bukan** di SQLite. Cron menulis hasil API ke tabel cache; endpoint membaca dari cache. Nol biaya, cukup untuk 5 user, ringan di VPS basic.
 - **AI:** **Claude Sonnet (default)** untuk scan & klasifikasi sentimen rutin (volume tinggi, murah) + **Claude Opus on-demand** hanya saat user minta ringkasan analisa mendalam. **Prompt Caching aktif** di kedua jalur (diskon input ~90%).
 - **Frontend:** Lanjutkan prototype **v3.1 yang dirapikan** — hapus semua call API langsung dari browser, sambungkan ke endpoint backend, lalu polish UI. Bukan rebuild framework.
 
 ### 7.2 Diagram
 ```
-[Browser (≤5 user)]  ──HTTPS──►  [Backend Node.js (Express/Fastify) @ VPS]
-                                       │
+[Browser (≤5 user)]  ──login──►  [Supabase Auth] ──JWT──►  (disimpan di sesi browser)
+        │
+        └──HTTPS + JWT──►  [Backend Node.js (Express/Fastify) @ VPS]
+                                       │  (validasi JWT Supabase tiap request → 401 jika invalid)
                                        ├─► SQLite (tabel cache: price, tweets, sentiment, news)
                                        │
                   ┌────────────────────┼─────────────────────────────────┐
@@ -147,6 +159,7 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 - `GET /api/tweets` — tweet terkurasi + label sentimen dari cache.
 - `GET /api/news` — headline CryptoPanic dari cache.
 - `POST /api/analyze` — trigger analisa mendalam (Opus on-demand).
+- **Semua endpoint `/api/*` dilindungi middleware auth** yang memvalidasi JWT Supabase; tanpa token valid → `401 Unauthorized`.
 - Semua endpoint membaca SQLite; tidak ada kredensial yang bocor ke client.
 
 ### 7.4 Cron / Scheduler (backend)
@@ -162,6 +175,7 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 | **X/Twitter Scraper** | Tweet per keyword | Apify/Xpoz (~$10–20/bln) |
 | **Anthropic Claude** | Klasifikasi & analisa sentimen | Pay-per-use + Prompt Caching (Sonnet default, Opus on-demand) |
 | **CryptoPanic** | Berita crypto | Free Tier ($0) |
+| **Supabase Auth** | Login / identitas user | Free Tier ($0) — cukup untuk ≤5 user |
 
 ---
 
@@ -177,6 +191,7 @@ Asumsi trafik: **6×/jam × 24 × 30 = 4.320 request/bulan**. Kurs Rp 17.877.
 | Twitter Scraper | ~$10 × Rp 17.877 | **Rp 178.770** |
 | Claude API | Estimasi konservatif basis Opus (~$24.64) → **lebih rendah karena default Sonnet** | **≤ Rp 440.489** |
 | CryptoPanic API | Free tier | **Rp 0** |
+| Supabase Auth | Free tier (≤5 user) | **Rp 0** |
 | **TOTAL ALL-IN** | | **~Rp 700.000 – Rp 1.000.000** |
 
 > **Catatan biaya AI:** Simulasi Rp440k di brief berbasis Opus penuh. Karena scan rutin kini default ke **Sonnet** (jauh lebih murah) dan Opus hanya on-demand, biaya aktual Claude diperkirakan **di bawah angka tersebut**. Total all-in tetap dipatok konservatif ≤ Rp 1jt.
@@ -198,12 +213,13 @@ Asumsi trafik: **6×/jam × 24 × 30 = 4.320 request/bulan**. Kurs Rp 17.877.
 
 ## 10. Tahapan Kerja (Scope of Work / Roadmap)
 
-### Tahap 1 — Setup Backend & Database
+### Tahap 1 — Setup Backend, Auth & Database
 - Provisioning Mini VPS, instalasi Node.js + process manager (pm2/systemd).
 - Setup SQLite + skema tabel cache.
+- **Setup Supabase Auth:** buat project, matikan self-signup, buat ≤5 akun trader, integrasi middleware validasi JWT di backend.
 - **Pindahkan seluruh autentikasi API ke backend** (atasi celah keamanan API Key) — *prioritas urgent*.
 
-**Deliverable:** Backend aman jalan, endpoint internal siap, tidak ada key di client.
+**Deliverable:** Backend aman jalan, login berfungsi, semua endpoint di belakang auth, tidak ada key di client.
 
 ### Tahap 2 — Integrasi & Caching API
 - Integrasi DexScreener, CoinGecko, Twitter Scraper, CryptoPanic, Claude (Sonnet + Opus on-demand).
@@ -214,6 +230,7 @@ Asumsi trafik: **6×/jam × 24 × 30 = 4.320 request/bulan**. Kurs Rp 17.877.
 
 ### Tahap 3 — Final UI Polish & Deployment
 - Rapikan frontend v3.1, sambungkan ke endpoint server (hapus call API client-side).
+- Tambah halaman login + guard sesi (redirect ke login bila belum auth) + tombol logout.
 - Finalisasi Signal Scores gabungan, polish UI.
 - Deployment operasional 24/7.
 
@@ -224,7 +241,9 @@ Asumsi trafik: **6×/jam × 24 × 30 = 4.320 request/bulan**. Kurs Rp 17.877.
 ## 11. Kriteria Penerimaan Akhir (Definition of Done)
 
 - [ ] Tidak ada API Key apa pun terlihat di browser (verifikasi Inspect Element / Network).
-- [ ] Semua fitur F1–F6 berfungsi sesuai acceptance criteria.
+- [ ] Login Supabase berfungsi; tanpa login tidak ada UI/endpoint data yang bisa diakses; logout mengunci kembali.
+- [ ] Self-signup mati; akun hanya bisa dibuat admin (≤5 user).
+- [ ] Semua fitur F0–F6 berfungsi sesuai acceptance criteria.
 - [ ] Data disajikan dari SQLite cache; refresh user tidak memicu call API berlebih.
 - [ ] Prompt Caching Claude aktif & terbukti hemat biaya input.
 - [ ] Sonnet default jalan untuk scan rutin; Opus hanya terpanggil on-demand.
