@@ -192,7 +192,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <div class="hdr-r">
     <div class="live"><div class="dot"></div>LIVE</div>
     <div id="ts" style="font-size:9px;color:var(--muted)">—</div>
-    <button class="btn" id="rbtn" onclick="doRefresh()">⟳ REFRESH</button>
+    <button class="btn" id="rbtn">⟳ REFRESH</button>
   </div>
   <button id="logout-btn" style="margin-left:auto;font-size:9px;padding:4px 10px;background:transparent;border:1px solid #243049;color:#8aa0c0;cursor:pointer">LOGOUT</button>
 </header>
@@ -333,13 +333,13 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
       <span>𝕏 TWITTER/X — OCTRA LIVE FEED</span>
       <div style="display:flex;gap:6px;align-items:center">
         <span id="tw-cnt" style="font-size:8px;color:var(--muted)">Loading...</span>
-        <button class="btn" style="font-size:8px;padding:3px 8px" onclick="fetchTweets()">↺</button>
+        <button class="btn" style="font-size:8px;padding:3px 8px">↺</button>
       </div>
     </div>
     <div class="tw-notice">⚠️ Twitter/X API resmi berbayar. Feed ini menggunakan <strong>AI-curated intelligence</strong> berdasarkan keyword monitoring: "Octra", "$OCT", "FHE layer1", "OCT listing". Auto-refresh tiap 3 menit.</div>
     <div class="tw-search-bar">
       <input type="text" id="tw-q" placeholder='Keyword: "octra listing", "OCT whale", "FHE"...' value="octra OCT">
-      <button class="btn" style="font-size:8px" onclick="fetchTweets()">SEARCH</button>
+      <button class="btn" style="font-size:8px">SEARCH</button>
     </div>
     <div class="tw-filter">
       <div class="twf on" onclick="twFilter('all',this)">ALL</div>
@@ -742,6 +742,17 @@ buildExits();
 // ═══════════════════════════════════
 // EXPOSE HELPERS FOR app.js GLUE
 // ═══════════════════════════════════
+// setTweets: assign module-scoped ALL_TWEETS (so twFilter works), render + stats.
+window.setTweets = function(tweets){
+  ALL_TWEETS = Array.isArray(tweets) ? tweets : [];
+  renderTweets(ALL_TWEETS);
+  updateTwStats(ALL_TWEETS);
+};
+// setPrice: keep module-scoped CUR_PRICE in sync so calcFib/calcPort/buildExits see it.
+window.setPrice = function(p){
+  if (p != null && !isNaN(p)) { CUR_PRICE = p; }
+  calcPort();
+};
 window.renderTweets = typeof renderTweets === 'function' ? renderTweets : undefined;
 window.renderNews = typeof renderNews === 'function' ? renderNews : undefined;
 window.computeSignal = typeof computeSignal === 'function' ? computeSignal : undefined;
