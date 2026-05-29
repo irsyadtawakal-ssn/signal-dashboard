@@ -56,3 +56,59 @@ token → `401`.
 
 > Cache-population (cron pulling DexScreener / CoinGecko / Twitter / Claude /
 > CryptoPanic) is implemented in Phase 2.
+
+## Deploy to VPS
+
+The backend is designed to run as a managed pm2 process on a Linux VPS.
+
+### First-time setup
+
+```bash
+# 1. Install pm2 globally (once per VPS)
+npm install -g pm2
+
+# 2. Production install (skip devDependencies)
+cd backend && npm ci --omit=dev
+
+# 3. Copy env and fill required values
+cp .env.example .env
+# Edit .env — at minimum set SUPABASE_JWT_SECRET
+# Optional: OPENROUTER_API_KEY / ANTHROPIC_API_KEY, CRYPTOPANIC_TOKEN, TWITTER_SCRAPER_TOKEN, CORS_ORIGIN
+
+# 4. Start the process (must run from inside the backend/ directory)
+cd backend && pm2 start pm2.config.js
+
+# 5. Register pm2 with the OS so it survives reboots
+pm2 startup
+# ↑ Prints something like: "sudo env PATH=... pm2 startup systemd -u user --hp /home/user"
+# Copy and paste the ENTIRE printed command (including 'sudo') and run it
+
+# 6. Save the current process list
+pm2 save
+```
+
+After steps 5 and 6 are both complete, pm2 will restart automatically after any VPS reboot.
+
+### Day-to-day operations
+
+```bash
+pm2 status                        # see all running processes + uptime
+pm2 logs signal-dashboard         # tail live logs
+pm2 logs signal-dashboard --lines 200  # last 200 log lines
+pm2 restart signal-dashboard      # restart after config/env change
+pm2 stop signal-dashboard         # stop without removing
+pm2 delete signal-dashboard       # remove from pm2 process list
+```
+
+### Updating the backend
+
+```bash
+git pull
+cd backend && npm ci --omit=dev
+pm2 restart signal-dashboard
+```
+
+### Log files
+
+Logs are written to `backend/logs/app.log` (stdout) and `backend/logs/error.log` (stderr).
+The `logs/` directory is created automatically by pm2 on first start.
