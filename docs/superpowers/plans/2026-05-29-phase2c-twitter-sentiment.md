@@ -825,14 +825,22 @@ git push origin <current-branch>
 
 ---
 
-## Done Criteria (Phase 2c)
+## Done Criteria (Phase 2c) — ✅ COMPLETE (2026-05-29, merged to `main`)
 
-- [ ] `npm test` passes all suites including new twitter/sentiment/adapter/tweets tests.
-- [ ] `fetchTweets` normalizes scraper results to `{ id, text, author, url, createdAt }`.
-- [ ] `classifyTweets` makes **one** batched call, labels each tweet `Bullish|Bearish|Whale`, and falls back to `Unrated` on failure/malformed output (never throws).
-- [ ] Provider switch works: `aiProvider` selects OpenRouter (default) or Anthropic; both adapters apply `cache_control` to the system prompt; the classifier core is provider-agnostic.
-- [ ] Server schedules a ~5-min tweets update writing the `tweets` cache key via `runCacheUpdate`.
-- [ ] `GET /api/tweets` returns `401` unauthed, `503` cold, `200` with enriched items when warm.
+Implemented via subagent-driven development (8 tasks) + final code review (Approved, no
+Critical/Important findings). Full suite: **69/69 tests passing** (18 files).
+
+- [x] `npm test` passes all suites including new twitter/sentiment/adapter/tweets tests.
+- [x] `fetchTweets` normalizes scraper results to `{ id, text, author, url, createdAt }`.
+- [x] `classifyTweets` makes **one** batched call, labels each tweet `Bullish|Bearish|Whale`, and falls back to `Unrated` on failure/malformed output (never throws).
+- [x] Provider switch works: `aiProvider` selects OpenRouter (default) or Anthropic; both adapters apply `cache_control` to the system prompt; the classifier core is provider-agnostic.
+- [x] Server schedules a ~5-min tweets update writing the `tweets` cache key via `runCacheUpdate`.
+- [x] `GET /api/tweets` returns `401` unauthed, `503` cold, `200` with enriched items when warm.
+
+**Note (no live smoke):** mock-first — no Apify/Xpoz or AI keys yet. With no AI key, the
+scheduled task stores tweets as `Unrated`; with no scraper token the feed stays `503`.
+**Follow-up when wiring real keys:** confirm the real scraper field names + the OpenRouter
+model slug (`anthropic/claude-sonnet-4.6`) and map them in `normalizeTweet`/the adapter.
 
 ## Out of Scope (later sub-plans)
 
