@@ -88,4 +88,16 @@ describe('loadConfig', () => {
     expect(cfg.sentimentModel).toBe('custom-model');
     expect(cfg.twitterKeywords).toEqual(['foo', 'bar']);
   });
+
+  it('parses analysis config with defaults', () => {
+    const cfg = loadConfig({ SUPABASE_JWT_SECRET: 'secret' });
+    expect(cfg.analysisTtlMs).toBe(600000);
+    expect(cfg.analysisModel).toBeUndefined();
+  });
+
+  it('reads analysis config overrides', () => {
+    const cfg = loadConfig({ SUPABASE_JWT_SECRET: 'secret', ANALYSIS_TTL_MS: '60000', ANALYSIS_MODEL: 'custom-opus' });
+    expect(cfg.analysisTtlMs).toBe(60000);
+    expect(cfg.analysisModel).toBe('custom-opus');
+  });
 });

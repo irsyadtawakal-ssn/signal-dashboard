@@ -23,6 +23,8 @@ function loadConfig(env = process.env) {
     twitterKeywords: env.TWITTER_KEYWORDS
       ? env.TWITTER_KEYWORDS.split(',').map((s) => s.trim()).filter(Boolean)
       : ['Octra', '$OCT', 'FHE layer1', 'OCT listing'],
+    analysisTtlMs: Number(env.ANALYSIS_TTL_MS) || 600000,
+    analysisModel: env.ANALYSIS_MODEL || undefined,
   };
 }
 
