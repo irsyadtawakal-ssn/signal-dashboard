@@ -38,6 +38,7 @@ describe('requireAuth', () => {
     const next = vi.fn();
     requireAuth(config)(req, res, next);
     expect(res.statusCode).toBe(401);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('accepts a valid token and attaches req.user', () => {
