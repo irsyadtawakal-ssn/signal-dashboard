@@ -18,6 +18,9 @@ SQLite cache.
 - `GET /api/price` — **protected**; returns the cached price object
   `{ oct, octChange24h, btc, btcChange24h, eth, ethChange24h, fetchedAt }`,
   or `503` until the first scheduled fetch completes.
+- `GET /api/news` — **protected**; returns cached crypto-news items
+  `[{ title, url, source, publishedAt, sentiment }]`, or `503` until the first
+  scheduled fetch completes.
 
 ## Background jobs
 
@@ -25,6 +28,9 @@ On startup the server schedules a price update (DexScreener for OCT, CoinGecko
 for BTC/ETH) every `PRICE_INTERVAL_MS` (default 5 min) and writes it to the
 `price` cache key. If one upstream fails, the other's data is still served (the
 failed fields are `null`).
+
+A news update (CryptoPanic, hourly by default via `NEWS_INTERVAL_MS`) writes the
+`news` cache key. The free public endpoint is used unless `CRYPTOPANIC_TOKEN` is set.
 
 ## Auth
 

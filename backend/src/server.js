@@ -5,8 +5,9 @@ const { createApp } = require('./app');
 const { getJson } = require('./http');
 const { fetchOctPrice } = require('./sources/dexscreener');
 const { fetchMacro } = require('./sources/coingecko');
+const { fetchNews } = require('./sources/cryptopanic');
 const { buildPrice } = require('./priceService');
-const { runPriceUpdate, startScheduler } = require('./scheduler');
+const { runPriceUpdate, runCacheUpdate, startScheduler } = require('./scheduler');
 
 try {
   const config = loadConfig();
@@ -22,6 +23,15 @@ try {
   startScheduler({
     tasks: [
       { run: () => runPriceUpdate({ db, buildPriceFn }), intervalMs: config.priceIntervalMs },
+      {
+        run: () =>
+          runCacheUpdate({
+            db,
+            key: 'news',
+            produceFn: () => fetchNews({ getJsonFn: getJson, token: config.cryptopanicToken }),
+          }),
+        intervalMs: config.newsIntervalMs,
+      },
     ],
   });
 
