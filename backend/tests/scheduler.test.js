@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { runPriceUpdate, startScheduler } from '../src/scheduler.js';
+import { runPriceUpdate, runCacheUpdate, startScheduler } from '../src/scheduler.js';
 import { createDb, getCache } from '../src/db.js';
 
 describe('runPriceUpdate', () => {
@@ -15,6 +15,22 @@ describe('runPriceUpdate', () => {
     const buildPriceFn = vi.fn().mockRejectedValue(new Error('boom'));
     await expect(runPriceUpdate({ db, buildPriceFn })).resolves.toBeUndefined();
     expect(getCache(db, 'price')).toBeNull();
+  });
+});
+
+describe('runCacheUpdate', () => {
+  it('writes the produced value under the given key', async () => {
+    const db = createDb(':memory:');
+    const produceFn = vi.fn().mockResolvedValue([{ title: 'hi' }]);
+    await runCacheUpdate({ db, key: 'news', produceFn });
+    expect(getCache(db, 'news').value).toEqual([{ title: 'hi' }]);
+  });
+
+  it('does not throw and skips write when produceFn fails', async () => {
+    const db = createDb(':memory:');
+    const produceFn = vi.fn().mockRejectedValue(new Error('boom'));
+    await expect(runCacheUpdate({ db, key: 'news', produceFn })).resolves.toBeUndefined();
+    expect(getCache(db, 'news')).toBeNull();
   });
 });
 
