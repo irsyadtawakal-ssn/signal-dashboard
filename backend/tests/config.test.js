@@ -41,4 +41,20 @@ describe('loadConfig', () => {
     expect(cfg.priceIntervalMs).toBe(60000);
     expect(cfg.supabaseJwtIssuer).toBe('https://proj.supabase.co/auth/v1');
   });
+
+  it('parses news config with defaults', () => {
+    const cfg = loadConfig({ SUPABASE_JWT_SECRET: 'secret' });
+    expect(cfg.newsIntervalMs).toBe(3600000);
+    expect(cfg.cryptopanicToken).toBeUndefined();
+  });
+
+  it('reads news config overrides', () => {
+    const cfg = loadConfig({
+      SUPABASE_JWT_SECRET: 'secret',
+      NEWS_INTERVAL_MS: '120000',
+      CRYPTOPANIC_TOKEN: 'tok123',
+    });
+    expect(cfg.newsIntervalMs).toBe(120000);
+    expect(cfg.cryptopanicToken).toBe('tok123');
+  });
 });

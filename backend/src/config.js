@@ -12,6 +12,8 @@ function loadConfig(env = process.env) {
     supabaseJwtIssuer: env.SUPABASE_JWT_ISSUER || undefined,
     octTokenAddress: env.OCT_TOKEN_ADDRESS || '0x4647e1fe715c9e23959022c2416c71867f5a6e80',
     priceIntervalMs: Number(env.PRICE_INTERVAL_MS) || 300000,
+    newsIntervalMs: Number(env.NEWS_INTERVAL_MS) || 3600000,
+    cryptopanicToken: env.CRYPTOPANIC_TOKEN || undefined,
   };
 }
 
