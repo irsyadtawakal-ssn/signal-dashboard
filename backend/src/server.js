@@ -12,12 +12,12 @@ const { createOpenRouterComplete } = require('./ai/providers/openrouter');
 const { createAnthropicComplete } = require('./ai/providers/anthropic');
 const { buildTweets } = require('./tweetsService');
 const { buildPrice } = require('./priceService');
+const { analyzeMarket } = require('./ai/analysis');
 const { runPriceUpdate, runCacheUpdate, startScheduler } = require('./scheduler');
 
 try {
   const config = loadConfig();
   const db = createDb(config.dbPath);
-  const app = createApp({ db, config });
 
   const buildPriceFn = () =>
     buildPrice({
@@ -41,6 +41,15 @@ try {
     complete
       ? classifyTweets({ tweets, complete })
       : Promise.resolve(tweets.map((t) => ({ ...t, sentiment: 'Unrated' })));
+
+  const analysisModel =
+    config.analysisModel ||
+    (config.aiProvider === 'anthropic' ? 'claude-opus-4-8' : 'anthropic/claude-opus-4.8');
+  const analyzeFn = complete
+    ? (data) => analyzeMarket({ ...data, complete, model: analysisModel })
+    : null;
+
+  const app = createApp({ db, config, analyzeFn });
 
   startScheduler({
     tasks: [

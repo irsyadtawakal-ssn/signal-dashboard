@@ -24,6 +24,10 @@ SQLite cache.
 - `GET /api/tweets` — **protected**; returns cached, AI-classified tweets
   `[{ id, text, author, url, createdAt, sentiment }]` where `sentiment` is
   `Bullish | Bearish | Whale | Unrated`, or `503` until the first scheduled fetch.
+- `POST /api/analyze` — **protected**; runs Claude Opus on the cached price/tweets/news and
+  returns `{ recommendation: BUY|HOLD|SELL, confidence, summary, components, generatedAt }`.
+  The result is cached for `ANALYSIS_TTL_MS` (default 10 min); send `{ "force": true }` to
+  re-run immediately. `503` if no AI key is configured; `502` if the analysis call fails.
 
 ## Background jobs
 
@@ -39,6 +43,10 @@ A tweets update (Twitter scraper, every `TWITTER_INTERVAL_MS`, default 5 min) wr
 `tweets` cache key. Each tweet is classified by Claude Sonnet via `AI_PROVIDER`
 (`openrouter` default, or `anthropic`); when no AI key is set the tweets are stored
 `Unrated`. A scraper failure leaves the feed at `503` until the next successful cycle.
+
+`POST /api/analyze` is **on-demand** (not scheduled): it reads the existing cache keys, calls
+Opus via `AI_PROVIDER`, and stores the result under the `analysis` cache key with a TTL to
+keep Opus cost low.
 
 ## Auth
 
