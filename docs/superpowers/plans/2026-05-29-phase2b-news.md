@@ -436,14 +436,19 @@ git push origin <current-branch>
 
 ---
 
-## Done Criteria (Phase 2b)
+## Done Criteria (Phase 2b) — ✅ COMPLETE (2026-05-29, merged to `main`)
 
-- [ ] `npm test` passes all suites including new `cryptopanic` and `news` tests.
-- [ ] `fetchNews` normalizes CryptoPanic results to `{ title, url, source, publishedAt, sentiment }` and derives bull/bear/neutral from votes.
-- [ ] News fetcher uses the public endpoint by default, the `auth_token` endpoint when `CRYPTOPANIC_TOKEN` is set.
-- [ ] Server schedules an hourly news update writing the `news` cache key (via generic `runCacheUpdate`).
-- [ ] `GET /api/news` returns `401` unauthed, `503` cold, `200` with cached items when warm.
-- [ ] Live smoke output reported (real items, or a noted limitation if the public endpoint is restricted).
+- [x] `npm test` passes all suites including new `cryptopanic` and `news` tests. (44/44 passing, 12 files)
+- [x] `fetchNews` normalizes CryptoPanic results to `{ title, url, source, publishedAt, sentiment }` and derives bull/bear/neutral from votes.
+- [x] News fetcher uses the public endpoint by default, the `auth_token` endpoint when `CRYPTOPANIC_TOKEN` is set.
+- [x] Server schedules an hourly news update writing the `news` cache key (via generic `runCacheUpdate`).
+- [x] `GET /api/news` returns `401` unauthed, `503` cold, `200` with cached items when warm.
+- [~] Live smoke output reported — **DONE_WITH_CONCERNS**: the public endpoint
+  `https://cryptopanic.com/api/v1/posts/?public=true&filter=hot&kind=news` now returns **404**
+  (CryptoPanic deprecated the v1 public path; it requires an `auth_token`). Per plan instructions
+  the URL was NOT changed to chase a 200. The `auth_token` branch is wired and unit-tested.
+  Graceful degrade holds: a failed fetch logs and leaves `/api/news` at `503` until data lands.
+  **Follow-up:** confirm the current CryptoPanic free-tier endpoint/path and set `CRYPTOPANIC_TOKEN`.
 
 ## Out of Scope (later sub-plans)
 
