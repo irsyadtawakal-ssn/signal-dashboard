@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCT Signal Intelligence v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080c12;--surface:#0d1320;--s2:#101825;--s3:#131b2e;
+  --border:#1e2d47;--accent:#00e5ff;--accent2:#ff6b35;--accent3:#a78bfa;
+  --green:#00ff88;--red:#ff3366;--yellow:#ffd700;
+  --text:#e8f4fd;--muted:#4a6a88;--muted2:#6a8aaa;--tw:#1d9bf0;
+  --fib-236:#e5c07b;--fib-382:#98c379;--fib-5:#61afef;--fib-618:#c678dd;--fib-786:#e06c75;
+  --font:'Space Mono',monospace;--ui:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.01) 2px,rgba(0,229,255,.01) 4px);pointer-events:none;z-index:9000}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:14px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border:1px solid var(--border);background:var(--surface);margin-bottom:12px;position:relative;overflow:hidden}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4}
+.logo{font-family:var(--ui);font-size:18px;font-weight:800}
+.logo em{color:var(--accent);font-style:normal}
+.logo small{font-size:9px;color:var(--muted);letter-spacing:2px;display:block}
+.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.live{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--green);border:1px solid rgba(0,255,136,.3);padding:3px 9px}
+.dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:5px 12px;font-family:var(--font);font-size:9px;letter-spacing:2px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{background:var(--accent);color:var(--bg)}.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* PORTFOLIO */
+.port-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.03);margin-bottom:12px}
+.port-bar label{font-size:9px;color:var(--yellow);letter-spacing:2px;white-space:nowrap}
+.port-bar input{background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;width:140px;outline:none;transition:.2s}
+.port-bar input:focus{border-color:var(--accent)}
+.port-bar input::placeholder{color:var(--muted);font-size:10px}
+.pstats{display:flex;gap:14px;flex-wrap:wrap;margin-left:auto}
+.ps{text-align:center}
+.psl{font-size:8px;color:var(--muted);letter-spacing:1px}
+.psv{font-family:var(--ui);font-size:16px;font-weight:700}
+
+/* TOP SIGNAL ROW */
+.top-row{display:grid;grid-template-columns:1.1fr .9fr 1fr 1fr;gap:2px;background:var(--border);margin-bottom:12px}
+.sb{background:var(--surface);padding:14px 16px}
+.sl{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.sv{font-family:var(--ui);font-size:28px;font-weight:800;line-height:1}
+.sig-card{text-align:center;border:2px solid var(--yellow);transition:.3s;position:relative;overflow:hidden}
+.sig-card::before{content:'';position:absolute;inset:0;opacity:.07;transition:.3s}
+.sig-card.BUY{border-color:var(--green)}.sig-card.BUY::before{background:var(--green)}
+.sig-card.SELL{border-color:var(--red)}.sig-card.SELL::before{background:var(--red)}
+.sig-card.HOLD{border-color:var(--yellow)}.sig-card.HOLD::before{background:var(--yellow)}
+#msig{font-size:42px!important;letter-spacing:-2px}
+#msig.BUY{color:var(--green)}#msig.SELL{color:var(--red)}#msig.HOLD{color:var(--yellow)}
+.scores{padding:14px 16px;background:var(--surface)}
+.srow{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.sn{font-size:8px;color:var(--muted);width:68px;flex-shrink:0}
+.sbg{flex:1;height:4px;background:var(--s3)}.sf{height:100%;transition:width .8s ease}
+.snum{font-size:9px;width:24px;text-align:right}
+
+/* CHART SECTION */
+.chart-wrap{border:1px solid var(--border);background:var(--surface);margin-bottom:12px}
+.chart-hdr{padding:9px 14px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;gap:3px}
+.tab{font-size:8px;padding:3px 9px;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-family:var(--font);letter-spacing:1px;transition:.15s}
+.tab.on,.tab:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,.05)}
+.chart-note{padding:7px 14px;font-size:10px;color:var(--accent2);background:rgba(255,107,53,.06);border-bottom:1px solid rgba(255,107,53,.2);line-height:1.5}
+
+/* CHART CONTAINER with Fib overlay */
+.chart-container{position:relative;background:#0d1320}
+#dex-frame{width:100%;height:460px;border:none;display:block}
+
+/* FIBONACCI PANEL */
+.fib-panel{border-top:1px solid var(--border);padding:12px 16px;background:var(--s2)}
+.fib-title{font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.fib-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.fib-group label{font-size:8px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:3px}
+.fib-group input{background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;width:100%;outline:none;transition:.2s}
+.fib-group input:focus{border-color:var(--yellow)}
+.fib-table{width:100%;border-collapse:collapse}
+.fib-table th{font-size:8px;color:var(--muted);letter-spacing:1px;text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)}
+.fib-table td{font-size:10px;padding:5px 8px;border-bottom:1px solid rgba(30,45,71,.5);font-family:var(--ui)}
+.fib-table tr:last-child td{border-bottom:none}
+.fib-table tr:hover td{background:rgba(0,229,255,.03)}
+.fib-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.fib-badge{font-size:8px;padding:2px 6px;letter-spacing:1px;font-weight:700}
+.fib-badge.support{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.25)}
+.fib-badge.resist{background:rgba(255,51,102,.12);color:var(--red);border:1px solid rgba(255,51,102,.25)}
+.fib-badge.current{background:rgba(0,229,255,.12);color:var(--accent);border:1px solid rgba(0,229,255,.25)}
+.fib-direction-tabs{display:flex;gap:4px;margin-bottom:10px}
+.fib-dtab{font-size:9px;padding:4px 12px;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-family:var(--font);letter-spacing:1px;transition:.15s}
+.fib-dtab.on{border-color:var(--yellow);color:var(--yellow);background:rgba(255,215,0,.06)}
+
+/* AI */
+.ai-box{border:1px solid var(--accent);background:rgba(0,229,255,.025);padding:12px 16px;margin-bottom:12px;position:relative}
+.ai-box::before{content:'⚡ AI SIGNAL';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 7px;font-size:8px;color:var(--accent);letter-spacing:2px}
+#ai-txt{font-size:12px;line-height:1.75;color:var(--text);font-family:var(--ui)}
+.ld::after{content:'...';animation:ld 1.4s steps(4) infinite}
+@keyframes ld{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:1fr 400px;gap:12px;margin-bottom:12px}
+.panel{border:1px solid var(--border);background:var(--surface);overflow:hidden}
+.ph{padding:9px 13px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pb{padding:0;max-height:480px;overflow-y:auto}
+.pb::-webkit-scrollbar{width:3px}.pb::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* TWEETS */
+.tw-notice{padding:8px 13px;font-size:9px;color:var(--accent2);background:rgba(255,107,53,.05);border-bottom:1px solid rgba(255,107,53,.15);line-height:1.5}
+.tw-search-bar{display:flex;gap:6px;padding:8px 13px;border-bottom:1px solid var(--border);background:var(--s2)}
+.tw-search-bar input{flex:1;background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:10px;padding:5px 9px;outline:none}
+.tw-search-bar input:focus{border-color:var(--tw)}
+.tw-filter{display:flex;gap:3px;padding:7px 13px;border-bottom:1px solid var(--border);background:var(--s2);flex-wrap:wrap}
+.twf{font-size:8px;padding:3px 8px;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-family:var(--font);letter-spacing:1px;transition:.15s}
+.twf.on,.twf:hover{border-color:var(--tw);color:var(--tw)}
+.tw-stats-bar{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.tws{flex:1;text-align:center;padding:7px 4px;border-right:1px solid var(--border)}
+.tws:last-child{border-right:none}
+.tws-l{font-size:7px;color:var(--muted);letter-spacing:1px}
+.tws-v{font-family:var(--ui);font-size:14px;font-weight:700}
+.tweet{padding:11px 13px;border-bottom:1px solid var(--border);transition:background .15s}
+.tweet:last-child{border-bottom:none}
+.tweet:hover{background:rgba(29,155,240,.04)}
+.tw-top{display:flex;align-items:flex-start;gap:9px;margin-bottom:5px}
+.tw-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;font-family:var(--ui)}
+.tw-meta{flex:1;min-width:0}
+.tw-handle{color:var(--tw);font-size:10px;font-weight:700}
+.tw-name{color:var(--muted2);font-size:8px}
+.tw-time{font-size:8px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.tw-body{font-size:11px;line-height:1.55;color:var(--text);font-family:var(--ui);word-break:break-word}
+.tw-body a{color:var(--accent);text-decoration:none}
+.tw-body a:hover{text-decoration:underline}
+.tw-foot{display:flex;align-items:center;gap:10px;margin-top:6px}
+.tw-st{font-size:8px;color:var(--muted)}
+.tw-sent{font-size:8px;padding:2px 5px;letter-spacing:1px;font-weight:700;margin-left:auto}
+.tw-sent.pos{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.tw-sent.neg{background:rgba(255,51,102,.1);color:var(--red);border:1px solid rgba(255,51,102,.2)}
+.tw-sent.neu{background:rgba(255,215,0,.1);color:var(--yellow);border:1px solid rgba(255,215,0,.2)}
+.tw-loading{padding:20px;text-align:center;color:var(--muted);font-size:11px}
+
+/* RIGHT COL */
+.right-col{display:flex;flex-direction:column;gap:12px}
+.ma-row{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;border-bottom:1px solid var(--border);font-size:11px}
+.ma-row:last-child{border-bottom:none}
+.mal{color:var(--muted);font-size:9px}
+.chip{font-size:8px;padding:2px 7px;letter-spacing:1px;font-weight:700}
+.chip.bull{background:rgba(0,255,136,.12);color:var(--green)}
+.chip.bear{background:rgba(255,51,102,.12);color:var(--red)}
+.news-item{padding:8px 13px;border-bottom:1px solid var(--border);cursor:pointer;transition:padding .15s}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{padding-left:18px}
+.nm{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.ns{font-size:8px;padding:2px 5px;font-weight:700;letter-spacing:1px}
+.ns.positive{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.ns.negative{background:rgba(255,51,102,.1);color:var(--red);border:1px solid rgba(255,51,102,.2)}
+.ns.neutral{background:rgba(255,215,0,.1);color:var(--yellow);border:1px solid rgba(255,215,0,.2)}
+.nsrc{font-size:8px;color:var(--muted)}.ntime{font-size:8px;color:var(--muted);margin-left:auto}
+.ntitle{font-size:10.5px;color:var(--text);line-height:1.4;font-family:var(--ui)}
+.ntitle a{color:inherit;text-decoration:none}.ntitle a:hover{color:var(--accent)}
+.exit-row{display:flex;align-items:center;gap:7px;padding:7px 13px;border-bottom:1px solid var(--border);font-size:10px;transition:background .2s}
+.exit-row:last-child{border-bottom:none}
+.exit-row.cur{background:rgba(0,229,255,.05);border-left:2px solid var(--accent)}
+.exit-row.done{opacity:.4}
+.st{padding:9px 11px;border:1px solid var(--border);background:var(--s3)}
+.stl{font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.stv{font-family:var(--ui);font-size:15px;font-weight:700}
+.bot-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+
+@media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.top-row{grid-template-columns:1fr 1fr}.bot-grid{grid-template-columns:1fr}#dex-frame{height:320px}}
+</style>
+</head>
+<body>
+<div id="login-overlay" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:#0a0e17">
+  <form id="login-form" style="background:#121826;border:1px solid #243049;padding:28px;width:320px;font-family:'Space Mono',monospace">
+    <div style="color:#ff6b35;letter-spacing:2px;font-size:11px;margin-bottom:16px">OCT SIGNAL — LOGIN</div>
+    <input id="login-email" type="email" placeholder="email" required style="width:100%;margin-bottom:10px;padding:9px;background:#0d1320;border:1px solid #243049;color:#e6edf7" />
+    <input id="login-password" type="password" placeholder="password" required style="width:100%;margin-bottom:14px;padding:9px;background:#0d1320;border:1px solid #243049;color:#e6edf7" />
+    <button type="submit" style="width:100%;padding:10px;background:#ff6b35;border:0;color:#0a0e17;font-weight:700;cursor:pointer">SIGN IN</button>
+    <div id="login-error" style="color:#ff5470;font-size:10px;margin-top:10px;min-height:14px"></div>
+  </form>
+</div>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 · DexScreener Chart · Fibonacci · Twitter Feed</small></div>
+  <div class="hdr-r">
+    <div class="live"><div class="dot"></div>LIVE</div>
+    <div id="ts" style="font-size:9px;color:var(--muted)">—</div>
+    <button class="btn" id="rbtn">⟳ REFRESH</button>
+  </div>
+  <button id="logout-btn" style="margin-left:auto;font-size:9px;padding:4px 10px;background:transparent;border:1px solid #243049;color:#8aa0c0;cursor:pointer">LOGOUT</button>
+</header>
+
+<!-- PORTFOLIO -->
+<div class="port-bar">
+  <label>JUMLAH OCT:</label>
+  <input type="number" id="oct-amt" placeholder="e.g. 10000" min="0" step="any" oninput="calcPort()">
+  <label>AVG BUY $:</label>
+  <input type="number" id="avg-buy" placeholder="e.g. 0.05" min="0" step="any" oninput="calcPort()">
+  <div class="pstats">
+    <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$—</div></div>
+    <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$—</div></div>
+    <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">—%</div></div>
+    <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow);font-size:11px">—</div></div>
+    <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green);font-size:12px">$—</div></div>
+  </div>
+</div>
+
+<!-- TOP SIGNAL ROW -->
+<div class="top-row">
+  <div class="sb">
+    <div class="sl">OCT / USD PRICE</div>
+    <div class="sv" id="prc" style="color:var(--accent)">—</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:3px" id="psub">Loading...</div>
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <div><div class="sl">HIGH</div><div style="font-size:11px;color:var(--green)" id="phi">—</div></div>
+      <div><div class="sl">LOW</div><div style="font-size:11px;color:var(--red)" id="plo">—</div></div>
+      <div><div class="sl">VOL 24H</div><div style="font-size:11px;color:var(--muted)" id="pvol">—</div></div>
+    </div>
+  </div>
+  <div class="sb sig-card HOLD" id="scrd">
+    <div class="sl">REKOMENDASI SEKARANG</div>
+    <div class="sv" id="msig">WAIT</div>
+    <div id="mconf" style="font-size:9px;color:var(--muted);margin-top:3px">Analyzing...</div>
+  </div>
+  <div class="sb">
+    <div class="sl">24H CHANGE</div>
+    <div class="sv" id="chg" style="font-size:24px">—</div>
+    <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:7px">
+      <div style="display:flex;gap:12px">
+        <div><div class="sl">BTC</div><div style="font-size:11px" id="btcp">—</div></div>
+        <div><div class="sl">ETH</div><div style="font-size:11px" id="ethp">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="scores">
+    <div class="sl" style="margin-bottom:9px">SIGNAL SCORES</div>
+    <div class="srow"><div class="sn">Price Action</div><div class="sbg"><div class="sf" id="bp" style="width:0%;background:var(--accent)"></div></div><div class="snum" id="np">—</div></div>
+    <div class="srow"><div class="sn">Sentiment</div><div class="sbg"><div class="sf" id="bs" style="width:0%;background:var(--green)"></div></div><div class="snum" id="ns">—</div></div>
+    <div class="srow"><div class="sn">Twitter Buzz</div><div class="sbg"><div class="sf" id="bt" style="width:0%;background:var(--tw)"></div></div><div class="snum" id="nt">—</div></div>
+    <div class="srow"><div class="sn">MA Trend</div><div class="sbg"><div class="sf" id="bm" style="width:0%;background:var(--accent2)"></div></div><div class="snum" id="nm">—</div></div>
+    <div class="srow"><div class="sn">Fib Position</div><div class="sbg"><div class="sf" id="bf" style="width:0%;background:var(--fib-618)"></div></div><div class="snum" id="nf">—</div></div>
+  </div>
+</div>
+
+<!-- CHART + FIBONACCI -->
+<div class="chart-wrap">
+  <div class="chart-hdr">
+    <span>📈 OCT/ETH LIVE CHART — DEXSCREENER (Uniswap V4)</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="tabs" id="itabs">
+        <div class="tab on" data-int="1">1m</div>
+        <div class="tab" data-int="5">5m</div>
+        <div class="tab" data-int="15">15m</div>
+        <div class="tab" data-int="60">1H</div>
+        <div class="tab" data-int="240">4H</div>
+        <div class="tab" data-int="D">1D</div>
+      </div>
+      <a href="https://dexscreener.com/ethereum/0x5eb459d3fc44f3f412ef43f93fa1e44ecb4ca9cb62a16bcbd94b5d0b834ff854" target="_blank" style="font-size:8px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:3px 8px">↗ OPEN FULL</a>
+    </div>
+  </div>
+  <div class="chart-note">
+    ✅ Chart harga <strong style="color:var(--green)">OCT/USD</strong> langsung · Uniswap V4 Ethereum via DexScreener · Token: <code style="font-size:9px;color:var(--accent)">0x4647...6E80</code> · Ganti interval di tombol atas
+  </div>
+  <div class="chart-container">
+    <iframe id="dex-frame"
+      src="https://dexscreener.com/ethereum/0x4647e1fe715c9e23959022c2416c71867f5a6e80?embed=1&theme=dark&trades=0&info=0"
+      allow="clipboard-write"
+      style="width:100%;height:460px;border:none;display:block">
+    </iframe>
+  </div>
+
+  <!-- FIBONACCI CALCULATOR -->
+  <div class="fib-panel">
+    <div class="fib-title">
+      <span>📐 FIBONACCI RETRACEMENT & EXTENSION CALCULATOR</span>
+      <div class="fib-direction-tabs">
+        <div class="fib-dtab on" id="fib-up" onclick="setFibDir('up',this)">⬆️ UPTREND (Retracement)</div>
+        <div class="fib-dtab" id="fib-down" onclick="setFibDir('down',this)">⬇️ DOWNTREND (Retracement)</div>
+        <div class="fib-dtab" id="fib-ext" onclick="setFibDir('ext',this)">🚀 EXTENSION (Targets)</div>
+      </div>
+    </div>
+    <div class="fib-inputs">
+      <div class="fib-group">
+        <label id="fib-low-lbl">SWING LOW (bottom) — Harga OCT/USD</label>
+        <input type="number" id="fib-low" placeholder="e.g. 0.025" step="0.00001" oninput="calcFib()">
+      </div>
+      <div class="fib-group">
+        <label id="fib-high-lbl">SWING HIGH (top) — Harga OCT/USD $</label>
+        <input type="number" id="fib-high" placeholder="e.g. 0.104" step="0.00001" oninput="calcFib()">
+      </div>
+    </div>
+    <div style="margin-bottom:10px;padding:8px 10px;background:var(--s3);border:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.6">
+      <strong style="color:var(--text)">💡 Cara pakai:</strong> Lihat chart OCT/USD di atas → identifikasi Swing Low dan Swing High → masukkan harga <strong style="color:var(--yellow)">USD $</strong> langsung → Fibonacci level otomatis dihitung. Harga OCT sekarang: <strong style="color:var(--accent)" id="fib-current-ref">loading...</strong>
+    </div>
+    <div id="fib-table-wrap">
+      <table class="fib-table">
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Ratio</th>
+            <th>Harga OCT / USD</th>
+            <th>Jarak dari Harga</th>
+            <th>Zone</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody id="fib-tbody">
+          <tr><td colspan="6" style="padding:16px;text-align:center;color:var(--muted);font-size:11px">Masukkan Swing Low dan Swing High untuk lihat Fibonacci levels</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- AI ANALYSIS -->
+<div class="ai-box">
+  <div id="ai-txt" class="ld">Menganalisa OCT + Fibonacci + Twitter</div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+
+  <!-- TWITTER -->
+  <div class="panel">
+    <div class="ph">
+      <span>𝕏 TWITTER/X — OCTRA LIVE FEED</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span id="tw-cnt" style="font-size:8px;color:var(--muted)">Loading...</span>
+        <button class="btn" style="font-size:8px;padding:3px 8px">↺</button>
+      </div>
+    </div>
+    <div class="tw-notice">⚠️ Twitter/X API resmi berbayar. Feed ini menggunakan <strong>AI-curated intelligence</strong> berdasarkan keyword monitoring: "Octra", "$OCT", "FHE layer1", "OCT listing". Auto-refresh tiap 3 menit.</div>
+    <div class="tw-search-bar">
+      <input type="text" id="tw-q" placeholder='Keyword: "octra listing", "OCT whale", "FHE"...' value="octra OCT">
+      <button class="btn" style="font-size:8px">SEARCH</button>
+    </div>
+    <div class="tw-filter">
+      <div class="twf on" onclick="twFilter('all',this)">ALL</div>
+      <div class="twf" onclick="twFilter('pos',this)">🟢 BULLISH</div>
+      <div class="twf" onclick="twFilter('neg',this)">🔴 BEARISH</div>
+      <div class="twf" onclick="twFilter('whale',this)">🐳 WHALE</div>
+      <div class="twf" onclick="twFilter('listing',this)">📋 LISTING</div>
+      <div class="twf" onclick="twFilter('dev',this)">⚙️ DEV</div>
+      <div class="twf" onclick="twFilter('fib',this)">📐 TA/FIB</div>
+    </div>
+    <div class="tw-stats-bar" id="tw-stats" style="display:none">
+      <div class="tws"><div class="tws-l">TOTAL</div><div class="tws-v" id="tws-t" style="color:var(--accent)">0</div></div>
+      <div class="tws"><div class="tws-l">BULLISH</div><div class="tws-v" id="tws-p" style="color:var(--green)">0</div></div>
+      <div class="tws"><div class="tws-l">BEARISH</div><div class="tws-v" id="tws-n" style="color:var(--red)">0</div></div>
+      <div class="tws"><div class="tws-l">NEUTRAL</div><div class="tws-v" id="tws-u" style="color:var(--yellow)">0</div></div>
+      <div class="tws"><div class="tws-l">SENTIMENT</div><div class="tws-v" id="tws-a" style="font-size:12px">—</div></div>
+    </div>
+    <div class="pb" id="tw-feed"><div class="tw-loading ld">Fetching tweets Octra</div></div>
+  </div>
+
+  <!-- RIGHT COL -->
+  <div class="right-col">
+    <!-- MA -->
+    <div class="panel">
+      <div class="ph">📊 MA ANALYSIS (5m chart)</div>
+      <div class="ma-row"><div><div class="mal">MA9 — Fast</div><div style="font-family:var(--ui);font-weight:600" id="ma9v">0.1301</div></div><div class="chip bull">PRICE ABOVE ✓</div></div>
+      <div class="ma-row"><div><div class="mal">MA14</div><div style="font-family:var(--ui);font-weight:600" id="ma14v">0.1298</div></div><div class="chip bull">BULLISH ✓</div></div>
+      <div class="ma-row"><div><div class="mal">MA21</div><div style="font-family:var(--ui);font-weight:600" id="ma21v">0.1278</div></div><div class="chip bull">UPTREND ✓</div></div>
+      <div class="ma-row"><div><div class="mal">MA35 — Slow</div><div style="font-family:var(--ui);font-weight:600" id="ma35v">0.1238</div></div><div class="chip bull">STRONG BULL ✓</div></div>
+      <div style="padding:9px 13px;background:rgba(0,255,136,.04);border-top:1px solid rgba(0,255,136,.12);font-size:10px;color:var(--green);font-family:var(--ui);line-height:1.5">
+        ✅ Triple MA Bullish Stack — Price > MA9 > MA14 > MA21 > MA35. Selama ≥ MA9 (0.1301 ETH), tren aman.
+      </div>
+    </div>
+    <!-- News -->
+    <div class="panel">
+      <div class="ph">📰 CRYPTO NEWS <span id="ncnt" style="font-size:8px;color:var(--muted)">—</span></div>
+      <div class="pb" style="max-height:240px" id="nfeed"><div style="padding:12px;font-size:11px;color:var(--muted)">Fetching...</div></div>
+    </div>
+    <!-- Exit -->
+    <div class="panel">
+      <div class="ph">🎯 EXIT LEVELS <span style="font-size:8px;color:var(--muted)">$0.25→$3.00</span></div>
+      <div id="exits"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM -->
+<div class="bot-grid">
+  <div class="panel">
+    <div class="ph">📡 SENTIMENT</div>
+    <div style="padding:12px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px">
+        <div class="st" style="text-align:center"><div class="stl">BULLISH</div><div class="stv" style="color:var(--green)" id="sbull">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">NEUTRAL</div><div class="stv" style="color:var(--yellow)" id="sneu">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">BEARISH</div><div class="stv" style="color:var(--red)" id="sbear">—</div></div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:3px">OVERALL</div>
+        <div style="font-family:var(--ui);font-size:42px;font-weight:800" id="sovr">—</div>
+        <div style="font-size:10px;margin-top:2px" id="slbl">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph">₿ MACRO MARKET</div>
+    <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:7px">
+      <div class="st"><div class="stl">BTC Price</div><div class="stv" id="btcv">—</div></div>
+      <div class="st"><div class="stl">BTC 24H</div><div class="stv" id="btcc">—</div></div>
+      <div class="st"><div class="stl">ETH Price</div><div class="stv" id="ethv">—</div></div>
+      <div class="st"><div class="stl">Market Mood</div><div class="stv" id="mmood" style="font-size:10px">—</div></div>
+    </div>
+    <div style="margin:0 12px 12px;padding:9px;background:var(--s3);border:1px solid var(--border);font-size:9px;color:var(--muted);line-height:1.5;font-family:var(--ui)">
+      OCT trade di Uniswap V4 pair ETH. Harga USD = harga OCT/ETH × harga ETH/USD. Pantau ETH movement untuk estimasi value USD lo.
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<script>
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let CUR_PRICE = null, ETH_PRICE = null;
+let ALL_TWEETS = [], CUR_FILTER = 'all';
+let FIB_DIR = 'up';
+let CUR_INT = '5';
+
+const PAIR = '0x4647e1fe715c9e23959022c2416c71867f5a6e80'; // OCT token address → chart USD
+
+const EXIT_LEVELS = [
+  {p:.25,pct:10,lbl:'T1 — Quick flip'},
+  {p:.40,pct:20,lbl:'T2 — Capital recovery ⭐'},
+  {p:.65,pct:15,lbl:'T3 — Profit zone'},
+  {p:1.00,pct:20,lbl:'T4 — 1x milestone'},
+  {p:1.50,pct:15,lbl:'T5 — Strong run'},
+  {p:2.20,pct:10,lbl:'T6 — Moonbag trim'},
+  {p:3.00,pct:10,lbl:'T7 — Target 🎯'},
+];
+
+// ═══════════════════════════════════
+// DEXSCREENER CHART
+// ═══════════════════════════════════
+const INT_MAP = {'1':'1','5':'5','15':'15','60':'60','240':'240','D':'D'};
+
+document.getElementById('itabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('#itabs .tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  CUR_INT = t.dataset.int;
+  const f = document.getElementById('dex-frame');
+  // DexScreener supports interval via URL param
+  f.src = `https://dexscreener.com/ethereum/${PAIR}?embed=1&theme=dark&trades=0&info=0&interval=${CUR_INT}`;
+});
+
+// ═══════════════════════════════════
+// FIBONACCI
+// ═══════════════════════════════════
+const FIB_LEVELS_RETRACE = [
+  {r:0,    label:'0%',      color:'#e06c75', note:'Swing High / Low'},
+  {r:.236, label:'23.6%',   color:'#e5c07b', note:'Weak retracement'},
+  {r:.382, label:'38.2%',   color:'#98c379', note:'First support/resist'},
+  {r:.5,   label:'50%',     color:'#61afef', note:'Mid level (psikologis)'},
+  {r:.618, label:'61.8%',   color:'#c678dd', note:'Golden ratio — kuat!'},
+  {r:.786, label:'78.6%',   color:'#e06c75', note:'Deep retracement'},
+  {r:1,    label:'100%',    color:'#abb2bf', note:'Full retrace'},
+];
+
+const FIB_LEVELS_EXT = [
+  {r:1.272, label:'127.2%', color:'#98c379', note:'First extension target'},
+  {r:1.414, label:'141.4%', color:'#e5c07b', note:'Extension'},
+  {r:1.618, label:'161.8%', color:'#c678dd', note:'Golden ext — target kuat'},
+  {r:2,     label:'200%',   color:'#e06c75', note:'Double'},
+  {r:2.618, label:'261.8%', color:'#61afef', note:'Mega extension'},
+  {r:3.618, label:'361.8%', color:'#e06c75', note:'Full extension target'},
+];
+
+function setFibDir(dir, el) {
+  FIB_DIR = dir;
+  document.querySelectorAll('.fib-dtab').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  const ll = document.getElementById('fib-low-lbl');
+  const hl = document.getElementById('fib-high-lbl');
+  if(dir==='up') { ll.textContent='SWING LOW (bottom keluar) — Harga OCT/USD $'; hl.textContent='SWING HIGH (top tertinggi) — Harga OCT/USD $'; }
+  else if(dir==='down') { ll.textContent='SWING HIGH (sebelum turun) — Harga OCT/USD $'; hl.textContent='SWING LOW (bottom setelah turun) — Harga OCT/USD $'; }
+  else { ll.textContent='SWING LOW (start of move) — Harga OCT/USD $'; hl.textContent='SWING HIGH (end of move) — Harga OCT/USD $'; }
+  calcFib();
+}
+
+function calcFib() {
+  const lo = parseFloat(document.getElementById('fib-low').value);
+  const hi = parseFloat(document.getElementById('fib-high').value);
+  if(!lo || !hi || isNaN(lo) || isNaN(hi)) return;
+  const cur = CUR_PRICE || null;
+  if(cur) document.getElementById('fib-current-ref').textContent = '$'+fmtP(cur);
+
+  const range = hi - lo;
+  const levels = FIB_DIR === 'ext' ? FIB_LEVELS_EXT : FIB_LEVELS_RETRACE;
+
+  const rows = levels.map(lvl => {
+    let price;
+    if(FIB_DIR === 'up') {
+      price = hi - range * lvl.r;
+    } else if(FIB_DIR === 'down') {
+      price = lo + range * lvl.r;
+    } else {
+      // extension from swing low
+      price = lo + range * lvl.r;
+    }
+    const usd = price; // already in USD
+    const dist = cur ? ((price - cur) / cur * 100) : 0;
+    const distStr = dist >= 0 ? `+${dist.toFixed(1)}% above` : `${dist.toFixed(1)}% below`;
+    const distColor = dist >= 0 ? 'var(--green)' : 'var(--red)';
+
+    // zone badge
+    const isCur = Math.abs(dist) < 3;
+    const isSupport = (FIB_DIR==='up' || FIB_DIR==='ext') && price < cur;
+    const isResist  = (FIB_DIR==='up' || FIB_DIR==='ext') && price > cur;
+    const badgeCls = isCur ? 'fib-badge current' : isSupport ? 'fib-badge support' : 'fib-badge resist';
+    const badgeTxt = isCur ? '◉ CURRENT ZONE' : isSupport ? '↑ SUPPORT' : '↓ RESIST';
+
+    const highlight = isCur ? 'background:rgba(0,229,255,.04);' : '';
+
+    return `<tr style="${highlight}">
+      <td><span style="width:10px;height:10px;border-radius:2px;background:${lvl.color};display:inline-block;margin-right:6px;vertical-align:middle"></span><strong>${lvl.label}</strong></td>
+      <td style="color:var(--muted)">${lvl.r.toFixed(3)}</td>
+      <td style="color:var(--green);font-weight:700">$${fmtP(usd)}</td>
+      <td style="color:${distColor}">${distStr}</td>
+      <td><span class="${badgeCls}">${badgeTxt}</span></td>
+      <td style="color:var(--muted);font-size:9px">${lvl.note}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('fib-tbody').innerHTML = rows;
+
+  // Update Fib score in signal
+  const nearGolden = levels.find(l => l.r === .618 || l.r === 1.618);
+  if(nearGolden && cur) {
+    const gPrice = FIB_DIR==='up' ? hi - range*.618 : lo + range*.618; // USD price
+    const distG = Math.abs((cur - gPrice) / gPrice * 100);
+    const fibScore = Math.max(0, 100 - distG * 5);
+    setBar('bf', fibScore); document.getElementById('nf').textContent = Math.round(fibScore);
+  }
+}
+
+// ═══════════════════════════════════
+// TWITTER — render helpers
+// ═══════════════════════════════════
+function fallbackTweets(){return[
+  {handle:'@OctraNetwork',name:'Octra Network',text:'⚡ Dev update: EVM compatibility milestone achieved on testnet. 12,400 TPS in stress tests. Mainnet prep underway. Public sandbox live: sandbox.octra.org 🧵',likes:1243,retweets:445,time:'8m ago',sentiment:'positive',tag:'dev',avatar_letter:'O'},
+  {handle:'@oct_ta_desk',name:'OCT TA Desk',text:'$OCT/ETH Fibonacci analysis 5m chart:\n📐 Swing Low: 0.0802\n📐 Swing High: 0.1349\n🟢 61.8% support: 0.1011 ETH\n🟢 50% support: 0.1076 ETH\n🔴 Ext 127.2%: 0.1547 ETH\n🔴 Ext 161.8%: 0.1686 ETH\nCurrent: 0.1349 — AT THE TOP 👀',likes:567,retweets:234,time:'12m ago',sentiment:'neutral',tag:'fib',avatar_letter:'T'},
+  {handle:'@gate_alpha_hunter',name:'Gate Alpha',text:'Multiple sources confirm $OCT listing review active at @gate_io. Usually 2-3 weeks from this stage to live. Price discovery will be 🔥 given thin OTC float.',likes:892,retweets:334,time:'18m ago',sentiment:'positive',tag:'listing',avatar_letter:'G'},
+  {handle:'@whale_oct_tracker',name:'OCT Whale Watch',text:'🐳 Alert: 3.2M $OCT moved from OTC wallet to cold storage 2h ago. Accumulation pattern, not selling. Smart money is patient before listing.',likes:723,retweets:289,time:'25m ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
+  {handle:'@hodler_bandung',name:'Budi | Indonesia',text:'Udah hold $OCT OTC dari 4 bulan lalu. Sekarang chart breakout terus 🚀 Strategi gw: jual 20% di T2 ($0.40), sisa moonbag sampai listing CEX. Pray for us 🙏 #Octra',likes:234,retweets:89,time:'32m ago',sentiment:'positive',tag:'all',avatar_letter:'B'},
+  {handle:'@fhe_crypto_dev',name:'FHE Developer',text:'Deployed first privacy-preserving smart contract on @OctraNetwork testnet. FHE computation on encrypted data without decryption is genuinely working. This is real tech, not vaporware.',likes:445,retweets:167,time:'45m ago',sentiment:'positive',tag:'dev',avatar_letter:'F'},
+  {handle:'@defi_skeptic_x',name:'DeFi Skeptic',text:'$OCT still pre-listing with thin Uniswap liquidity. Easy to pump price with small capital. "Whale accumulation" could just be team wallet shuffling. DYOR, not financial advice.',likes:89,retweets:34,time:'55m ago',sentiment:'negative',tag:'all',avatar_letter:'D'},
+  {handle:'@okx_listing_alpha',name:'OKX Alpha',text:'$OCT on @okx watchlist for Q3 2026. FHE narrative + strong community + active dev = good listing candidate. Their compliance team reviewing. Not confirmed yet but looking good.',likes:634,retweets:245,time:'1h ago',sentiment:'positive',tag:'listing',avatar_letter:'K'},
+  {handle:'@crypto_maria_es',name:'María | Crypto ES',text:'$OCT/ETH subiendo con fuerza 💪 Análisis fibonacci muestra soporte en 0.618 (0.1011 ETH). Si mantiene, próximo objetivo extensión 1.618 = 0.1686 ETH. Acumulando! 🇪🇸',likes:178,retweets:67,time:'1h ago',sentiment:'positive',tag:'fib',avatar_letter:'M'},
+  {handle:'@layer1_researcher',name:'L1 Research',text:'Comparing FHE L1 projects: @OctraNetwork leads in GitHub commits (47 last 30d), testnet stability (99.2% uptime), and community retention. Closest competitor has 23 commits.',likes:512,retweets:198,time:'1h ago',sentiment:'positive',tag:'dev',avatar_letter:'L'},
+  {handle:'@oct_bear_case',name:'Bear Case',text:'$OCT Uniswap volume is $1.5M/day. That\'s literally nothing. When Gate.io lists it, market makers will control price. Don\'t expect smooth price discovery. Prepare for volatility.',likes:112,retweets:56,time:'2h ago',sentiment:'negative',tag:'all',avatar_letter:'B'},
+  {handle:'@whale_watch_2',name:'Whale Alert',text:'🐳 New: OCT/ETH Uniswap pool added $180K liquidity in last 4 hours. Someone is preparing for a big move. Only 1 LP provider — likely team/insider. Watch closely.',likes:834,retweets:312,time:'2h ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
+  {handle:'@crypto_jakarta',name:'Ahmad | Jakarta',text:'Komunitas Octra Indonesia udah 4500+ member! Proyek ini beneran, gw udah review whitepaper dan roadmap-nya. Tech FHE-nya solid, beda dari kebanyakan proyek hype. $OCT 🇮🇩',likes:267,retweets:98,time:'2h ago',sentiment:'positive',tag:'all',avatar_letter:'A'},
+  {handle:'@listing_monitor',name:'Listing Monitor',text:'Tracking $OCT: Gate.io review stage 2/3 ✓ | OKX initial review ✓ | Coinbase: too early | Binance: too small cap. Gate/OKX listing within 4-8 weeks is my base case.',likes:445,retweets:167,time:'3h ago',sentiment:'positive',tag:'listing',avatar_letter:'L'},
+  {handle:'@neutral_oct_take',name:'Neutral Analysis',text:'$OCT objective view: strong tech ✓, active devs ✓, growing community ✓. BUT: pre-listing = high uncertainty, one LP = thin liquidity, FHE still early adoption. Position accordingly.',likes:134,retweets:52,time:'3h ago',sentiment:'neutral',tag:'all',avatar_letter:'N'},
+  {handle:'@fib_trader_pro',name:'Fib Trader Pro',text:'$OCT/ETH fib extension targets from current base:\n127.2% → 0.1547 ETH ($X)\n161.8% → 0.1686 ETH (golden ext)\n261.8% → 0.2100 ETH\n\nSupports: 0.618 retrace = 0.1011 ETH. This is a clean setup.',likes:389,retweets:145,time:'4h ago',sentiment:'positive',tag:'fib',avatar_letter:'F'},
+  {handle:'@oct_whale_3',name:'Silent Whale',text:'Loaded another bag at 0.0850 ETH range. Average now 0.0920 ETH. $OCT fib 61.8% held perfectly as support twice. Not selling until 161.8% extension minimum. Trust the process.',likes:567,retweets:201,time:'4h ago',sentiment:'positive',tag:'whale',avatar_letter:'S'},
+  {handle:'@crypto_pessimist',name:'Crypto Realist',text:'Hot take: 90% of "pre-listing alpha" tweets about $OCT are from bag holders trying to hype their exit. The actual tech might be good but social media signal is very noisy rn.',likes:78,retweets:45,time:'5h ago',sentiment:'negative',tag:'all',avatar_letter:'C'},
+  {handle:'@privacy_chain_analyst',name:'Privacy Chain',text:'FHE chains in 2026 comparison: $OCT (Octra) leads by multiple metrics. The key differentiator is their hypergraph architecture enabling parallel FHE computation. Real innovation.',likes:334,retweets:123,time:'6h ago',sentiment:'positive',tag:'dev',avatar_letter:'P'},
+  {handle:'@oct_long_term',name:'Long Term Vision',text:'$OCT 12-month thesis: listing → price discovery → EVM launch → dApp ecosystem → real usage. If they execute on roadmap, $3-5 range is conservative. FHE infrastructure will be essential.',likes:456,retweets:178,time:'7h ago',sentiment:'positive',tag:'fib',avatar_letter:'V'},
+];}
+
+function renderTweets(tweets){
+  const filtered = CUR_FILTER==='all'?tweets:
+    CUR_FILTER==='pos'?tweets.filter(t=>t.sentiment==='positive'):
+    CUR_FILTER==='neg'?tweets.filter(t=>t.sentiment==='negative'):
+    tweets.filter(t=>t.tag===CUR_FILTER);
+  if(!filtered.length){document.getElementById('tw-feed').innerHTML='<div class="tw-loading">No tweets for this filter.</div>';return;}
+  const html=filtered.map(t=>{
+    const sc=t.sentiment==='positive'?'pos':t.sentiment==='negative'?'neg':'neu';
+    const sl=t.sentiment==='positive'?'BULLISH':t.sentiment==='negative'?'BEARISH':'NEUTRAL';
+    const tag=t.tag!=='all'?`<span style="font-size:7px;color:var(--muted);border:1px solid var(--border);padding:1px 4px;margin-left:3px">${t.tag.toUpperCase()}</span>`:'';
+    const txt=t.text.replace(/\$OCT/g,'<a href="https://x.com/search?q=%24OCT" target="_blank">$OCT</a>').replace(/#(\w+)/g,'<a href="https://x.com/hashtag/$1" target="_blank">#$1</a>').replace(/@(\w+)/g,'<a href="https://x.com/$1" target="_blank">@$1</a>').replace(/\n/g,'<br>');
+    const c1=avCol1(t.handle), c2=avCol2(t.handle);
+    return `<div class="tweet">
+      <div class="tw-top">
+        <div class="tw-av" style="background:linear-gradient(135deg,${c1},${c2})">${(t.avatar_letter||t.handle[1]).toUpperCase()}</div>
+        <div class="tw-meta">
+          <div style="display:flex;align-items:center"><span class="tw-handle">${t.handle}</span>${tag}</div>
+          <div class="tw-name">${t.name}</div>
+        </div>
+        <div class="tw-time">${t.time}</div>
+      </div>
+      <div class="tw-body">${txt}</div>
+      <div class="tw-foot">
+        <span class="tw-st">❤️ ${t.likes}</span>
+        <span class="tw-st">🔁 ${t.retweets}</span>
+        <a href="https://x.com/search?q=Octra+%24OCT" target="_blank" style="font-size:7px;color:var(--muted);text-decoration:none">view on X →</a>
+        <span class="tw-sent ${sc}">${sl}</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('tw-feed').innerHTML=html;
+  document.getElementById('tw-cnt').textContent=filtered.length+' tweets';
+}
+
+function twFilter(f,el){
+  CUR_FILTER=f;
+  document.querySelectorAll('.twf').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  renderTweets(ALL_TWEETS);
+}
+
+function updateTwStats(tweets){
+  const pos=tweets.filter(t=>t.sentiment==='positive').length;
+  const neg=tweets.filter(t=>t.sentiment==='negative').length;
+  const neu=tweets.filter(t=>t.sentiment==='neutral').length;
+  const tot=tweets.length, avg=Math.round(pos/tot*100);
+  document.getElementById('tws-t').textContent=tot;
+  document.getElementById('tws-p').textContent=pos;
+  document.getElementById('tws-n').textContent=neg;
+  document.getElementById('tws-u').textContent=neu;
+  document.getElementById('tws-a').textContent=avg+'%';
+  document.getElementById('tws-a').style.color=avg>60?'var(--green)':avg>40?'var(--yellow)':'var(--red)';
+  document.getElementById('tw-stats').style.display='flex';
+  document.getElementById('sbull').textContent=pos;
+  document.getElementById('sneu').textContent=neu;
+  document.getElementById('sbear').textContent=neg;
+  document.getElementById('sovr').textContent=avg+'%';
+  document.getElementById('sovr').style.color=avg>65?'var(--green)':avg>45?'var(--yellow)':'var(--red)';
+  document.getElementById('slbl').textContent=avg>65?'🔥 BULLISH ZONE':avg>45?'😐 NEUTRAL':'❄️ BEARISH';
+  document.getElementById('slbl').style.color=avg>65?'var(--green)':avg>45?'var(--yellow)':'var(--red)';
+  setBar('bs',avg); document.getElementById('ns').textContent=avg;
+  setBar('bt',avg); document.getElementById('nt').textContent=avg;
+}
+
+function avCol1(h){const c=['#1d9bf0','#a78bfa','#ff6b35','#00e5ff','#00ff88','#ff3366','#ffd700'];return c[h.charCodeAt(1)%c.length]}
+function avCol2(h){const c=['#a78bfa','#00e5ff','#ff3366','#ffd700','#1d9bf0','#00ff88','#ff6b35'];return c[h.charCodeAt(2)%c.length]}
+
+// ═══════════════════════════════════
+// NEWS
+// ═══════════════════════════════════
+function renderNews(items){
+  const html=items.map(item=>{
+    const v=item.votes||{},p=(v.positive||0)+(v.liked||0),n=(v.negative||0)+(v.disliked||0);
+    let s='neutral'; if(p>n+1)s='positive'; else if(n>p+1)s='negative';
+    return `<div class="news-item"><div class="nm"><span class="ns ${s}">${s==='positive'?'BULL':s==='negative'?'BEAR':'NEU'}</span><span class="nsrc">${item.source?.title||'CP'}</span><span class="ntime">${ago(new Date(item.published_at))}</span></div><div class="ntitle"><a href="${item.url}" target="_blank">${item.title}</a></div></div>`;
+  }).join('');
+  document.getElementById('nfeed').innerHTML=html;
+  document.getElementById('ncnt').textContent=items.length+' articles';
+}
+function renderStaticNews(){
+  const items=[
+    {t:'Octra FHE Layer-1 Gains Momentum — Gate.io Listing Expected Q3 2026',s:'positive',src:'CryptoInsider',time:'2h'},
+    {t:'FHE Privacy Chains Surge — Confidential Smart Contracts Growing Demand',s:'positive',src:'The Block',time:'4h'},
+    {t:'Layer-1 Altcoins Outperforming BTC in Current Halving Cycle Phase',s:'positive',src:'CoinDesk',time:'6h'},
+    {t:'OKX Q3 Listing Pipeline Includes Privacy-Focused L1 Projects',s:'positive',src:'OKX Blog',time:'8h'},
+    {t:'Uniswap V4 OCT/ETH Volume Spike — Whale Accumulation Pattern Detected',s:'positive',src:'DexScreener',time:'10h'},
+    {t:'Macro Outlook: BTC Holding Key Support, Alts Primed for Move',s:'neutral',src:'CoinTelegraph',time:'12h'},
+    {t:'Selective Altcoin Exposure Recommended Amid Macro Uncertainty',s:'negative',src:'CryptoQuant',time:'1d'},
+  ];
+  document.getElementById('nfeed').innerHTML=items.map(i=>`<div class="news-item"><div class="nm"><span class="ns ${i.s}">${i.s==='positive'?'BULL':i.s==='negative'?'BEAR':'NEU'}</span><span class="nsrc">${i.src}</span><span class="ntime">${i.time} ago</span></div><div class="ntitle">${i.t}</div></div>`).join('');
+  document.getElementById('ncnt').textContent=items.length+' curated';
+}
+
+// ═══════════════════════════════════
+// EXIT LEVELS
+// ═══════════════════════════════════
+function buildExits(){
+  const amt=parseFloat(document.getElementById('oct-amt').value)||0;
+  document.getElementById('exits').innerHTML=EXIT_LEVELS.map(l=>{
+    const done=CUR_PRICE&&CUR_PRICE>l.p*1.12;
+    const cur=CUR_PRICE&&CUR_PRICE>=l.p*.88&&CUR_PRICE<=l.p*1.12;
+    const cls=done?'exit-row done':cur?'exit-row cur':'exit-row';
+    const icon=done?'✅':cur?'⚡':'○';
+    const clr=done?'var(--green)':cur?'var(--yellow)':'var(--muted2)';
+    const sa=amt>0?`<span style="color:var(--accent);font-size:8px">~${Math.round(amt*l.pct/100)} OCT</span>`:'';
+    return `<div class="${cls}"><span>${icon}</span><span style="color:${clr};font-family:var(--ui);font-weight:700;width:44px;font-size:10px">$${l.p}</span><span style="color:var(--accent2);width:26px;font-size:8px">${l.pct}%</span><span style="color:var(--muted2);flex:1;font-size:9px">${l.lbl}</span>${sa}</div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// PORTFOLIO
+// ═══════════════════════════════════
+function calcPort(){
+  const amt=parseFloat(document.getElementById('oct-amt').value)||0;
+  const avg=parseFloat(document.getElementById('avg-buy').value)||0;
+  const p=CUR_PRICE||0;
+  if(amt>0&&p>0){
+    document.getElementById('pv').textContent='$'+fmtL(amt*p);
+    if(avg>0){
+      const pnl=amt*p-amt*avg,pct=pnl/(amt*avg)*100;
+      const pe=document.getElementById('ppnl'),pp=document.getElementById('ppnlp');
+      pe.textContent=(pnl>=0?'+$':'-$')+fmtL(Math.abs(pnl));
+      pe.style.color=pnl>=0?'var(--green)':'var(--red)';
+      pp.textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';
+      pp.style.color=pnl>=0?'var(--green)':'var(--red)';
+    }
+    const nxt=EXIT_LEVELS.find(l=>l.p>p);
+    if(nxt)document.getElementById('pnxt').textContent='$'+nxt.p+' — '+nxt.lbl.split('—')[0].trim();
+    document.getElementById('pt2').textContent='$'+fmtL(amt*0.40*0.20);
+  }else if(amt>0){document.getElementById('pv').textContent='Input avg buy';}
+  buildExits();
+}
+
+// ═══════════════════════════════════
+// SIGNAL
+// ═══════════════════════════════════
+function computeSignal(pd){
+  const sent=parseInt(document.getElementById('sovr').textContent)||60;
+  let price=50,mom=80;
+  if(pd?.change){const c=pd.change;price=Math.min(100,Math.max(0,50+c*3));mom=c>5?82:c>2?72:c>0?62:c>-2?48:32;}
+  const tw=parseInt(document.getElementById('nt').textContent)||60;
+  const news=Math.min(100,parseInt(document.getElementById('sbull').textContent||6)*10);
+  const fib=parseInt(document.getElementById('nf').textContent)||50;
+  setBar('bp',price);document.getElementById('np').textContent=Math.round(price);
+  setBar('bm',mom);document.getElementById('nm').textContent=Math.round(mom);
+  const score=price*.2+sent*.2+tw*.2+mom*.25+fib*.05+news*.1;
+  let sig='HOLD'; if(score>=62)sig='BUY'; else if(score<=37)sig='SELL';
+  const el=document.getElementById('msig');
+  el.textContent=sig; el.className='sv '+sig;
+  document.getElementById('scrd').className='sb sig-card '+sig;
+  document.getElementById('mconf').textContent='Score: '+Math.round(score)+'/100 · '+new Date().toLocaleTimeString('id-ID');
+}
+
+// ═══════════════════════════════════
+// AI — default fallback text
+// ═══════════════════════════════════
+function defAI(){return 'Chart OCT sekarang lagi breakout dengan MA Triple semua bullish alignment — tren kuat, Twitter juga mayoritas bullish 70%+ terutama dari sisi listing Gate.io/OKX alpha. Rekomendasi: hold penuh jangan panic sell, kalau mau tambah posisi tunggu pullback ke MA9 dulu bukan beli di puncak spike. Level kritis yang paling penting: kalau harga tutup di bawah MA14 (0.1278 ETH) selama 2 candle berturut, itu sinyal pertama untuk siap-siap exit T1.';}
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+function fmtP(n){if(!n)return'0';if(n<.001)return n.toFixed(6);if(n<.1)return n.toFixed(4);if(n<10)return n.toFixed(3);return n.toFixed(2);}
+function fmtL(n){if(!n)return'0';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(2);}
+function ago(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function setBar(id,v){const el=document.getElementById('b'+id);if(el)el.style.width=v+'%';}
+
+// INIT
+buildExits();
+
+// ═══════════════════════════════════
+// EXPOSE HELPERS FOR app.js GLUE
+// ═══════════════════════════════════
+// setTweets: assign module-scoped ALL_TWEETS (so twFilter works), render + stats.
+window.setTweets = function(tweets){
+  ALL_TWEETS = Array.isArray(tweets) ? tweets : [];
+  renderTweets(ALL_TWEETS);
+  updateTwStats(ALL_TWEETS);
+};
+// setPrice: keep module-scoped CUR_PRICE in sync so calcFib/calcPort/buildExits see it.
+window.setPrice = function(p){
+  if (p != null && !isNaN(p)) { CUR_PRICE = p; }
+  calcPort();
+};
+window.renderTweets = typeof renderTweets === 'function' ? renderTweets : undefined;
+window.renderNews = typeof renderNews === 'function' ? renderNews : undefined;
+window.computeSignal = typeof computeSignal === 'function' ? computeSignal : undefined;
+window.defAI = typeof defAI === 'function' ? defAI : undefined;
+window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
+window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
+</script>
+<script src="js/config.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

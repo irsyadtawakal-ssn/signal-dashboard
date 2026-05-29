@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { requireAuth } = require('./auth');
 const healthRoute = require('./routes/health');
 const cacheRoute = require('./routes/cache');
@@ -6,6 +7,7 @@ const analyzeRoute = require('./routes/analyze');
 
 function createApp({ db, config, analyzeFn }) {
   const app = express();
+  app.use(cors(config.corsOrigin ? { origin: config.corsOrigin } : {}));
   app.use(express.json());
 
   // Public
