@@ -57,4 +57,35 @@ describe('loadConfig', () => {
     expect(cfg.newsIntervalMs).toBe(120000);
     expect(cfg.cryptopanicToken).toBe('tok123');
   });
+
+  it('parses twitter + AI config with defaults', () => {
+    const cfg = loadConfig({ SUPABASE_JWT_SECRET: 'secret' });
+    expect(cfg.twitterIntervalMs).toBe(300000);
+    expect(cfg.twitterToken).toBeUndefined();
+    expect(cfg.aiProvider).toBe('openrouter');
+    expect(cfg.openrouterApiKey).toBeUndefined();
+    expect(cfg.anthropicApiKey).toBeUndefined();
+    expect(cfg.sentimentModel).toBeUndefined();
+    expect(cfg.twitterKeywords).toEqual(['Octra', '$OCT', 'FHE layer1', 'OCT listing']);
+  });
+
+  it('reads twitter + AI config overrides', () => {
+    const cfg = loadConfig({
+      SUPABASE_JWT_SECRET: 'secret',
+      TWITTER_INTERVAL_MS: '60000',
+      TWITTER_SCRAPER_TOKEN: 'scrapetok',
+      AI_PROVIDER: 'anthropic',
+      OPENROUTER_API_KEY: 'or-key',
+      ANTHROPIC_API_KEY: 'an-key',
+      SENTIMENT_MODEL: 'custom-model',
+      TWITTER_KEYWORDS: 'foo,bar',
+    });
+    expect(cfg.twitterIntervalMs).toBe(60000);
+    expect(cfg.twitterToken).toBe('scrapetok');
+    expect(cfg.aiProvider).toBe('anthropic');
+    expect(cfg.openrouterApiKey).toBe('or-key');
+    expect(cfg.anthropicApiKey).toBe('an-key');
+    expect(cfg.sentimentModel).toBe('custom-model');
+    expect(cfg.twitterKeywords).toEqual(['foo', 'bar']);
+  });
 });

@@ -14,6 +14,15 @@ function loadConfig(env = process.env) {
     priceIntervalMs: Number(env.PRICE_INTERVAL_MS) || 300000,
     newsIntervalMs: Number(env.NEWS_INTERVAL_MS) || 3600000,
     cryptopanicToken: env.CRYPTOPANIC_TOKEN || undefined,
+    twitterIntervalMs: Number(env.TWITTER_INTERVAL_MS) || 300000,
+    twitterToken: env.TWITTER_SCRAPER_TOKEN || undefined,
+    aiProvider: env.AI_PROVIDER || 'openrouter',
+    openrouterApiKey: env.OPENROUTER_API_KEY || undefined,
+    anthropicApiKey: env.ANTHROPIC_API_KEY || undefined,
+    sentimentModel: env.SENTIMENT_MODEL || undefined,
+    twitterKeywords: env.TWITTER_KEYWORDS
+      ? env.TWITTER_KEYWORDS.split(',').map((s) => s.trim()).filter(Boolean)
+      : ['Octra', '$OCT', 'FHE layer1', 'OCT listing'],
   };
 }
 
