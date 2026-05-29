@@ -1,4 +1,5 @@
 const { getJson } = require('../http');
+const { toNum } = require('../util');
 
 const URL =
   'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true';
@@ -9,10 +10,10 @@ async function fetchMacro({ getJsonFn = getJson } = {}) {
     throw new Error('CoinGecko response missing bitcoin/ethereum');
   }
   return {
-    btc: Number(data.bitcoin.usd),
-    btcChange24h: Number(data.bitcoin.usd_24h_change),
-    eth: Number(data.ethereum.usd),
-    ethChange24h: Number(data.ethereum.usd_24h_change),
+    btc: toNum(data.bitcoin.usd),
+    btcChange24h: toNum(data.bitcoin.usd_24h_change),
+    eth: toNum(data.ethereum.usd),
+    ethChange24h: toNum(data.ethereum.usd_24h_change),
   };
 }
 

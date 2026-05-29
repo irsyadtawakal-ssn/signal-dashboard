@@ -1,4 +1,5 @@
 const { getJson } = require('../http');
+const { toNum } = require('../util');
 
 async function fetchOctPrice({ getJsonFn = getJson, tokenAddress }) {
   const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`;
@@ -8,8 +9,8 @@ async function fetchOctPrice({ getJsonFn = getJson, tokenAddress }) {
     throw new Error('DexScreener returned no pairs for token');
   }
   return {
-    oct: Number(pair.priceUsd),
-    octChange24h: pair.priceChange ? Number(pair.priceChange.h24) : null,
+    oct: toNum(pair.priceUsd),
+    octChange24h: pair.priceChange ? toNum(pair.priceChange.h24) : null,
   };
 }
 
