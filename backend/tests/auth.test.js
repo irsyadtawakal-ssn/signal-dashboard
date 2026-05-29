@@ -49,4 +49,30 @@ describe('requireAuth', () => {
     expect(next).toHaveBeenCalledOnce();
     expect(req.user).toEqual({ id: 'user-123', email: 'trader@example.com' });
   });
+
+  it('rejects a token with the wrong audience', () => {
+    const req = { headers: { authorization: `Bearer ${signTestToken({ aud: 'someone-else' })}` } };
+    const res = mockRes();
+    const next = vi.fn();
+    requireAuth(config)(req, res, next);
+    expect(res.statusCode).toBe(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('accepts a token with aud=authenticated', () => {
+    const req = { headers: { authorization: `Bearer ${signTestToken({ aud: 'authenticated' })}` } };
+    const res = mockRes();
+    const next = vi.fn();
+    requireAuth(config)(req, res, next);
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('rejects a token with the wrong issuer when issuer is configured', () => {
+    const cfgWithIss = { supabaseJwtSecret: TEST_SECRET, supabaseJwtIssuer: 'https://good.example' };
+    const req = { headers: { authorization: `Bearer ${signTestToken({ aud: 'authenticated', iss: 'https://evil.example' })}` } };
+    const res = mockRes();
+    const next = vi.fn();
+    requireAuth(cfgWithIss)(req, res, next);
+    expect(res.statusCode).toBe(401);
+  });
 });

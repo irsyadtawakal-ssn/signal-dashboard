@@ -9,6 +9,9 @@ function loadConfig(env = process.env) {
     port: Number(env.PORT) || 3000,
     dbPath: env.DB_PATH || './data/cache.sqlite',
     supabaseJwtSecret: required('SUPABASE_JWT_SECRET'),
+    supabaseJwtIssuer: env.SUPABASE_JWT_ISSUER || undefined,
+    octTokenAddress: env.OCT_TOKEN_ADDRESS || '0x4647e1fe715c9e23959022c2416c71867f5a6e80',
+    priceIntervalMs: Number(env.PRICE_INTERVAL_MS) || 300000,
   };
 }
 
