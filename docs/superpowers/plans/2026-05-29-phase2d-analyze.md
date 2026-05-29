@@ -556,13 +556,24 @@ git push origin <current-branch>
 
 ---
 
-## Done Criteria (Phase 2d)
+## Done Criteria (Phase 2d) — ✅ COMPLETE (2026-05-29, merged to `main`)
 
-- [ ] `npm test` passes all suites including new analysis/analysisService/analyze tests.
-- [ ] `analyzeMarket` makes **one** `complete` call with the Opus model and returns the structured shape; throws on rejection/malformed/invalid recommendation.
-- [ ] `getAnalysis` returns a fresh cached analysis without calling Opus; `force: true` and TTL expiry both trigger a re-run; only successful runs are cached; cold price/tweets/news pass as `null`.
-- [ ] `POST /api/analyze` returns `401` unauthed, `503` with no AI key, `502` on failure, `200` with the analysis (incl. `generatedAt`) otherwise.
-- [ ] Prompt caching applies to the analysis system prompt (via the existing adapter `cache_control`).
+Implemented via subagent-driven development (5 tasks) + final code review (Approved, no
+Critical/Important findings). Full suite: **87/87 tests passing** (21 files).
+
+- [x] `npm test` passes all suites including new analysis/analysisService/analyze tests.
+- [x] `analyzeMarket` makes **one** `complete` call with the Opus model and returns the structured shape; throws on rejection/malformed/invalid recommendation.
+- [x] `getAnalysis` returns a fresh cached analysis without calling Opus; `force: true` and TTL expiry both trigger a re-run; only successful runs are cached; cold price/tweets/news pass as `null`.
+- [x] `POST /api/analyze` returns `401` unauthed, `503` with no AI key, `502` on failure, `200` with the analysis (incl. `generatedAt`) otherwise.
+- [x] Prompt caching applies to the analysis system prompt (via the existing adapter `cache_control`).
+
+**Minor review follow-ups (optional, non-blocking):**
+- `confidence` is coerced to `null` if non-numeric but not range-clamped — a model returning
+  `1.5`/`-3` passes through. Clamp to `[0,1]` or document `confidence` may be `null`.
+- `analysis.test.js` asserts the system prompt is non-empty but not its content — add a
+  `toContain('recommendation')`/`'JSON'` assertion to guard against silent prompt regressions.
+- Add a code comment in `getAnalysis` noting the intentional `NaN`-comparison reliance for a
+  cached entry missing `generatedAt` (re-runs safely; don't "fix" the missing guard).
 
 ## Out of Scope (later phases)
 
