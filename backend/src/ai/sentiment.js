@@ -32,7 +32,7 @@ async function classifyTweets({ tweets, complete, model }) {
     console.error('sentiment classification failed:', err.message);
   }
 
-  return tweets.map((t) => ({ ...t, sentiment: labels[t.id] || 'Unrated' }));
+  return tweets.map((t) => ({ ...t, sentiment: labels[String(t.id)] || 'Unrated' }));
 }
 
 module.exports = { classifyTweets, SYSTEM_PROMPT };
