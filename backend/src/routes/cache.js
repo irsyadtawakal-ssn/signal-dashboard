@@ -10,5 +10,11 @@ module.exports = function cacheRoute({ db }) {
     return res.json(hit.value);
   });
 
+  r.get('/news', (req, res) => {
+    const hit = getCache(db, 'news');
+    if (!hit) return res.status(503).json({ error: 'no data yet' });
+    return res.json(hit.value);
+  });
+
   return r;
 };
