@@ -291,6 +291,19 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 @media(min-width:1481px){
   .wrap{max-width:1600px;padding:16px}
 }
+
+/* LOGIN FORM mobile safety */
+@media(max-width:360px){
+  #login-form{width:calc(100% - 20px)!important;max-width:320px;padding:20px!important}
+}
+
+/* Ensure no horizontal scroll across all breakpoints */
+@media(max-width:479px){
+  header{padding:8px 12px;gap:8px}
+  .logo small{display:none}
+  .port-bar label{font-size:8px}
+  .hdr-r{flex-wrap:wrap;gap:6px}
+}
 </style>
 </head>
 <body>
