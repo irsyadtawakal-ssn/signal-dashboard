@@ -86,8 +86,8 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 - **Acceptance:** Saat Swing diisi, semua level dihitung otomatis & ditandai Support/Resistance relatif harga sekarang.
 
 #### F3 — Twitter Live Feed (Sentiment AI)
-- Backend menarik tweet via **scraper pihak ketiga** (Apify/Xpoz) untuk keyword: `"Octra"`, `"$OCT"`, `"FHE layer1"`, `"OCT listing"`.
-- **Claude Sonnet** mengklasifikasikan tweet → **Bullish / Bearish / Whale**.
+- Backend menarik tweet via **TwitterAPI.io** (free 100K credits) untuk keyword: `"Octra"`, `"$OCT"`, `"FHE layer1"`, `"OCT listing"`.
+- **Claude Haiku** mengklasifikasikan tweet → **Bullish / Bearish / Whale**.
 - Dashboard auto-refresh tiap 3–5 menit **dari cache SQLite** (bukan call live per user).
 - **Acceptance:** Feed menampilkan tweet terkurasi + label sentimen; refresh tidak memicu call API baru selama cache valid.
 
@@ -102,9 +102,10 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 - Gabungan: *Price Action*, *Sentiment*, *Twitter Buzz*, *Moving Average (MA)*, *Fibonacci*.
 - **Acceptance:** Skor per komponen ditampilkan & menghasilkan satu rekomendasi gabungan yang konsisten dengan data.
 
-#### F6 — News Feed (CryptoPanic)
-- Headline + link artikel (Free Tier), di-cron 1 jam sekali.
+#### F6 — News Feed (CoinDesk RSS)
+- Headline + link artikel via CoinDesk RSS feed (gratis, tanpa API key), di-cron 1 jam sekali.
 - **Acceptance:** Headline terbaru tampil; klik membuka artikel sumber.
+- **Note:** CryptoPanic ditinggalkan — free plan dihapus April 2026, plan termurah $50/week.
 
 ### 5.2 Di Luar Lingkup (Fase Ini)
 - Eksekusi order / trading bot otomatis.
@@ -147,24 +148,24 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
                                        │
                   ┌────────────────────┼─────────────────────────────────┐
                   ▼                     ▼                ▼                 ▼
-            DexScreener API       CoinGecko API    Twitter Scraper    Claude API
-            (gratis, public)      (harga makro)    (Apify/Xpoz)       (Sonnet default,
-                                                                       Opus on-demand)
+            DexScreener API       CoinGecko API    TwitterAPI.io      Anthropic API
+            (gratis, public)      (harga makro)    (free 100K cr.)    (Haiku: sentiment,
+                                                                       Opus: on-demand)
                                                           + Prompt Caching
-                                                   CryptoPanic API (berita)
+                                                   CoinDesk RSS (berita, gratis)
 ```
 
 ### 7.3 Pola Endpoint (indikatif)
 - `GET /api/price` — harga OCT + makro (BTC/ETH) dari cache.
 - `GET /api/tweets` — tweet terkurasi + label sentimen dari cache.
-- `GET /api/news` — headline CryptoPanic dari cache.
+- `GET /api/news` — headline CoinDesk RSS dari cache.
 - `POST /api/analyze` — trigger analisa mendalam (Opus on-demand).
 - **Semua endpoint `/api/*` dilindungi middleware auth** yang memvalidasi JWT Supabase; tanpa token valid → `401 Unauthorized`.
 - Semua endpoint membaca SQLite; tidak ada kredensial yang bocor ke client.
 
 ### 7.4 Cron / Scheduler (backend)
 - Harga (DexScreener + CoinGecko) & Twitter+Sentiment AI: **tiap 3–5 menit**.
-- Berita CryptoPanic: **tiap 1 jam** (24×/hari, aman di free tier 100 req/hari).
+- Berita CoinDesk RSS: **tiap 1 jam** (24×/hari, gratis tanpa batas).
 - Hasil ditulis ke SQLite; jika sumber error, dashboard tetap menyajikan data cache terakhir (no nge-blank).
 
 ### 7.5 Sumber Data / Integrasi API
@@ -172,9 +173,9 @@ Skala: **maksimal 5 user internal**, bukan aplikasi publik.
 | :--- | :--- | :--- |
 | **DexScreener** | Harga live DEX (OCT/ETH, OCT/USD) | Gratis (public REST, tanpa key) |
 | **CoinGecko** | Harga makro (BTC, ETH) | Free; upgrade Basic ($35/bln) jika stabilitas perlu |
-| **X/Twitter Scraper** | Tweet per keyword | Apify/Xpoz (~$10–20/bln) |
-| **Anthropic Claude** | Klasifikasi & analisa sentimen | Pay-per-use + Prompt Caching (Sonnet default, Opus on-demand) |
-| **CryptoPanic** | Berita crypto | Free Tier ($0) |
+| **TwitterAPI.io** | Tweet per keyword | Free (100K credits, ~$0/bln) |
+| **Anthropic Claude** | Klasifikasi & analisa sentimen | Pay-per-use + Prompt Caching (Haiku untuk sentiment, Opus on-demand) |
+| **CoinDesk RSS** | Berita crypto | Gratis, tanpa API key |
 | **Supabase Auth** | Login / identitas user | Free Tier ($0) — cukup untuk ≤5 user |
 
 ---
@@ -190,7 +191,7 @@ Asumsi trafik: **6×/jam × 24 × 30 = 4.320 request/bulan**. Kurs Rp 17.877.
 | DexScreener API | Public REST gratis | **Rp 0** |
 | Twitter Scraper | ~$10 × Rp 17.877 | **Rp 178.770** |
 | Claude API | Estimasi konservatif basis Opus (~$24.64) → **lebih rendah karena default Sonnet** | **≤ Rp 440.489** |
-| CryptoPanic API | Free tier | **Rp 0** |
+| CoinDesk RSS | Gratis | **Rp 0** |
 | Supabase Auth | Free tier (≤5 user) | **Rp 0** |
 | **TOTAL ALL-IN** | | **~Rp 700.000 – Rp 1.000.000** |
 
@@ -205,7 +206,7 @@ Asumsi trafik: **6×/jam × 24 × 30 = 4.320 request/bulan**. Kurs Rp 17.877.
 | API Key bocor dari client | Tagihan membengkak | Semua auth di backend Node.js (Tahap 1, urgent) |
 | Free tier kena 429 / delay | Data nge-blank | Sajikan dari SQLite cache; opsi upgrade CoinGecko Basic |
 | Biaya Claude/Twitter membengkak | Over budget | Prompt caching + cron 3–5 menit + Sonnet default |
-| Scraper Twitter berubah/terblokir | Feed sentimen mati | Abstraksi provider; fallback Apify ↔ Xpoz |
+| Scraper Twitter berubah/terblokir | Feed sentimen mati | Abstraksi provider; fallback TwitterAPI.io ↔ RapidAPI |
 | Data sentimen mentah kurang akurat | Sinyal AI kurang tajam | Prompt engineering Claude untuk normalisasi teks mentah |
 | SQLite korup / VPS down | Hilang cache & layanan | Backup file SQLite berkala; restart otomatis (pm2/systemd) |
 

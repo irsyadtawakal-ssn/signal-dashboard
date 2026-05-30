@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const { loadConfig } = require('./config');
 const { createDb } = require('./db');
 const { createApp } = require('./app');
@@ -59,7 +59,7 @@ try {
           runCacheUpdate({
             db,
             key: 'news',
-            produceFn: () => fetchNews({ getJsonFn: getJson, token: config.cryptopanicToken }),
+            produceFn: () => fetchNews({ limit: 10 }),
           }),
         intervalMs: config.newsIntervalMs,
       },

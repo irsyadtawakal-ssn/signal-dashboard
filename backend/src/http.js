@@ -12,4 +12,23 @@ async function getJson(url, { fetchFn = fetch, timeoutMs = 8000, headers = {} } 
   }
 }
 
-module.exports = { getJson };
+async function postJson(url, body, { fetchFn = fetch, timeoutMs = 60000, headers = {} } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchFn(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Request to ${url} failed with status ${res.status}`);
+    }
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+module.exports = { getJson, postJson };
