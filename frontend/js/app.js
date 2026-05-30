@@ -95,6 +95,8 @@ function renderPortfolio() {
   }
   const nxt = nextTarget({ price });
   if (nxt) set('pnxt', '$' + nxt.p + ' — ' + nxt.lbl.split('—')[1].trim());
+  // value realised by selling the T2 tranche (20% at $0.40)
+  set('pt2', amount > 0 ? '$' + fmtMoney(amount * 0.40 * 0.20) : '—');
   const exits = document.getElementById('exits');
   if (exits) {
     exits.innerHTML = computeExitLevels({ price, amount }).map((l) => {
