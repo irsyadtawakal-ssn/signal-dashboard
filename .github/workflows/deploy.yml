@@ -17,6 +17,7 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
             set -e
+            git config --global --add safe.directory /opt/signal-dashboard
             cd /opt/signal-dashboard
 
             git pull origin main
