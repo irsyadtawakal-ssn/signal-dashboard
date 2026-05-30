@@ -1,5 +1,24 @@
 const https = require('https');
 
+/**
+ * Check if user email is in admin list and log the access attempt.
+ * @param {string} userEmail - The email to check
+ * @param {string[]} adminEmails - List of authorized admin emails
+ * @returns {boolean} True if user is admin, false otherwise
+ */
+function isAdmin(userEmail, adminEmails) {
+  const normalized = (userEmail || '').toLowerCase().trim();
+  const isAuthorized = adminEmails.includes(normalized);
+
+  if (isAuthorized) {
+    console.log(`[Admin] Access granted to ${userEmail} at ${new Date().toISOString()}`);
+  } else {
+    console.warn(`[Admin] Unauthorized access attempt from ${userEmail} at ${new Date().toISOString()}`);
+  }
+
+  return isAuthorized;
+}
+
 function supabaseAdminPost(supabaseUrl, serviceRoleKey, path, body) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(body);
@@ -35,8 +54,8 @@ module.exports = function adminRoute({ config }) {
   // POST /api/admin/invite  { email, password }
   router.post('/invite', async (req, res) => {
     // Only admin emails allowed
-    const callerEmail = (req.user?.email || '').toLowerCase();
-    if (!config.adminEmails.includes(callerEmail)) {
+    const callerEmail = req.user?.email || '';
+    if (!isAdmin(callerEmail, config.adminEmails)) {
       return res.status(403).json({ error: 'forbidden' });
     }
 
@@ -67,3 +86,5 @@ module.exports = function adminRoute({ config }) {
 
   return router;
 };
+
+module.exports.isAdmin = isAdmin;
