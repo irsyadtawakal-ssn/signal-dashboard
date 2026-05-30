@@ -1,12 +1,20 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createAuth } from './auth.js';
 import { createApiClient, AuthError } from './api-client.js';
+import { computePortfolio, computeExitLevels, nextTarget } from './portfolio.js';
 
 const cfg = window.APP_CONFIG || {};
 const auth = createAuth({ createClient, supabaseUrl: cfg.supabaseUrl, anonKey: cfg.anonKey });
 const api = createApiClient({ baseUrl: cfg.apiBaseUrl, getToken: auth.getToken });
 
 const $ = (id) => document.getElementById(id);
+
+// F4: recompute portfolio/exits as the user edits amount or avg-buy.
+['oct-amt', 'avg-buy'].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', renderPortfolio);
+});
+
 const overlay = $('login-overlay');
 const loginForm = $('login-form');
 const loginError = $('login-error');
@@ -68,6 +76,35 @@ function ago(d) {
   return Math.floor(s / 86400) + 'd ago';
 }
 
+// ── F4: Portfolio + exit-plan tracker (pure math in portfolio.js) ──
+let lastPrice = null;
+
+function fmtMoney(n) { return n == null ? '—' : (Math.abs(n) >= 1000 ? (n / 1000).toFixed(1) + 'K' : n.toFixed(2)); }
+
+function renderPortfolio() {
+  const amount = parseFloat(document.getElementById('oct-amt')?.value) || 0;
+  const avgBuy = parseFloat(document.getElementById('avg-buy')?.value) || 0;
+  const price = lastPrice || 0;
+  const { value, pnl, pnlPct } = computePortfolio({ amount, avgBuy, price });
+  const set = (id, txt, color) => { const el = document.getElementById(id); if (el) { if (txt != null) el.textContent = txt; if (color) el.style.color = color; } };
+  set('pv', value != null ? '$' + fmtMoney(value) : '—');
+  if (pnl != null) {
+    set('ppnl', (pnl >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(pnl)), pnl >= 0 ? 'var(--green)' : 'var(--red)');
+    set('ppnlp', (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%', pnl >= 0 ? 'var(--green)' : 'var(--red)');
+  }
+  const nxt = nextTarget({ price });
+  if (nxt) set('pnxt', '$' + nxt.p + ' — ' + nxt.lbl.split('—')[1].trim());
+  const exits = document.getElementById('exits');
+  if (exits) {
+    exits.innerHTML = computeExitLevels({ price, amount }).map((l) => {
+      const cls = l.status === 'done' ? 'exit-row done' : l.status === 'current' ? 'exit-row cur' : 'exit-row';
+      const icon = l.status === 'done' ? '✅' : l.status === 'current' ? '⚡' : '○';
+      const sa = l.sellAmount != null ? `<span style="color:var(--accent);font-size:8px">~${l.sellAmount} OCT</span>` : '';
+      return `<div class="${cls}"><span>${icon}</span><span style="font-weight:700;width:44px;font-size:10px">$${l.p}</span><span style="color:var(--accent2);width:26px;font-size:8px">${l.pct}%</span><span style="color:var(--muted2);flex:1;font-size:9px">${l.lbl}</span>${sa}</div>`;
+    }).join('');
+  }
+}
+
 function renderPrice(p) {
   if (!p || p.pending) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.textContent = val; };
@@ -99,6 +136,8 @@ async function refresh() {
   try {
     const price = await api.getPrice();
     renderPrice(price);
+    lastPrice = (price && !price.pending) ? price.oct : lastPrice;
+    renderPortfolio();
 
     const news = await api.getNews();
     if (!news.pending && window.renderNews) window.renderNews(mapNews(news));
@@ -139,5 +178,5 @@ if (refreshBtn) refreshBtn.addEventListener('click', refresh);
 (async function init() {
   if (!auth.isConfigured) { showLogin('Supabase not configured — see frontend/README.md'); return; }
   const token = await auth.getToken();
-  if (token) { hideLogin(); await refresh(); } else { showLogin(); }
+  if (token) { hideLogin(); renderPortfolio(); await refresh(); } else { showLogin(); }
 })();
