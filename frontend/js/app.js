@@ -10,10 +10,35 @@ const api = createApiClient({ baseUrl: cfg.apiBaseUrl, getToken: auth.getToken }
 
 const $ = (id) => document.getElementById(id);
 
+// ── Portfolio persistence (localStorage per user) ──
+const PORTFOLIO_KEY = (uid) => `oct_portfolio_${uid}`;
+
+function savePortfolio(uid) {
+  if (!uid) return;
+  const amt = $('oct-amt')?.value || '';
+  const avg = $('avg-buy')?.value || '';
+  localStorage.setItem(PORTFOLIO_KEY(uid), JSON.stringify({ amt, avg }));
+}
+
+function loadPortfolio(uid) {
+  if (!uid) return;
+  try {
+    const raw = localStorage.getItem(PORTFOLIO_KEY(uid));
+    if (!raw) return;
+    const { amt, avg } = JSON.parse(raw);
+    if ($('oct-amt') && amt) $('oct-amt').value = amt;
+    if ($('avg-buy') && avg) $('avg-buy').value = avg;
+    renderPortfolio();
+  } catch { /* ignore */ }
+}
+
 // F4: recompute portfolio/exits as the user edits amount or avg-buy.
 ['oct-amt', 'avg-buy'].forEach((id) => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', renderPortfolio);
+  if (el) el.addEventListener('input', () => {
+    renderPortfolio();
+    auth.getUser().then((u) => { if (u) savePortfolio(u.id); });
+  });
 });
 
 const overlay = $('login-overlay');
@@ -200,10 +225,27 @@ async function refresh() {
   }
 }
 
+// ── Admin: show/hide Add User button based on logged-in email ──
+const ADMIN_EMAILS = ['creatormpb25@gmail.com']; // sync with server ADMIN_EMAILS env
+
+async function setupAdminUI() {
+  const user = await auth.getUser();
+  const btn = $('admin-add-user-btn');
+  if (btn && user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+    btn.style.display = 'inline-flex';
+  }
+  if (user) loadPortfolio(user.id);
+}
+
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    try { await auth.login($('login-email').value, $('login-password').value); hideLogin(); await refresh(); }
+    try {
+      await auth.login($('login-email').value, $('login-password').value);
+      hideLogin();
+      await setupAdminUI();
+      await refresh();
+    }
     catch (err) { showLogin(err.message || 'Login failed'); }
   });
 }
@@ -262,8 +304,36 @@ if (analyzeBtn) {
   });
 }
 
+// ── Admin: Add User modal ──
+const adminAddBtn = $('admin-add-user-btn');
+const adminModal = $('admin-modal');
+const adminModalClose = $('admin-modal-close');
+const adminInviteForm = $('admin-invite-form');
+const adminInviteMsg = $('admin-invite-msg');
+
+if (adminAddBtn) adminAddBtn.addEventListener('click', () => { if (adminModal) adminModal.style.display = 'flex'; });
+if (adminModalClose) adminModalClose.addEventListener('click', () => { if (adminModal) adminModal.style.display = 'none'; });
+if (adminModal) adminModal.addEventListener('click', (e) => { if (e.target === adminModal) adminModal.style.display = 'none'; });
+
+if (adminInviteForm) {
+  adminInviteForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('new-user-email')?.value?.trim();
+    const password = $('new-user-password')?.value;
+    if (!email || !password) return;
+    if (adminInviteMsg) { adminInviteMsg.style.color = 'var(--muted)'; adminInviteMsg.textContent = 'Menambahkan user...'; }
+    try {
+      await api.adminInvite({ email, password });
+      if (adminInviteMsg) { adminInviteMsg.style.color = 'var(--green)'; adminInviteMsg.textContent = `✓ User ${email} berhasil ditambahkan!`; }
+      adminInviteForm.reset();
+    } catch (err) {
+      if (adminInviteMsg) { adminInviteMsg.style.color = 'var(--red)'; adminInviteMsg.textContent = err.message || 'Gagal menambahkan user'; }
+    }
+  });
+}
+
 (async function init() {
   if (!auth.isConfigured) { showLogin('Supabase not configured — see frontend/README.md'); return; }
   const token = await auth.getToken();
-  if (token) { hideLogin(); renderPortfolio(); await refresh(); setInterval(refresh, 60_000); } else { showLogin(); }
+  if (token) { hideLogin(); await setupAdminUI(); renderPortfolio(); await refresh(); setInterval(refresh, 60_000); } else { showLogin(); }
 })();

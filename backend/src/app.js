@@ -4,6 +4,7 @@ const { requireAuth } = require('./auth');
 const healthRoute = require('./routes/health');
 const cacheRoute = require('./routes/cache');
 const analyzeRoute = require('./routes/analyze');
+const adminRoute = require('./routes/admin');
 
 function createApp({ db, config, analyzeFn }) {
   const app = express();
@@ -15,6 +16,7 @@ function createApp({ db, config, analyzeFn }) {
 
   // Protected — everything below requires a valid Supabase JWT
   app.use('/api/analyze', requireAuth(config), analyzeRoute({ db, analyzeFn, ttlMs: config.analysisTtlMs }));
+  app.use('/api/admin', requireAuth(config), adminRoute({ config }));
   app.use('/api', requireAuth(config), cacheRoute({ db }));
 
   return app;

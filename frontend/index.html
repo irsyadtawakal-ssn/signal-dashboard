@@ -194,8 +194,31 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     <div id="ts" style="font-size:9px;color:var(--muted)">—</div>
     <button class="btn" id="rbtn">⟳ REFRESH</button>
   </div>
-  <button id="logout-btn" style="margin-left:auto;font-size:9px;padding:4px 10px;background:transparent;border:1px solid #243049;color:#8aa0c0;cursor:pointer">LOGOUT</button>
+  <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+    <button id="admin-add-user-btn" style="display:none;font-size:9px;padding:4px 10px;background:transparent;border:1px solid var(--yellow);color:var(--yellow);cursor:pointer">+ ADD USER</button>
+    <button id="logout-btn" style="font-size:9px;padding:4px 10px;background:transparent;border:1px solid #243049;color:#8aa0c0;cursor:pointer">LOGOUT</button>
+  </div>
 </header>
+
+<!-- ADMIN MODAL -->
+<div id="admin-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--yellow);padding:28px 24px;width:320px;position:relative">
+    <div style="font-size:10px;letter-spacing:2px;color:var(--yellow);margin-bottom:16px">ADD USER</div>
+    <button id="admin-modal-close" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer">✕</button>
+    <form id="admin-invite-form">
+      <div style="margin-bottom:10px">
+        <label style="font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">EMAIL</label>
+        <input id="new-user-email" type="email" required placeholder="user@email.com" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:7px 10px;box-sizing:border-box;outline:none">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">PASSWORD</label>
+        <input id="new-user-password" type="password" required placeholder="Min. 8 karakter" minlength="8" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:7px 10px;box-sizing:border-box;outline:none">
+      </div>
+      <button type="submit" style="width:100%;background:var(--yellow);color:#000;border:none;padding:8px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer">TAMBAH USER</button>
+    </form>
+    <div id="admin-invite-msg" style="margin-top:10px;font-size:11px;min-height:16px"></div>
+  </div>
+</div>
 
 <!-- PORTFOLIO -->
 <div id="portfolio-capture">

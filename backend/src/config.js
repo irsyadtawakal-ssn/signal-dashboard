@@ -27,6 +27,10 @@ function loadConfig(env = process.env) {
     analysisTtlMs: Number(env.ANALYSIS_TTL_MS) || 600000,
     analysisModel: env.ANALYSIS_MODEL || undefined,
     corsOrigin: env.CORS_ORIGIN || undefined,
+    supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY || undefined,
+    adminEmails: env.ADMIN_EMAILS
+      ? env.ADMIN_EMAILS.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+      : [],
   };
 }
 

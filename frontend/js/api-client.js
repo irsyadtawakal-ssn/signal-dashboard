@@ -28,6 +28,8 @@ function createApiClient({ baseUrl, getToken, fetchFn = fetch }) {
     getTweets: () => call('/api/tweets'),
     analyze: ({ force = false } = {}) =>
       call('/api/analyze', { method: 'POST', body: JSON.stringify({ force }) }),
+    adminInvite: ({ email, password }) =>
+      call('/api/admin/invite', { method: 'POST', body: JSON.stringify({ email, password }) }),
   };
 }
 
