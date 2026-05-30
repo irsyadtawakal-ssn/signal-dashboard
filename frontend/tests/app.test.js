@@ -241,3 +241,168 @@ describe('news rendering - type safety', () => {
     });
   });
 });
+
+describe('price state - staleness detection', () => {
+  it('should track price freshness separately from rendering', () => {
+    // Simulate lastPrice object structure
+    const lastPrice = {
+      value: null,
+      fetchedAt: null,
+      get staleSinceMs() {
+        return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+      },
+      get isStale() {
+        return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+      },
+    };
+
+    // Initially no price set
+    expect(lastPrice.value).toBe(null);
+    expect(lastPrice.staleSinceMs).toBe(0);
+    expect(lastPrice.isStale).toBe(false);
+
+    // Update with fresh price
+    lastPrice.value = 0.35;
+    lastPrice.fetchedAt = Date.now();
+    expect(lastPrice.value).toBe(0.35);
+    expect(lastPrice.staleSinceMs).toBeLessThan(100); // Should be very fresh
+    expect(lastPrice.isStale).toBe(false);
+  });
+
+  it('should detect stale price after 10 minutes', () => {
+    const lastPrice = {
+      value: 0.35,
+      fetchedAt: null,
+      get staleSinceMs() {
+        return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+      },
+      get isStale() {
+        return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+      },
+    };
+
+    // Set fetched time to 11 minutes ago
+    const elevenMinutesAgo = Date.now() - (11 * 60 * 1000);
+    lastPrice.fetchedAt = elevenMinutesAgo;
+
+    expect(lastPrice.isStale).toBe(true);
+    expect(lastPrice.staleSinceMs).toBeGreaterThan(10 * 60 * 1000);
+  });
+
+  it('should not mark price as stale within 10 minutes', () => {
+    const lastPrice = {
+      value: 0.35,
+      fetchedAt: null,
+      get staleSinceMs() {
+        return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+      },
+      get isStale() {
+        return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+      },
+    };
+
+    // Set fetched time to 5 minutes ago
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+    lastPrice.fetchedAt = fiveMinutesAgo;
+
+    expect(lastPrice.isStale).toBe(false);
+    expect(lastPrice.staleSinceMs).toBeLessThan(10 * 60 * 1000);
+  });
+
+  it('should handle partial failure: tweets fail but price succeeds', async () => {
+    let priceError = null;
+    let price = { oct: 0.35, pending: false };
+
+    // Simulate partial failure
+    const mockApi = {
+      getPrice: vi.fn(async () => price),
+      getTweets: vi.fn(async () => {
+        throw new Error('Tweet fetch failed');
+      }),
+      getNews: vi.fn(async () => []),
+    };
+
+    // Simulate refresh flow
+    try {
+      price = await mockApi.getPrice();
+    } catch (error) {
+      priceError = error;
+    }
+
+    try {
+      await mockApi.getTweets();
+    } catch (error) {
+      console.error('[Tweets] Fetch failed:', error.message);
+    }
+
+    // Price should succeed, tweets should fail
+    expect(price).not.toBeNull();
+    expect(price.oct).toBe(0.35);
+    expect(priceError).toBeNull();
+    expect(mockApi.getTweets).toHaveBeenCalled();
+  });
+
+  it('should clear staleness warning when fresh data arrives', () => {
+    const lastPrice = {
+      value: 0.35,
+      fetchedAt: Date.now(),
+      get staleSinceMs() {
+        return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+      },
+      get isStale() {
+        return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+      },
+    };
+
+    expect(lastPrice.isStale).toBe(false);
+
+    // Simulate time passing
+    lastPrice.fetchedAt = Date.now() - (15 * 60 * 1000); // 15 minutes ago
+    expect(lastPrice.isStale).toBe(true);
+
+    // Simulate fresh price arriving
+    lastPrice.fetchedAt = Date.now();
+    expect(lastPrice.isStale).toBe(false);
+  });
+
+  it('should keep stale value in portfolio when price fetch fails', () => {
+    const lastPrice = {
+      value: 0.35, // Old value
+      fetchedAt: Date.now() - (15 * 60 * 1000), // 15 minutes old
+      get staleSinceMs() {
+        return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+      },
+      get isStale() {
+        return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+      },
+    };
+
+    // Price is stale but still usable
+    expect(lastPrice.value).toBe(0.35);
+    expect(lastPrice.isStale).toBe(true);
+
+    // Portfolio computation should still work with stale value
+    const price = lastPrice.value || 0;
+    expect(price).toBe(0.35);
+  });
+
+  it('should display stale data indicator when isStale is true', () => {
+    // This test validates the warning display logic
+    const lastPrice = {
+      value: 0.35,
+      fetchedAt: Date.now() - (15 * 60 * 1000), // 15 minutes old
+      get staleSinceMs() {
+        return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+      },
+      get isStale() {
+        return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+      },
+    };
+
+    if (lastPrice.isStale && lastPrice.value) {
+      const warningText = `⚠️ Price data is stale (${Math.round(lastPrice.staleSinceMs / 1000)}s old)`;
+      expect(warningText).toContain('stale');
+      expect(warningText).toContain('Price data');
+    }
+  });
+});

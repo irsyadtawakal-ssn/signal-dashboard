@@ -108,14 +108,24 @@ function ago(d) {
 }
 
 // ── F4: Portfolio + exit-plan tracker (pure math in portfolio.js) ──
-let lastPrice = null;
+// Track price freshness separately with staleness detection
+let lastPrice = {
+  value: null,
+  fetchedAt: null,
+  get staleSinceMs() {
+    return this.fetchedAt ? Date.now() - this.fetchedAt : 0;
+  },
+  get isStale() {
+    return this.staleSinceMs > 10 * 60 * 1000; // 10 minutes
+  },
+};
 
 function fmtMoney(n) { return n == null ? '—' : (Math.abs(n) >= 1000 ? (n / 1000).toFixed(1) + 'K' : n.toFixed(2)); }
 
 function renderPortfolio() {
   const amount = parseFloat(document.getElementById('oct-amt')?.value) || 0;
   const avgBuy = parseFloat(document.getElementById('avg-buy')?.value) || 0;
-  const price = lastPrice || 0;
+  const price = lastPrice.value || 0;
   const { value, pnl, pnlPct } = computePortfolio({ amount, avgBuy, price });
   const set = (id, txt, color) => { const el = document.getElementById(id); if (el) { if (txt != null) el.textContent = txt; if (color) el.style.color = color; } };
   set('pv', value != null ? '$' + fmtMoney(value) : '—');
@@ -127,6 +137,18 @@ function renderPortfolio() {
   if (nxt) set('pnxt', '$' + nxt.p + ' — ' + nxt.lbl.split('—')[1].trim());
   // value realised by selling the T2 tranche (20% at $0.40)
   set('pt2', amount > 0 ? '$' + fmtMoney(amount * 0.40 * 0.20) : '—');
+
+  // Mark price element as stale if data is old
+  const priceEl = document.getElementById('prc');
+  if (priceEl) {
+    if (lastPrice.isStale && lastPrice.value) {
+      priceEl.classList.add('stale-data');
+      priceEl.title = `Last updated ${Math.round(lastPrice.staleSinceMs / 1000)}s ago`;
+    } else {
+      priceEl.classList.remove('stale-data');
+    }
+  }
+
   const exits = document.getElementById('exits');
   if (exits) {
     exits.innerHTML = computeExitLevels({ price, amount }).map((l) => {
@@ -151,6 +173,11 @@ function renderPrice(p) {
   set('fib-current-ref', p.oct != null ? `$${p.oct}` : '—');
   // Keep module-scoped CUR_PRICE in sync (drives calcFib / calcPort / buildExits).
   if (typeof window.setPrice === 'function') window.setPrice(p.oct);
+  // Update lastPrice with fresh timestamp
+  if (p.oct != null) {
+    lastPrice.value = p.oct;
+    lastPrice.fetchedAt = Date.now();
+  }
 }
 
 function renderAnalysis(a) {
@@ -203,39 +230,92 @@ function renderSignal({ price, tweets, news }) {
   setComponentBar('bf', 'nf', components.fibonacci);
 }
 
+function showStalePriceWarning(staleSinceMs) {
+  let warning = document.querySelector('[data-test="stale-price-warning"]');
+  if (!warning) {
+    warning = document.createElement('div');
+    warning.setAttribute('data-test', 'stale-price-warning');
+    warning.className = 'warning-banner';
+    const portfolio = document.querySelector('.portfolio');
+    if (portfolio) portfolio.prepend(warning);
+  }
+  warning.textContent = `⚠️ Price data is stale (${Math.round(staleSinceMs / 1000)}s old)`;
+  warning.style.display = 'block';
+}
+
+function hideStalePriceWarning() {
+  const warning = document.querySelector('[data-test="stale-price-warning"]');
+  if (warning) warning.style.display = 'none';
+}
+
 async function refresh() {
+  let priceError = null;
+  let price = null;
+
+  // Fetch price independently from tweets
   try {
-    const price = await api.getPrice();
-    renderPrice(price);
-    lastPrice = (price && !price.pending) ? price.oct : lastPrice;
-    renderPortfolio();
-
-    let news = await api.getNews();
-    // Validate response is an array before mapping
-    if (!Array.isArray(news)) {
-      console.warn('[News] Backend returned non-array response:', news);
-      if (news && news.error) {
-        console.warn('[News] Error from backend:', news.error);
-      }
-      // Use empty array as fallback
-      news = [];
+    price = await api.getPrice();
+    if (price && !price.pending) {
+      renderPrice(price);
     }
-    if (!news.pending && window.renderNews) window.renderNews(mapNews(news));
+  } catch (error) {
+    priceError = error;
+    console.error('[Price] Fetch failed, keeping stale value:', error.message);
+  }
 
+  // Fetch tweets independently
+  try {
     const tweets = await api.getTweets();
     // setTweets sets ALL_TWEETS (so filter buttons work) + renders + updates stats.
     if (!tweets.pending) {
       if (typeof window.setTweets === 'function') window.setTweets(mapTweets(tweets));
       else if (window.renderTweets) window.renderTweets(mapTweets(tweets));
     }
+  } catch (error) {
+    console.error('[Tweets] Fetch failed:', error.message);
+  }
 
-    // F5: signal scores from signal.js (uses raw backend sentiment fields + Fib inputs).
+  // Fetch news independently
+  let news = [];
+  try {
+    const newsResult = await api.getNews();
+    // Validate response is an array before mapping
+    if (!Array.isArray(newsResult)) {
+      console.warn('[News] Backend returned non-array response:', newsResult);
+      if (newsResult && newsResult.error) {
+        console.warn('[News] Error from backend:', newsResult.error);
+      }
+      news = [];
+    } else {
+      news = newsResult;
+    }
+    if (!news.pending && window.renderNews) window.renderNews(mapNews(news));
+  } catch (error) {
+    console.error('[News] Fetch failed:', error.message);
+  }
+
+  // Always render portfolio and signal with current state (using stale price if necessary)
+  renderPortfolio();
+
+  // F5: signal scores from signal.js (uses raw backend sentiment fields + Fib inputs).
+  try {
+    const tweets = Array.isArray(window.ALL_TWEETS) ? window.ALL_TWEETS : [];
     renderSignal({ price, tweets, news });
+  } catch (error) {
+    console.error('[Signal] Computation failed:', error.message);
+  }
 
-    // analysis is manual — triggered by ANALYZE button only
-  } catch (err) {
-    if (err instanceof AuthError) { await auth.logout(); showLogin('Session expired — sign in again.'); }
-    else { console.error('refresh failed:', err); }
+  // Show staleness warning if price is stale
+  if (lastPrice.isStale && lastPrice.value) {
+    showStalePriceWarning(lastPrice.staleSinceMs);
+  } else {
+    hideStalePriceWarning();
+  }
+
+  // Only re-throw auth errors; partial failures are logged and handled gracefully
+  if (priceError instanceof AuthError) {
+    await auth.logout();
+    showLogin('Session expired — sign in again.');
   }
 }
 
