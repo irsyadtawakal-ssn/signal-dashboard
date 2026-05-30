@@ -2,7 +2,7 @@
 
 > Single source of truth for phase progress. Master design: `specs/2026-05-29-signal-intelligence-dashboard-design.md`.
 > The master spec defines **3 official stages (Tahap)**; implementation decomposes them into sub-phases so each ships as its own spec → plan → tested code cycle.
-> **Last updated:** 2026-05-29 (post Phase 3a merge; deploy work landed concurrently — see note).
+> **Last updated:** 2026-05-30 (Phase 3c merged — all features F1–F6 implemented).
 
 ## Status at a glance
 
@@ -15,9 +15,9 @@
 | | Phase 2d — Opus `POST /api/analyze` | ✅ | ✅ | ✅ merged |
 | **Tahap 3 — UI Polish & Deployment** | Phase 3a — frontend auth + API wiring | ✅ | ✅ | ✅ merged |
 | | Deploy — CORS middleware + pm2 ecosystem + VPS guide | ✅ | ✅ | ✅ merged |
-| | Phase 3b — features (F4 portfolio, F5 signal scores) + UI polish | ⏳ | ⏳ | ⬜ not started |
+| | Phase 3c — features (F4 portfolio, F5 signal scores) + polish | ✅ | ✅ | ✅ merged |
 
-**Progress: 7 / 8 sub-phases merged.** Tahap 1 & 2 complete; Tahap 3 nearly done — only the F4/F5 client features + UI polish remain.
+**Progress: 8 / 8 sub-phases merged. 🎉 All features F1–F6 implemented.** Remaining work is operational only (live keys, deploy, the noted follow-ups).
 
 Legend: ✅ done · 🔵 ready/in progress · ⏳ pending · ⬜ not started · ⚠️ has a known follow-up.
 
@@ -40,7 +40,9 @@ Legend: ✅ done · 🔵 ready/in progress · ⏳ pending · ⬜ not started · 
 
 CORS is configurable via `CORS_ORIGIN` (allow-all by default — fine for a private VPS). Deploy via pm2 (`backend/pm2.config.js`, single instance to keep the in-process scheduler + SQLite consistent).
 
-Tests: **87 passing** (backend) + **12 passing** (frontend: `auth` + `api-client`). AI is provider-abstracted (OpenRouter default, official Anthropic fallback). Everything built **mock-first** — runs/tests without live keys.
+Tests: **87 passing** (backend) + **31 passing** (frontend: `auth`, `api-client`, `portfolio`, `signal`). AI is provider-abstracted (OpenRouter default, official Anthropic fallback). Everything built **mock-first** — runs/tests without live keys.
+
+Frontend (vanilla, no build): Supabase login gate + backend API client (3a); F4 portfolio/exit tracker + F5 signal scores BUY/HOLD/SELL from live data (3c). MA dropped from F5 (no candle data backend-side).
 
 ## Per-phase documents
 
@@ -53,7 +55,7 @@ Tests: **87 passing** (backend) + **12 passing** (frontend: `auth` + `api-client
 | 2d | `specs/2026-05-29-phase2d-analyze-design.md` | `plans/2026-05-29-phase2d-analyze.md` |
 | 3a | `specs/2026-05-29-phase3a-auth-api-wiring-design.md` | `plans/2026-05-29-phase3a-auth-api-wiring.md` |
 | Deploy ("3b") | `specs/2026-05-29-phase3b-pm2-deployment-design.md` | `plans/2026-05-29-phase3b-pm2-deployment.md` |
-| Features (F4/F5) + polish | _(pending)_ | _(pending)_ |
+| 3c (F4/F5 + polish) | `specs/2026-05-29-phase3c-features-design.md` | `plans/2026-05-29-phase3c-features.md` |
 
 ## Open follow-ups (non-blocking)
 
@@ -65,7 +67,8 @@ Tests: **87 passing** (backend) + **12 passing** (frontend: `auth` + `api-client
 - **Phase 2d minors:** clamp `confidence` to `[0,1]`; assert system-prompt content in tests; add a code comment on the `getAnalysis` NaN-comparison guard.
 - **Phase 3a minors:** `auth.getUser()` untested; `auth.onChange()` implemented but not wired in `app.js` (re-login is reactive via 401); add `Array.isArray` guards in the `app.js` render mappers.
 - **Deploy minors:** no CORS-header test (supertest assert `Access-Control-Allow-Origin`); `pm2 env_file:'.env'` is redundant (server.js already loads dotenv).
-- **Remaining feature work:** F4 portfolio/exit tracker + F5 deterministic signal scores + UI polish (the prototype's tweet feed lacks likes/retweets and the listing/dev/fib filters won't match live backend data yet).
+- **Phase 3c minors:** F5 `MA Trend` bar stays empty by design (MA dropped); whale tweets count toward Twitter Buzz, not the Sentiment ratio (per spec); add an exit-boundary test at exactly `p*1.12`/`p*0.88`.
+- **No feature work remains** — F1–F6 are all implemented. What's left is operational: wire the live keys (now in `backend/.env`), run the pm2 deploy on the VPS, and address the 2b/2d/3a/deploy minors above.
 
 ## Out of scope (whole project, per master spec §5.2)
 
