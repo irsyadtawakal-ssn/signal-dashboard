@@ -27,7 +27,16 @@ function extractJsonObject(text) {
   if (start === -1 || end === -1 || end < start) {
     throw new Error('no JSON object in analysis reply');
   }
-  return JSON.parse(text.slice(start, end + 1));
+
+  try {
+    const parsed = JSON.parse(text.slice(start, end + 1));
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error(`Expected object but got ${typeof parsed}`);
+    }
+    return parsed;
+  } catch (error) {
+    throw new Error(`JSON parsing failed in analysis: ${error.message}. Input: ${text.slice(start, end + 1).substring(0, 100)}...`);
+  }
 }
 
 async function analyzeMarket({ price, tweets, news, complete, model }) {

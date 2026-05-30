@@ -50,4 +50,20 @@ describe('classifyTweets', () => {
     expect(await classifyTweets({ tweets: [], complete })).toEqual([]);
     expect(complete).not.toHaveBeenCalled();
   });
+
+  it('should handle malformed JSON gracefully', async () => {
+    const complete = vi.fn().mockResolvedValue('[invalid json here]');
+    const result = await classifyTweets({ tweets, complete });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.map((t) => t.sentiment)).toEqual(['Unrated', 'Unrated', 'Unrated']);
+  });
+
+  it('should log parsing errors for debugging', async () => {
+    const consoleSpy = vi.spyOn(console, 'error');
+    const complete = vi.fn().mockResolvedValue('[{invalid}]');
+    await classifyTweets({ tweets, complete });
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy.mock.calls[0][0]).toContain('[Sentiment]');
+    consoleSpy.mockRestore();
+  });
 });

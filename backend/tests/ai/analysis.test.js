@@ -59,4 +59,14 @@ describe('analyzeMarket', () => {
     const complete = vi.fn().mockRejectedValue(new Error('opus down'));
     await expect(analyzeMarket({ price, tweets, news, complete })).rejects.toThrow('opus down');
   });
+
+  it('should throw descriptive error on malformed JSON', async () => {
+    const complete = vi.fn().mockResolvedValue('{broken json}');
+    await expect(analyzeMarket({ price, tweets, news, complete })).rejects.toThrow(/JSON parsing failed/);
+  });
+
+  it('should throw descriptive error with truncated input on JSON parse failure', async () => {
+    const complete = vi.fn().mockResolvedValue('{ malformed json with many long fields that should be truncated: "this is a very long string that exceeds 100 characters to test truncation in error messages" }');
+    await expect(analyzeMarket({ price, tweets, news, complete })).rejects.toThrow(/JSON parsing failed in analysis/);
+  });
 });

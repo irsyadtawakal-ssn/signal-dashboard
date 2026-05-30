@@ -14,7 +14,18 @@ function extractJsonArray(text) {
   const start = text.indexOf('[');
   const end = text.lastIndexOf(']');
   if (start === -1 || end === -1 || end < start) return [];
-  return JSON.parse(text.slice(start, end + 1));
+
+  try {
+    const parsed = JSON.parse(text.slice(start, end + 1));
+    if (!Array.isArray(parsed)) {
+      console.error(`[Sentiment] Expected array but got ${typeof parsed}:`, text.slice(start, end + 1));
+      return [];
+    }
+    return parsed;
+  } catch (error) {
+    console.error(`[Sentiment] JSON parse failed: ${error.message}`, { input: text.slice(start, end + 1), error: error.message });
+    return [];
+  }
 }
 
 async function classifyTweets({ tweets, complete, model }) {
