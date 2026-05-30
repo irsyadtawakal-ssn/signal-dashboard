@@ -1,8 +1,8 @@
 # OCT Signal Intelligence — Project Roadmap
 
 > Single source of truth for phase progress. Master design: `specs/2026-05-29-signal-intelligence-dashboard-design.md`.
-> The master spec defines **3 official stages (Tahap)**; implementation decomposes them into **8 sub-phases** so each ships as its own spec → plan → tested code cycle.
-> **Last updated:** 2026-05-29.
+> The master spec defines **3 official stages (Tahap)**; implementation decomposes them into sub-phases so each ships as its own spec → plan → tested code cycle.
+> **Last updated:** 2026-05-29 (post Phase 3a merge; deploy work landed concurrently — see note).
 
 ## Status at a glance
 
@@ -13,13 +13,22 @@
 | | Phase 2b — news (CryptoPanic) | (in plan) | ✅ | ✅ merged ⚠️ |
 | | Phase 2c — Twitter sentiment (Sonnet) | ✅ | ✅ | ✅ merged |
 | | Phase 2d — Opus `POST /api/analyze` | ✅ | ✅ | ✅ merged |
-| **Tahap 3 — UI Polish & Deployment** | Phase 3a — frontend auth + API wiring | ✅ | ⏳ | 🔵 spec ready |
+| **Tahap 3 — UI Polish & Deployment** | Phase 3a — frontend auth + API wiring | ✅ | ✅ | ✅ merged |
+| | Deploy — CORS middleware + pm2 ecosystem + VPS guide | ✅ | ✅ | ✅ merged |
 | | Phase 3b — features (F4 portfolio, F5 signal scores) + UI polish | ⏳ | ⏳ | ⬜ not started |
-| | Phase 3c — VPS deploy (HTTPS, process manager, prod scheduler) | ⏳ | ⏳ | ⬜ not started |
 
-**Progress: 5 / 8 sub-phases merged.** Tahap 1 & 2 complete; Tahap 3 in progress.
+**Progress: 7 / 8 sub-phases merged.** Tahap 1 & 2 complete; Tahap 3 nearly done — only the F4/F5 client features + UI polish remain.
 
 Legend: ✅ done · 🔵 ready/in progress · ⏳ pending · ⬜ not started · ⚠️ has a known follow-up.
+
+> **Phasing note:** the deploy slice (CORS + pm2) was completed concurrently and merged into
+> `main` (commit `9704737`) ahead of the F4/F5 feature work — so the original "3b = features,
+> 3c = deploy" numbering no longer holds. The table above reflects what actually landed: **deploy
+> is done; the remaining work is the F4/F5 dashboard features + polish.** Its spec/plan live at
+> `specs/…phase3b-pm2-deployment-design.md` and `plans/…phase3b-pm2-deployment.md` (labeled "3b"
+> by that session). The CORS + pm2 commits did not pass this project's TDD/review loop but were
+> reviewed post-hoc: clean, no blocking issues (no CORS header test; `pm2 instances:1` correct for
+> the in-process scheduler + SQLite).
 
 ## Backend surface (all merged, behind Supabase JWT auth)
 
@@ -29,7 +38,9 @@ Legend: ✅ done · 🔵 ready/in progress · ⏳ pending · ⬜ not started · 
 - `GET /api/tweets` — AI-classified tweets (Bullish/Bearish/Whale/Unrated) from cache.
 - `POST /api/analyze` — Opus on-demand deep analysis (BUY/HOLD/SELL), cached with TTL + `force`.
 
-Tests: **87 passing** (backend). AI is provider-abstracted (OpenRouter default, official Anthropic fallback). Everything built **mock-first** — runs/tests without live keys.
+CORS is configurable via `CORS_ORIGIN` (allow-all by default — fine for a private VPS). Deploy via pm2 (`backend/pm2.config.js`, single instance to keep the in-process scheduler + SQLite consistent).
+
+Tests: **87 passing** (backend) + **12 passing** (frontend: `auth` + `api-client`). AI is provider-abstracted (OpenRouter default, official Anthropic fallback). Everything built **mock-first** — runs/tests without live keys.
 
 ## Per-phase documents
 
@@ -40,9 +51,9 @@ Tests: **87 passing** (backend). AI is provider-abstracted (OpenRouter default, 
 | 2b | — | `plans/2026-05-29-phase2b-news.md` |
 | 2c | `specs/2026-05-29-phase2c-twitter-sentiment-design.md` | `plans/2026-05-29-phase2c-twitter-sentiment.md` |
 | 2d | `specs/2026-05-29-phase2d-analyze-design.md` | `plans/2026-05-29-phase2d-analyze.md` |
-| 3a | `specs/2026-05-29-phase3a-auth-api-wiring-design.md` | _(pending)_ |
-| 3b | _(pending)_ | _(pending)_ |
-| 3c | _(pending)_ | _(pending)_ |
+| 3a | `specs/2026-05-29-phase3a-auth-api-wiring-design.md` | `plans/2026-05-29-phase3a-auth-api-wiring.md` |
+| Deploy ("3b") | `specs/2026-05-29-phase3b-pm2-deployment-design.md` | `plans/2026-05-29-phase3b-pm2-deployment.md` |
+| Features (F4/F5) + polish | _(pending)_ | _(pending)_ |
 
 ## Open follow-ups (non-blocking)
 
@@ -52,6 +63,9 @@ Tests: **87 passing** (backend). AI is provider-abstracted (OpenRouter default, 
   - Supabase: project URL + anon key + JWT secret (needed for Phase 3a login).
 - **Phase 2b CryptoPanic 404:** the public v1 endpoint is deprecated; set `CRYPTOPANIC_TOKEN` and confirm the current endpoint/path for real news data.
 - **Phase 2d minors:** clamp `confidence` to `[0,1]`; assert system-prompt content in tests; add a code comment on the `getAnalysis` NaN-comparison guard.
+- **Phase 3a minors:** `auth.getUser()` untested; `auth.onChange()` implemented but not wired in `app.js` (re-login is reactive via 401); add `Array.isArray` guards in the `app.js` render mappers.
+- **Deploy minors:** no CORS-header test (supertest assert `Access-Control-Allow-Origin`); `pm2 env_file:'.env'` is redundant (server.js already loads dotenv).
+- **Remaining feature work:** F4 portfolio/exit tracker + F5 deterministic signal scores + UI polish (the prototype's tweet feed lacks likes/retweets and the listing/dev/fib filters won't match live backend data yet).
 
 ## Out of scope (whole project, per master spec §5.2)
 
