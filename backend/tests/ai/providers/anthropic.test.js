@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createAnthropicComplete } from '../../../src/ai/providers/anthropic.js';
 
 function mockClient(text) {
-  return { messages: { create: vi.fn().mockResolvedValue({ content: [{ text }] }) } };
+  return { messages: { create: vi.fn().mockResolvedValue({ content: [{ type: 'text', text }] }) } };
 }
 
 describe('createAnthropicComplete', () => {
@@ -29,5 +29,29 @@ describe('createAnthropicComplete', () => {
     const complete = createAnthropicComplete({ client });
     await complete({ system: 's', user: 'u', model: 'claude-opus-4-8' });
     expect(client.messages.create.mock.calls[0][0].model).toBe('claude-opus-4-8');
+  });
+
+  it('should handle empty content array gracefully', async () => {
+    const client = { messages: { create: vi.fn().mockResolvedValue({ content: [] }) } };
+    const complete = createAnthropicComplete({ client });
+    await expect(complete({ system: 's', user: 'u' })).rejects.toThrow(/empty content array/);
+  });
+
+  it('should handle missing content property gracefully', async () => {
+    const client = { messages: { create: vi.fn().mockResolvedValue({}) } };
+    const complete = createAnthropicComplete({ client });
+    await expect(complete({ system: 's', user: 'u' })).rejects.toThrow(/empty content array/);
+  });
+
+  it('should handle null content gracefully', async () => {
+    const client = { messages: { create: vi.fn().mockResolvedValue({ content: null }) } };
+    const complete = createAnthropicComplete({ client });
+    await expect(complete({ system: 's', user: 'u' })).rejects.toThrow(/empty content array/);
+  });
+
+  it('should handle content without text property', async () => {
+    const client = { messages: { create: vi.fn().mockResolvedValue({ content: [{ type: 'text' }] }) } };
+    const complete = createAnthropicComplete({ client });
+    await expect(complete({ system: 's', user: 'u' })).rejects.toThrow(/no text content/);
   });
 });

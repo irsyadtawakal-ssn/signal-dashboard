@@ -10,7 +10,19 @@ function createAnthropicComplete({ apiKey, client = new Anthropic({ apiKey }), m
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user }],
     });
-    return msg.content[0].text;
+
+    // Defensive checks: validate response structure
+    if (!msg.content || !Array.isArray(msg.content) || msg.content.length === 0) {
+      throw new Error(`Anthropic API returned empty content array. Full response: ${JSON.stringify(msg)}`);
+    }
+
+    const textContent = msg.content.find(block => block && block.type === 'text');
+    if (!textContent || !textContent.text) {
+      const contentTypes = msg.content.map(c => c?.type || 'unknown').join(', ');
+      throw new Error(`Anthropic API returned no text content. Content types: [${contentTypes}]`);
+    }
+
+    return textContent.text;
   };
 }
 
