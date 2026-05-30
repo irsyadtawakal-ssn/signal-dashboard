@@ -26,8 +26,9 @@ jobs:
             if git diff --name-only HEAD@{1} HEAD | grep -q '^backend/'; then
               cd backend
               npm ci --omit=dev
-              pm2 restart signal-dashboard
               cd ..
+              # Restart as creatormpb25 user (where PM2 daemon is)
+              su - creatormpb25 -c "cd /opt/signal-dashboard && pm2 restart signal-dashboard"
             fi
 
             echo "Deploy selesai: $(date)"
