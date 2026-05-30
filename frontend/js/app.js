@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createAuth } from './auth.js';
 import { createApiClient, AuthError } from './api-client.js';
 import { computePortfolio, computeExitLevels, nextTarget } from './portfolio.js';
+import { deriveComponents, computeSignal } from './signal.js';
 
 const cfg = window.APP_CONFIG || {};
 const auth = createAuth({ createClient, supabaseUrl: cfg.supabaseUrl, anonKey: cfg.anonKey });
@@ -132,6 +133,43 @@ function renderAnalysis(a) {
   }
 }
 
+// ── F5: Signal scores (pure engine in signal.js) ──
+function readFib() {
+  const low = parseFloat(document.getElementById('fib-low')?.value);
+  const high = parseFloat(document.getElementById('fib-high')?.value);
+  return (low > 0 && high > low) ? { low, high } : null;
+}
+
+function setComponentBar(barId, numId, value) {
+  const v = Math.round(value);
+  const bar = document.getElementById(barId);
+  if (bar) bar.style.width = v + '%';
+  const num = document.getElementById(numId);
+  if (num) num.textContent = v;
+}
+
+function renderSignal({ price, tweets, news }) {
+  const components = deriveComponents({
+    priceChange: price && !price.pending ? price.octChange24h : 0,
+    price: price && !price.pending ? price.oct : 0,
+    tweets: Array.isArray(tweets) ? tweets : [],
+    news: Array.isArray(news) ? news : [],
+    fib: readFib(),
+  });
+  const { score, recommendation } = computeSignal(components);
+  const sig = document.getElementById('msig');
+  if (sig) { sig.textContent = recommendation; sig.className = 'sv ' + recommendation; }
+  const card = document.getElementById('scrd');
+  if (card) card.className = 'sb sig-card ' + recommendation;
+  const conf = document.getElementById('mconf');
+  if (conf) conf.textContent = 'Score: ' + score + '/100 · ' + new Date().toLocaleTimeString('id-ID');
+  // Component score bars (ids confirmed in index.html top-row "SIGNAL SCORES").
+  setComponentBar('bp', 'np', components.priceAction);
+  setComponentBar('bs', 'ns', components.sentiment);
+  setComponentBar('bt', 'nt', components.twitterBuzz);
+  setComponentBar('bf', 'nf', components.fibonacci);
+}
+
 async function refresh() {
   try {
     const price = await api.getPrice();
@@ -149,11 +187,8 @@ async function refresh() {
       else if (window.renderTweets) window.renderTweets(mapTweets(tweets));
     }
 
-    // computeSignal reads DOM (sentiment/twitter/news/fib) and takes optional { change }.
-    if (window.computeSignal) {
-      const change = price && !price.pending ? price.octChange24h : null;
-      window.computeSignal(change != null ? { change } : undefined);
-    }
+    // F5: signal scores from signal.js (uses raw backend sentiment fields + Fib inputs).
+    renderSignal({ price, tweets, news });
 
     const analysis = await api.analyze({ force: false }); // force:false → cheap, TTL-cached
     if (!analysis.pending) renderAnalysis(analysis);

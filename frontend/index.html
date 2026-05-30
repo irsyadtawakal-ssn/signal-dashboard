@@ -346,9 +346,6 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
       <div class="twf" onclick="twFilter('pos',this)">🟢 BULLISH</div>
       <div class="twf" onclick="twFilter('neg',this)">🔴 BEARISH</div>
       <div class="twf" onclick="twFilter('whale',this)">🐳 WHALE</div>
-      <div class="twf" onclick="twFilter('listing',this)">📋 LISTING</div>
-      <div class="twf" onclick="twFilter('dev',this)">⚙️ DEV</div>
-      <div class="twf" onclick="twFilter('fib',this)">📐 TA/FIB</div>
     </div>
     <div class="tw-stats-bar" id="tw-stats" style="display:none">
       <div class="tws"><div class="tws-l">TOTAL</div><div class="tws-v" id="tws-t" style="color:var(--accent)">0</div></div>
@@ -654,24 +651,8 @@ function renderStaticNews(){
 }
 
 // ═══════════════════════════════════
-// SIGNAL
+// SIGNAL — F5 scores now computed in js/signal.js, rendered by app.js
 // ═══════════════════════════════════
-function computeSignal(pd){
-  const sent=parseInt(document.getElementById('sovr').textContent)||60;
-  let price=50,mom=80;
-  if(pd?.change){const c=pd.change;price=Math.min(100,Math.max(0,50+c*3));mom=c>5?82:c>2?72:c>0?62:c>-2?48:32;}
-  const tw=parseInt(document.getElementById('nt').textContent)||60;
-  const news=Math.min(100,parseInt(document.getElementById('sbull').textContent||6)*10);
-  const fib=parseInt(document.getElementById('nf').textContent)||50;
-  setBar('bp',price);document.getElementById('np').textContent=Math.round(price);
-  setBar('bm',mom);document.getElementById('nm').textContent=Math.round(mom);
-  const score=price*.2+sent*.2+tw*.2+mom*.25+fib*.05+news*.1;
-  let sig='HOLD'; if(score>=62)sig='BUY'; else if(score<=37)sig='SELL';
-  const el=document.getElementById('msig');
-  el.textContent=sig; el.className='sv '+sig;
-  document.getElementById('scrd').className='sb sig-card '+sig;
-  document.getElementById('mconf').textContent='Score: '+Math.round(score)+'/100 · '+new Date().toLocaleTimeString('id-ID');
-}
 
 // ═══════════════════════════════════
 // AI — default fallback text
@@ -701,7 +682,6 @@ window.setPrice = function(p){
 };
 window.renderTweets = typeof renderTweets === 'function' ? renderTweets : undefined;
 window.renderNews = typeof renderNews === 'function' ? renderNews : undefined;
-window.computeSignal = typeof computeSignal === 'function' ? computeSignal : undefined;
 window.defAI = typeof defAI === 'function' ? defAI : undefined;
 window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
 window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
