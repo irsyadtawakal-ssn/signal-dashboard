@@ -37,7 +37,12 @@ function loadPortfolio(uid) {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', () => {
     renderPortfolio();
-    auth.getUser().then((u) => { if (u) savePortfolio(u.id); });
+    auth.getUser()
+      .then((u) => { if (u) savePortfolio(u.id); })
+      .catch((error) => {
+        console.error('[Portfolio] Failed to restore portfolio from auth:', error.message);
+        // User can still use app with empty portfolio, just won't be persisted
+      });
   });
 });
 
@@ -229,12 +234,17 @@ async function refresh() {
 const ADMIN_EMAILS = ['admin@admin.com']; // sync with server ADMIN_EMAILS env
 
 async function setupAdminUI() {
-  const user = await auth.getUser();
-  const btn = $('admin-add-user-btn');
-  if (btn && user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
-    btn.style.display = 'inline-flex';
+  try {
+    const user = await auth.getUser();
+    const btn = $('admin-add-user-btn');
+    if (btn && user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+      btn.style.display = 'inline-flex';
+    }
+    if (user) loadPortfolio(user.id);
+  } catch (error) {
+    console.error('[Portfolio] Auth failed during admin setup:', error.message);
+    // Continue gracefully — user will see login overlay or empty portfolio
   }
-  if (user) loadPortfolio(user.id);
 }
 
 if (loginForm) {
