@@ -6,6 +6,9 @@ const https = require('https');
 const jwksCache = { keys: {}, fetchedAt: 0 };
 const JWKS_TTL_MS = 3_600_000; // re-fetch after 1 hour
 
+// Serialization lock to prevent race condition in concurrent JWKS refreshes
+let refreshJwksLock = null;
+
 function fetchJwks(supabaseUrl) {
   return new Promise((resolve, reject) => {
     https
@@ -22,13 +25,30 @@ function fetchJwks(supabaseUrl) {
 }
 
 async function refreshJwks(supabaseUrl) {
-  const { keys } = await fetchJwks(supabaseUrl);
-  jwksCache.keys = {};
-  for (const k of keys) {
-    const pub = createPublicKey({ key: k, format: 'jwk' });
-    jwksCache.keys[k.kid] = pub.export({ type: 'spki', format: 'pem' });
+  // If a refresh is already in progress, wait for it to complete
+  if (refreshJwksLock) {
+    return refreshJwksLock;
   }
-  jwksCache.fetchedAt = Date.now();
+
+  refreshJwksLock = (async () => {
+    try {
+      const { keys } = await fetchJwks(supabaseUrl);
+      // Build new cache before replacing (atomic update)
+      const newKeys = {};
+      for (const k of keys) {
+        const pub = createPublicKey({ key: k, format: 'jwk' });
+        newKeys[k.kid] = pub.export({ type: 'spki', format: 'pem' });
+      }
+      // Replace cache atomically
+      jwksCache.keys = newKeys;
+      jwksCache.fetchedAt = Date.now();
+    } finally {
+      // Release lock when refresh completes
+      refreshJwksLock = null;
+    }
+  })();
+
+  return refreshJwksLock;
 }
 
 function getTokenKid(token) {
