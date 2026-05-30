@@ -198,17 +198,20 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 </header>
 
 <!-- PORTFOLIO -->
-<div class="port-bar">
-  <label>JUMLAH OCT:</label>
-  <input type="number" id="oct-amt" placeholder="e.g. 10000" min="0" step="any">
-  <label>AVG BUY $:</label>
-  <input type="number" id="avg-buy" placeholder="e.g. 0.05" min="0" step="any">
-  <div class="pstats">
-    <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$—</div></div>
-    <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$—</div></div>
-    <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">—%</div></div>
-    <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow);font-size:11px">—</div></div>
-    <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green);font-size:12px">$—</div></div>
+<div id="portfolio-capture">
+  <div class="port-bar">
+    <label>JUMLAH OCT:</label>
+    <input type="number" id="oct-amt" placeholder="e.g. 10000" min="0" step="any">
+    <label>AVG BUY $:</label>
+    <input type="number" id="avg-buy" placeholder="e.g. 0.05" min="0" step="any">
+    <div class="pstats">
+      <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$—</div></div>
+      <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$—</div></div>
+      <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">—%</div></div>
+      <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow);font-size:11px">—</div></div>
+      <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green);font-size:12px">$—</div></div>
+    </div>
+    <button id="save-img-btn" title="Save as Image" style="margin-left:auto;background:transparent;border:1px solid var(--yellow);color:var(--yellow);font-size:9px;font-weight:700;letter-spacing:1px;padding:5px 10px;cursor:pointer;border-radius:2px;white-space:nowrap">📷 SAVE</button>
   </div>
 </div>
 
@@ -690,6 +693,7 @@ window.defAI = typeof defAI === 'function' ? defAI : undefined;
 window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
 window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="js/config.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>

@@ -212,6 +212,33 @@ if (logoutBtn) logoutBtn.addEventListener('click', async () => { await auth.logo
 const refreshBtn = $('rbtn');
 if (refreshBtn) refreshBtn.addEventListener('click', refresh);
 
+// Save portfolio as image
+const saveImgBtn = $('save-img-btn');
+if (saveImgBtn) {
+  saveImgBtn.addEventListener('click', async () => {
+    const target = document.getElementById('portfolio-capture');
+    if (!target || !window.html2canvas) return;
+    saveImgBtn.textContent = '⏳';
+    try {
+      const canvas = await window.html2canvas(target, {
+        backgroundColor: '#0a0a0f',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement('a');
+      const ts = new Date().toISOString().slice(0,16).replace('T','_').replace(':','-');
+      link.download = `OCT-portfolio-${ts}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('save image failed:', e);
+    } finally {
+      saveImgBtn.textContent = '📷 SAVE';
+    }
+  });
+}
+
 const analyzeBtn = $('analyze-btn');
 const analyzeStatus = $('analyze-status');
 if (analyzeBtn) {

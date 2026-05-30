@@ -112,3 +112,16 @@ Dalam file HTML yang ada saat ini, terdapat beberapa celah keamanan dan limitasi
 2. **Tahap 2: Integrasi & Caching API** (Menghubungkan DexScreener, Twitter Scraper, dan AI Claude secara stabil).  
 3. **Tahap 3: Final UI Polish & Deployment** (Menghubungkan visual dashboard lama ke data server baru agar siap digunakan 24/7).
 
+---
+
+## **5\. Update Fitur Terbaru (30 Mei 2026)**
+
+### **A. Auto-Refresh Data (setiap 60 detik)**
+Dashboard kini otomatis memperbarui seluruh data — harga OCT/BTC/ETH, signal scores, news, dan tweets — setiap **60 detik** tanpa perlu klik tombol Refresh secara manual. AI Analysis **tidak** ikut di-refresh otomatis (lihat poin B).
+
+### **B. Tombol ANALYZE Manual (AI Analysis On-Demand)**
+Sebelumnya analisis AI (rekomendasi BUY/HOLD/SELL dari Claude) berjalan otomatis setiap refresh. Sekarang diganti menjadi **on-demand**: boss klik tombol **▶ ANALYZE** di atas kotak AI Signal kapanpun ingin mendapat analisis terbaru. Ini menghindari pemanggilan AI yang tidak perlu dan menghemat biaya API Claude.
+
+### **C. Simpan Portfolio sebagai Gambar (📷 SAVE)**
+Ditambahkan tombol **📷 SAVE** di pojok kanan bar portfolio. Sekali klik, dashboard langsung men-capture section portfolio (Jumlah OCT, Avg Buy, Value Now, P&L, P&L %, Next Target, Value @ T2) dan menyimpannya sebagai file PNG ke perangkat dengan nama format `OCT-portfolio-YYYY-MM-DD_HH-MM.png`.
+
