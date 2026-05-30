@@ -125,3 +125,49 @@ Sebelumnya analisis AI (rekomendasi BUY/HOLD/SELL dari Claude) berjalan otomatis
 ### **C. Simpan Portfolio sebagai Gambar (📷 SAVE)**
 Ditambahkan tombol **📷 SAVE** di pojok kanan bar portfolio. Sekali klik, dashboard langsung men-capture section portfolio (Jumlah OCT, Avg Buy, Value Now, P&L, P&L %, Next Target, Value @ T2) dan menyimpannya sebagai file PNG ke perangkat dengan nama format `OCT-portfolio-YYYY-MM-DD_HH-MM.png`.
 
+### **D. Portfolio Persistence per User (localStorage)**
+Setiap user yang login memiliki portfolio tersendiri. Data **Jumlah OCT** dan **Avg Buy** otomatis tersimpan di localStorage dengan key yang unik per user ID. Ketika login ulang, data langsung muncul kembali — tidak perlu input ulang setiap kali. Setiap user data terisolasi, tidak tercampur dengan user lain.
+
+### **E. Admin Panel — Tambah User Baru (+ ADD USER)**
+Untuk user dengan email **admin@admin.com** (dapat dikonfigurasi di env `ADMIN_EMAILS`), tombol kuning **+ ADD USER** akan muncul di header setelah login. Klik tombol tersebut untuk membuka modal dan tambahkan user baru:
+- Isi email dan password (min. 8 karakter)
+- Klik **TAMBAH USER**
+- User langsung aktif dan dapat login ke dashboard
+
+Backend menggunakan Supabase Admin API (`/api/admin/invite`) untuk membuat user dengan aman (hanya accessible oleh admin emails yang tersaftar).
+
+---
+
+## **6\. Konfigurasi Server (Setup yang Diperlukan)**
+
+Setelah deploy, ada dua langkah konfigurasi di VPS agar fitur Admin Add User berfungsi:
+
+### **Step 1 — Dapatkan Service Role Key dari Supabase**
+1. Login ke Supabase Dashboard
+2. Masuk project → **Settings → API**
+3. Cari **service_role key** (bukan anon key)
+4. Copy nilai tersebut
+
+### **Step 2 — Masukkan ke `.env` di VPS**
+SSH ke VPS dan edit `/opt/signal-dashboard/backend/.env`:
+
+```bash
+nano /opt/signal-dashboard/backend/.env
+```
+
+Cari/tambahkan baris berikut:
+```
+SUPABASE_URL=https://hckifcqrsvbymcnuvcsv.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<PASTE_SERVICE_ROLE_KEY_DI_SINI>
+ADMIN_EMAILS=admin@admin.com
+```
+
+Simpan file (Ctrl+O → Enter → Ctrl+X).
+
+### **Step 3 — Restart Backend**
+```bash
+pm2 restart signal-dashboard --update-env
+```
+
+Setelah itu, user dengan email **admin@admin.com** dapat login dan mengakses tombol **+ ADD USER** untuk menambahkan user baru.
+
