@@ -210,7 +210,16 @@ async function refresh() {
     lastPrice = (price && !price.pending) ? price.oct : lastPrice;
     renderPortfolio();
 
-    const news = await api.getNews();
+    let news = await api.getNews();
+    // Validate response is an array before mapping
+    if (!Array.isArray(news)) {
+      console.warn('[News] Backend returned non-array response:', news);
+      if (news && news.error) {
+        console.warn('[News] Error from backend:', news.error);
+      }
+      // Use empty array as fallback
+      news = [];
+    }
     if (!news.pending && window.renderNews) window.renderNews(mapNews(news));
 
     const tweets = await api.getTweets();
