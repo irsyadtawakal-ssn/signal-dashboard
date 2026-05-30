@@ -223,6 +223,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 @media(min-width:768px) and (max-width:899px){
   body{font-size:12px}
   .top-row{grid-template-columns:1fr 1fr}
+  /* Always expand portfolio on tablet and up */
+  .portfolio-toggle-btn{display:none!important}
+  .port-bar input[type="number"],.port-bar .pstats{display:flex!important}
 }
 
 /* 900px - Large Tablet */
@@ -234,6 +237,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 /* 1100px+ - Desktop (4 columns) */
 @media(min-width:1100px){
   .top-row{grid-template-columns:1.1fr .9fr 1fr 1fr;gap:2px}
+  /* Always expand portfolio on desktop */
+  .portfolio-toggle-btn{display:none!important}
+  .port-bar input[type="number"],.port-bar .pstats{display:flex!important}
   .main-grid{grid-template-columns:1fr 400px}
 }
 
@@ -292,6 +298,8 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <!-- PORTFOLIO -->
 <div id="portfolio-capture">
   <div class="port-bar">
+    <input type="checkbox" id="portfolio-toggle" style="display:none;" />
+    <label for="portfolio-toggle" class="portfolio-toggle-btn">▼</label>
     <label>JUMLAH OCT:</label>
     <input type="number" id="oct-amt" placeholder="e.g. 10000" min="0" step="any">
     <label>AVG BUY $:</label>
