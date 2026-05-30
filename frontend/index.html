@@ -170,7 +170,54 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 .stv{font-family:var(--ui);font-size:15px;font-weight:700}
 .bot-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 
+/* 320px - Small Mobile */
+@media(max-width:479px){
+  body{font-size:13px;line-height:1.4}
+  h1,.sv{font-size:16px}
+  h2{font-size:14px}
+  .wrap{padding:8px}
+  header{padding:8px 10px}
+  .sb{padding:10px 12px}
+  .port-bar{flex-direction:column;gap:8px}
+  .pstats{gap:10px}
+}
+
+/* 480px - Large Mobile */
+@media(max-width:599px){
+  body{font-size:13px}
+  .wrap{padding:10px}
+  .top-row{grid-template-columns:1fr 1fr}
+  .fib-inputs{grid-template-columns:1fr}
+}
+
+/* 600px - Small Tablet */
+@media(max-width:767px){
+  body{font-size:12px}
+  .wrap{padding:12px}
+  .top-row{grid-template-columns:1fr 1fr 1fr}
+}
+
+/* 768px - Standard Tablet */
+@media(max-width:899px){
+  body{font-size:12px}
+  .top-row{grid-template-columns:1fr 1fr}
+}
+
+/* 900px - Large Tablet */
+@media(max-width:1099px){
+  body{font-size:13px}
+  #dex-frame{height:350px}
+}
+
+/* 1100px+ - Desktop & Large Desktop */
 @media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
+
+/* 1480px+ - Large Desktop */
+@media(min-width:1481px){
+  .wrap{max-width:1600px;padding:16px}
+}
+
+/* Legacy breakpoints */
 @media(max-width:800px){.top-row{grid-template-columns:1fr 1fr}.bot-grid{grid-template-columns:1fr}#dex-frame{height:320px}}
 </style>
 </head>
