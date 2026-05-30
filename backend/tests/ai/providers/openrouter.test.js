@@ -41,4 +41,54 @@ describe('createOpenRouterComplete', () => {
     const complete = createOpenRouterComplete({ apiKey: 'k', fetchFn });
     await expect(complete({ system: 's', user: 'u' })).rejects.toThrow('429');
   });
+
+  describe('openrouter provider - edge cases', () => {
+    it('should throw on empty choices array', async () => {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [] })
+      });
+      const complete = createOpenRouterComplete({ apiKey: 'k', fetchFn });
+      await expect(complete({ system: 's', user: 'u' })).rejects.toThrow('empty choices array');
+    });
+
+    it('should throw on missing choices array', async () => {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({})
+      });
+      const complete = createOpenRouterComplete({ apiKey: 'k', fetchFn });
+      await expect(complete({ system: 's', user: 'u' })).rejects.toThrow('empty choices array');
+    });
+
+    it('should throw on missing message in choice', async () => {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{}] })
+      });
+      const complete = createOpenRouterComplete({ apiKey: 'k', fetchFn });
+      await expect(complete({ system: 's', user: 'u' })).rejects.toThrow('invalid message structure');
+    });
+
+    it('should throw on missing content in message', async () => {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: {} }] })
+      });
+      const complete = createOpenRouterComplete({ apiKey: 'k', fetchFn });
+      await expect(complete({ system: 's', user: 'u' })).rejects.toThrow('invalid message structure');
+    });
+
+    it('should successfully extract content from valid response', async () => {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'Valid response from OpenRouter' } }]
+        })
+      });
+      const complete = createOpenRouterComplete({ apiKey: 'k', fetchFn });
+      const result = await complete({ system: 's', user: 'u' });
+      expect(result).toBe('Valid response from OpenRouter');
+    });
+  });
 });

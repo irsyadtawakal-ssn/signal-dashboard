@@ -21,7 +21,27 @@ function createOpenRouterComplete({ apiKey, fetchFn = fetch, model = DEFAULT_MOD
       throw new Error(`OpenRouter request failed with status ${res.status}`);
     }
     const data = await res.json();
-    return data.choices[0].message.content;
+
+    // Defensive checks: validate response structure
+    if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+      const diagnostics = {
+        choicesLength: data.choices?.length,
+        hasChoices: !!data.choices,
+        isArray: Array.isArray(data.choices),
+      };
+      throw new Error(`OpenRouter API returned empty choices array: ${JSON.stringify(diagnostics)}`);
+    }
+
+    const choice = data.choices[0];
+    if (!choice.message || !choice.message.content) {
+      const messageStructure = {
+        hasMessage: !!choice.message,
+        hasContent: !!choice.message?.content,
+      };
+      throw new Error(`OpenRouter API returned invalid message structure: ${JSON.stringify(messageStructure)}`);
+    }
+
+    return choice.message.content;
   };
 }
 
