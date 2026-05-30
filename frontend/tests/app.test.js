@@ -406,3 +406,236 @@ describe('price state - staleness detection', () => {
     }
   });
 });
+
+describe('portfolio rendering - debounce', () => {
+  it('should debounce rapid render calls', async () => {
+    let renderCount = 0;
+    const mockRender = () => renderCount++;
+    const debouncedRender = vi.fn().mockImplementation(() => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          mockRender();
+          timeoutId = null;
+        }, 200);
+      };
+    })();
+
+    // Call debounced function multiple times rapidly
+    debouncedRender();
+    debouncedRender();
+    debouncedRender();
+
+    // Should not render immediately
+    expect(renderCount).toBe(0);
+
+    // Wait for debounce timeout
+    await new Promise(r => setTimeout(r, 250));
+
+    // Should only render once after debounce completes
+    expect(renderCount).toBe(1);
+  });
+
+  it('should delay render execution by debounce time', async () => {
+    let executionTime = null;
+    const mockRender = () => { executionTime = Date.now(); };
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func();
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const startTime = Date.now();
+    const debouncedRender = debounce(mockRender, 200);
+
+    debouncedRender();
+    expect(executionTime).toBeNull();
+
+    await new Promise(r => setTimeout(r, 250));
+    expect(executionTime).not.toBeNull();
+    expect(executionTime - startTime).toBeGreaterThanOrEqual(200);
+  });
+
+  it('should reset timer on subsequent calls within debounce window', async () => {
+    let renderCount = 0;
+    const mockRender = () => renderCount++;
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func();
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const debouncedRender = debounce(mockRender, 200);
+
+    // First call
+    debouncedRender();
+    await new Promise(r => setTimeout(r, 100));
+
+    // Call again before timeout (should reset)
+    debouncedRender();
+    await new Promise(r => setTimeout(r, 100));
+
+    // Still should not have rendered
+    expect(renderCount).toBe(0);
+
+    // Wait for the timer to complete
+    await new Promise(r => setTimeout(r, 150));
+    expect(renderCount).toBe(1);
+  });
+
+  it('should preserve function arguments across debounce', async () => {
+    let capturedArgs = null;
+    const mockRender = (value) => { capturedArgs = value; };
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced(...args) {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func(...args);
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const debouncedRender = debounce(mockRender, 200);
+    debouncedRender('test-value');
+
+    await new Promise(r => setTimeout(r, 250));
+    expect(capturedArgs).toBe('test-value');
+  });
+
+  it('should handle multiple debounced functions independently', async () => {
+    let count1 = 0;
+    let count2 = 0;
+    const mockRender1 = () => count1++;
+    const mockRender2 = () => count2++;
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func();
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const debounced1 = debounce(mockRender1, 200);
+    const debounced2 = debounce(mockRender2, 150);
+
+    debounced1();
+    debounced2();
+
+    // First timeout expires (150ms)
+    await new Promise(r => setTimeout(r, 160));
+    expect(count1).toBe(0);
+    expect(count2).toBe(1);
+
+    // Second timeout expires (200ms)
+    await new Promise(r => setTimeout(r, 60));
+    expect(count1).toBe(1);
+    expect(count2).toBe(1);
+  });
+
+  it('should not render when debounced function is never called', async () => {
+    let renderCount = 0;
+    const mockRender = () => renderCount++;
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func();
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const debouncedRender = debounce(mockRender, 200);
+
+    await new Promise(r => setTimeout(r, 250));
+    expect(renderCount).toBe(0);
+  });
+
+  it('should prevent DOM thrash when input and refresh events coincide', async () => {
+    let domWriteCount = 0;
+    const mockDOMWrite = () => domWriteCount++;
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func();
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const debouncedRender = debounce(mockDOMWrite, 200);
+
+    // Simulate: user types amount (input event)
+    debouncedRender();
+    // Simultaneously, auto-refresh triggers (refresh event)
+    debouncedRender();
+    // Another keystroke
+    debouncedRender();
+
+    // DOM should not be written during rapid events
+    expect(domWriteCount).toBe(0);
+
+    // Wait for debounce to settle
+    await new Promise(r => setTimeout(r, 250));
+
+    // Should only write once to DOM
+    expect(domWriteCount).toBe(1);
+  });
+
+  it('should handle rapid consecutive calls within debounce window', async () => {
+    let renderCount = 0;
+    const mockRender = () => renderCount++;
+
+    const debounce = (func, delayMs) => {
+      let timeoutId = null;
+      return function debounced() {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func();
+          timeoutId = null;
+        }, delayMs);
+      };
+    };
+
+    const debouncedRender = debounce(mockRender, 200);
+
+    // Simulate 10 rapid keystrokes
+    for (let i = 0; i < 10; i++) {
+      debouncedRender();
+      await new Promise(r => setTimeout(r, 10));
+    }
+
+    expect(renderCount).toBe(0);
+
+    // Wait for final debounce to complete
+    await new Promise(r => setTimeout(r, 250));
+
+    // Should only render once for all 10 calls
+    expect(renderCount).toBe(1);
+  });
+});

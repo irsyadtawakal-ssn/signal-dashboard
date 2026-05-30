@@ -3,6 +3,7 @@ import { createAuth } from './auth.js';
 import { createApiClient, AuthError } from './api-client.js';
 import { computePortfolio, computeExitLevels, nextTarget } from './portfolio.js';
 import { deriveComponents, computeSignal } from './signal.js';
+import { debounce } from './utils.js';
 
 const cfg = window.APP_CONFIG || {};
 const auth = createAuth({ createClient, supabaseUrl: cfg.supabaseUrl, anonKey: cfg.anonKey });
@@ -36,7 +37,7 @@ function loadPortfolio(uid) {
 ['oct-amt', 'avg-buy'].forEach((id) => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', () => {
-    renderPortfolio();
+    debouncedRenderPortfolio();
     auth.getUser()
       .then((u) => { if (u) savePortfolio(u.id); })
       .catch((error) => {
@@ -159,6 +160,11 @@ function renderPortfolio() {
     }).join('');
   }
 }
+
+// Debounced render to prevent DOM thrashing from simultaneous input + refresh events
+const debouncedRenderPortfolio = debounce(() => {
+  renderPortfolio();
+}, 200);
 
 function renderPrice(p) {
   if (!p || p.pending) return;
@@ -295,7 +301,7 @@ async function refresh() {
   }
 
   // Always render portfolio and signal with current state (using stale price if necessary)
-  renderPortfolio();
+  debouncedRenderPortfolio();
 
   // F5: signal scores from signal.js (uses raw backend sentiment fields + Fib inputs).
   try {
