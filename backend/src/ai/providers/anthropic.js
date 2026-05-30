@@ -13,7 +13,12 @@ function createAnthropicComplete({ apiKey, client = new Anthropic({ apiKey }), m
 
     // Defensive checks: validate response structure
     if (!msg.content || !Array.isArray(msg.content) || msg.content.length === 0) {
-      throw new Error(`Anthropic API returned empty content array. Full response: ${JSON.stringify(msg)}`);
+      const diagnostics = {
+        contentLength: msg.content?.length,
+        hasContent: !!msg.content,
+        isArray: Array.isArray(msg.content),
+      };
+      throw new Error(`Anthropic API returned empty content array: ${JSON.stringify(diagnostics)}`);
     }
 
     const textContent = msg.content.find(block => block && block.type === 'text');
