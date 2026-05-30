@@ -127,6 +127,7 @@ function renderAnalysis(a) {
   const el = $('ai-txt');
   if (el && a) {
     el.classList.remove('ld');
+    el.style.color = 'var(--text)';
     const parts = [];
     if (a.recommendation) parts.push(String(a.recommendation).toUpperCase());
     if (a.confidence != null) parts.push(`(${a.confidence}% confidence)`);
@@ -192,8 +193,7 @@ async function refresh() {
     // F5: signal scores from signal.js (uses raw backend sentiment fields + Fib inputs).
     renderSignal({ price, tweets, news });
 
-    const analysis = await api.analyze({ force: false }); // force:false → cheap, TTL-cached
-    if (!analysis.pending) renderAnalysis(analysis);
+    // analysis is manual — triggered by ANALYZE button only
   } catch (err) {
     if (err instanceof AuthError) { await auth.logout(); showLogin('Session expired — sign in again.'); }
     else { console.error('refresh failed:', err); }
@@ -212,8 +212,31 @@ if (logoutBtn) logoutBtn.addEventListener('click', async () => { await auth.logo
 const refreshBtn = $('rbtn');
 if (refreshBtn) refreshBtn.addEventListener('click', refresh);
 
+const analyzeBtn = $('analyze-btn');
+const analyzeStatus = $('analyze-status');
+if (analyzeBtn) {
+  analyzeBtn.addEventListener('click', async () => {
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = '⏳ ANALYZING...';
+    if (analyzeStatus) analyzeStatus.textContent = 'Sedang menganalisa...';
+    const aiTxt = $('ai-txt');
+    if (aiTxt) { aiTxt.style.color = 'var(--muted)'; aiTxt.textContent = 'Menganalisa OCT + Fibonacci + Twitter...'; }
+    try {
+      const analysis = await api.analyze({ force: true });
+      if (!analysis.pending) renderAnalysis(analysis);
+      if (analyzeStatus) analyzeStatus.textContent = 'Terakhir: ' + new Date().toLocaleTimeString('id-ID');
+    } catch (err) {
+      if (analyzeStatus) analyzeStatus.textContent = 'Gagal — coba lagi';
+      console.error('analyze error:', err);
+    } finally {
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = '▶ ANALYZE';
+    }
+  });
+}
+
 (async function init() {
   if (!auth.isConfigured) { showLogin('Supabase not configured — see frontend/README.md'); return; }
   const token = await auth.getToken();
-  if (token) { hideLogin(); renderPortfolio(); await refresh(); } else { showLogin(); }
+  if (token) { hideLogin(); renderPortfolio(); await refresh(); setInterval(refresh, 60_000); } else { showLogin(); }
 })();

@@ -321,7 +321,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 <!-- AI ANALYSIS -->
 <div class="ai-box">
-  <div id="ai-txt" class="ld">Menganalisa OCT + Fibonacci + Twitter</div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button id="analyze-btn" style="background:var(--accent);color:#000;border:none;padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;border-radius:2px">▶ ANALYZE</button>
+    <span id="analyze-status" style="font-size:9px;color:var(--muted)">Belum dianalisa</span>
+  </div>
+  <div id="ai-txt" style="font-size:12px;line-height:1.75;color:var(--muted)">Klik ANALYZE untuk mulai analisis AI.</div>
 </div>
 
 <!-- MAIN GRID -->
