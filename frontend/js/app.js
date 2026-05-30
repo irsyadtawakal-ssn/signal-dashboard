@@ -226,7 +226,7 @@ async function refresh() {
 }
 
 // ── Admin: show/hide Add User button based on logged-in email ──
-const ADMIN_EMAILS = ['creatormpb25@gmail.com']; // sync with server ADMIN_EMAILS env
+const ADMIN_EMAILS = ['admin@admin.com']; // sync with server ADMIN_EMAILS env
 
 async function setupAdminUI() {
   const user = await auth.getUser();
