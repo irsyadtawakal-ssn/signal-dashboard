@@ -121,4 +121,43 @@ describe('telegram schema migrations', () => {
     expect(notification.errorMessage).toBe('Chat ID not found');
     expect(notification.retryCount).toBe(1);
   });
+
+  it('enforces foreign key constraint on userId', () => {
+    // Attempt to insert a notification with non-existent userId should fail
+    expect(() => {
+      db.prepare(`
+        INSERT INTO failed_notifications (userId, signal, messageId, errorMessage, retryCount)
+        VALUES (?, ?, ?, ?, ?)
+      `).run('non-existent-user', 'BUY', null, 'Chat ID not found', 1);
+    }).toThrow();
+  });
+
+  it('handles nextRetryAt timestamp operations correctly', () => {
+    const userId = 'user-456';
+    const now = new Date().toISOString();
+    const futureTime = new Date(Date.now() + 3600000).toISOString(); // 1 hour later
+
+    // First insert a user
+    db.prepare(`
+      INSERT INTO users (id, email) VALUES (?, ?)
+    `).run(userId, 'user@example.com');
+
+    // Insert a failed notification with nextRetryAt
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, nextRetryAt, errorMessage, retryCount)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, 'SELL', futureTime, 'Retry needed', 2);
+
+    const notification = db.prepare(`
+      SELECT userId, signal, nextRetryAt, retryCount FROM failed_notifications
+      WHERE userId = ?
+    `).get(userId);
+
+    expect(notification.userId).toBe(userId);
+    expect(notification.signal).toBe('SELL');
+    expect(notification.retryCount).toBe(2);
+    expect(notification.nextRetryAt).toBeTruthy();
+    // Verify nextRetryAt is in the future
+    expect(new Date(notification.nextRetryAt).getTime()).toBeGreaterThan(Date.now());
+  });
 });

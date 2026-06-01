@@ -75,9 +75,15 @@ function createFailedNotificationsTable(db) {
         FOREIGN KEY (userId) REFERENCES users(id)
       );
     `);
+    // Add index for query performance
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_failed_notifications_userId ON failed_notifications(userId);`);
     console.log('✓ Created failed_notifications table');
   } catch (e) {
-    console.log('✓ failed_notifications table already exists');
+    if (e.message.includes('already exists') || e.message.includes('duplicate')) {
+      console.log('✓ failed_notifications table already exists');
+    } else {
+      throw e;  // Rethrow unexpected errors
+    }
   }
 }
 
