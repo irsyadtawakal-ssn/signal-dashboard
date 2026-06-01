@@ -14,6 +14,7 @@ const { buildTweets } = require('./tweetsService');
 const { buildPrice } = require('./priceService');
 const { analyzeMarket } = require('./ai/analysis');
 const { runPriceUpdate, runCacheUpdate, startScheduler } = require('./scheduler');
+const { createNotifier } = require('./services/notifierFactory');
 
 try {
   const config = loadConfig();
@@ -49,7 +50,10 @@ try {
     ? (data) => analyzeMarket({ ...data, complete, model: analysisModel })
     : null;
 
-  const app = createApp({ db, config, analyzeFn });
+  // Create notifier if Telegram bot token is configured
+  const notifier = config.telegramBotToken ? createNotifier({ botToken: config.telegramBotToken }) : null;
+
+  const app = createApp({ db, config, analyzeFn, notifier });
 
   startScheduler({
     tasks: [

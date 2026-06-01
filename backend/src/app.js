@@ -7,7 +7,7 @@ const analyzeRoute = require('./routes/analyze');
 const adminRoute = require('./routes/admin');
 const telegramRoute = require('./routes/telegram');
 
-function createApp({ db, config, analyzeFn }) {
+function createApp({ db, config, analyzeFn, notifier }) {
   const app = express();
   app.use(cors(config.corsOrigin ? { origin: config.corsOrigin } : {}));
   app.use(express.json());
@@ -20,7 +20,7 @@ function createApp({ db, config, analyzeFn }) {
   app.use('/api/telegram', publicRouter);
 
   // Protected — everything below requires a valid Supabase JWT
-  app.use('/api/analyze', requireAuth(config), analyzeRoute({ db, analyzeFn, ttlMs: config.analysisTtlMs }));
+  app.use('/api/analyze', requireAuth(config), analyzeRoute({ db, analyzeFn, ttlMs: config.analysisTtlMs, notifier }));
   app.use('/api/admin', requireAuth(config), adminRoute({ config }));
   app.use('/api/telegram', requireAuth(config), protectedRouter);
   app.use('/api', requireAuth(config), cacheRoute({ db }));

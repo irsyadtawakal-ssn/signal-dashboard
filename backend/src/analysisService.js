@@ -21,4 +21,14 @@ async function getAnalysis({ db, analyzeFn, ttlMs, force = false, now = Date.now
   return result;
 }
 
-module.exports = { getAnalysis };
+/**
+ * Gets the previous signal from cache (stored by analyze route)
+ * @param {Object} db - Database instance
+ * @returns {string|null} Previous signal (BUY, SELL, HOLD) or null if not set
+ */
+function getPreviousSignal(db) {
+  const lastSignal = getCache(db, 'lastSignal');
+  return lastSignal ? lastSignal.value : null;
+}
+
+module.exports = { getAnalysis, getPreviousSignal };
