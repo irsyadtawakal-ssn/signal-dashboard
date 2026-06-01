@@ -13,7 +13,7 @@ const { createAnthropicComplete } = require('./ai/providers/anthropic');
 const { buildTweets } = require('./tweetsService');
 const { buildPrice } = require('./priceService');
 const { analyzeMarket } = require('./ai/analysis');
-const { runPriceUpdate, runCacheUpdate, startScheduler } = require('./scheduler');
+const { runPriceUpdate, runCacheUpdate, startScheduler, retryFailedNotifications } = require('./scheduler');
 const { createNotifier } = require('./services/notifierFactory');
 
 try {
@@ -55,34 +55,53 @@ try {
 
   const app = createApp({ db, config, analyzeFn, notifier });
 
-  startScheduler({
-    tasks: [
-      { run: () => runPriceUpdate({ db, buildPriceFn }), intervalMs: config.priceIntervalMs },
-      {
-        run: () =>
-          runCacheUpdate({
-            db,
-            key: 'news',
-            produceFn: () => fetchNews({ limit: 10 }),
-          }),
-        intervalMs: config.newsIntervalMs,
-      },
-      {
-        run: () =>
-          runCacheUpdate({
-            db,
-            key: 'tweets',
-            produceFn: () =>
-              buildTweets({
-                fetchFn: () =>
-                  fetchTweets({ getJsonFn: getJson, token: config.twitterToken, keywords: config.twitterKeywords }),
-                classifyFn,
-              }),
-          }),
-        intervalMs: config.twitterIntervalMs,
-      },
-    ],
-  });
+  // Prepare tasks array with base tasks
+  const baseTasks = [
+    { run: () => runPriceUpdate({ db, buildPriceFn }), intervalMs: config.priceIntervalMs },
+    {
+      run: () =>
+        runCacheUpdate({
+          db,
+          key: 'news',
+          produceFn: () => fetchNews({ limit: 10 }),
+        }),
+      intervalMs: config.newsIntervalMs,
+    },
+    {
+      run: () =>
+        runCacheUpdate({
+          db,
+          key: 'tweets',
+          produceFn: () =>
+            buildTweets({
+              fetchFn: () =>
+                fetchTweets({ getJsonFn: getJson, token: config.twitterToken, keywords: config.twitterKeywords }),
+              classifyFn,
+            }),
+        }),
+      intervalMs: config.twitterIntervalMs,
+    },
+  ];
+
+  // Start scheduler with base tasks
+  startScheduler({ tasks: baseTasks });
+
+  // Add retry failed notifications job if Telegram is configured
+  if (config.telegramBotToken) {
+    // Dynamically import the ES module telegramNotifier and add retry job
+    import('./services/telegramNotifier.js')
+      .then((telegramNotifier) => {
+        // Schedule the retry job (runs every 60 seconds / 1 minute)
+        setInterval(
+          () => retryFailedNotifications({ db, telegramNotifier, config }),
+          60000
+        );
+        console.log('[Server] Retry scheduler for failed notifications initialized (1 minute interval)');
+      })
+      .catch((err) => {
+        console.warn('[Server] Failed to load telegramNotifier module for retry job:', err.message);
+      });
+  }
 
   app.listen(config.port, () => {
     console.log(`Signal Dashboard backend listening on :${config.port}`);

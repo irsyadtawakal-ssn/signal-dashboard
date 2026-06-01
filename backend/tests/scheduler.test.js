@@ -212,3 +212,203 @@ describe('startScheduler', () => {
     vi.useRealTimers();
   });
 });
+
+describe('retryFailedNotifications', () => {
+  let retryFailedNotifications;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    const scheduler = await import('../src/scheduler.js');
+    retryFailedNotifications = scheduler.retryFailedNotifications;
+  });
+
+  it('retries failed notification successfully and deletes from table', async () => {
+    const db = createDb(':memory:');
+    const userId = 'user-123';
+    const chatId = '987654321';
+    const signal = { recommendation: 'BUY', confidence: 0.85, summary: 'Test', components: {}, generatedAt: new Date().toISOString() };
+
+    // Create user with chat ID
+    db.prepare('INSERT INTO users (id, email, telegramChatId) VALUES (?, ?, ?)').run(userId, 'user@example.com', chatId);
+
+    // Insert failed notification
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, JSON.stringify(signal), 'Timeout', 1, new Date().toISOString());
+
+    const telegramNotifier = {
+      send: vi.fn().mockResolvedValue({ success: true, messageId: 12345 })
+    };
+
+    const config = { botToken: 'fake-token' };
+
+    // Run retry job
+    await retryFailedNotifications({ db, telegramNotifier, config });
+
+    // Verify notification was deleted
+    const remaining = db.prepare('SELECT id FROM failed_notifications WHERE userId = ?').all(userId);
+    expect(remaining.length).toBe(0);
+
+    // Verify send was called
+    expect(telegramNotifier.send).toHaveBeenCalled();
+  });
+
+  it('reschedules notification if retry fails', async () => {
+    const db = createDb(':memory:');
+    const userId = 'user-456';
+    const chatId = '987654321';
+    const signal = { recommendation: 'SELL', confidence: 0.75, summary: 'Test', components: {}, generatedAt: new Date().toISOString() };
+
+    // Create user with chat ID
+    db.prepare('INSERT INTO users (id, email, telegramChatId) VALUES (?, ?, ?)').run(userId, 'user@example.com', chatId);
+
+    // Insert failed notification with retryCount = 0
+    const now = new Date();
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, JSON.stringify(signal), 'Network error', 0, now.toISOString());
+
+    const telegramNotifier = {
+      send: vi.fn().mockResolvedValue({ success: false, error: 'Still failing' })
+    };
+
+    const config = { botToken: 'fake-token' };
+
+    // Run retry job
+    await retryFailedNotifications({ db, telegramNotifier, config });
+
+    // Verify notification was updated (not deleted)
+    const notification = db.prepare('SELECT retryCount, nextRetryAt FROM failed_notifications WHERE userId = ?').get(userId);
+    expect(notification).toBeDefined();
+    expect(notification.retryCount).toBe(1);
+    expect(new Date(notification.nextRetryAt).getTime()).toBeGreaterThan(now.getTime());
+  });
+
+  it('stops retrying when max retries reached', async () => {
+    const db = createDb(':memory:');
+    const userId = 'user-789';
+    const chatId = '987654321';
+    const signal = { recommendation: 'HOLD', confidence: 0.5, summary: 'Test', components: {}, generatedAt: new Date().toISOString() };
+
+    // Create user with chat ID
+    db.prepare('INSERT INTO users (id, email, telegramChatId) VALUES (?, ?, ?)').run(userId, 'user@example.com', chatId);
+
+    // Insert failed notification at max retries (3)
+    const now = new Date();
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, JSON.stringify(signal), 'Max retries reached', 3, now.toISOString());
+
+    const telegramNotifier = {
+      send: vi.fn().mockResolvedValue({ success: false, error: 'Still failing' })
+    };
+
+    const config = { botToken: 'fake-token' };
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    // Run retry job
+    await retryFailedNotifications({ db, telegramNotifier, config });
+
+    // Verify notification is still in table (not deleted)
+    const notification = db.prepare('SELECT id FROM failed_notifications WHERE userId = ?').get(userId);
+    expect(notification).toBeDefined();
+
+    // Verify warning was logged
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Max retries (3) reached')
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it('deletes notification if user has no telegramChatId', async () => {
+    const db = createDb(':memory:');
+    const userId = 'user-no-chat';
+    const signal = { recommendation: 'BUY', confidence: 0.85, summary: 'Test', components: {}, generatedAt: new Date().toISOString() };
+
+    // Create user WITHOUT chat ID
+    db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run(userId, 'user@example.com');
+
+    // Insert failed notification
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, JSON.stringify(signal), 'No chat ID', 0, new Date().toISOString());
+
+    const telegramNotifier = {
+      send: vi.fn()
+    };
+
+    const config = { botToken: 'fake-token' };
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    // Run retry job
+    await retryFailedNotifications({ db, telegramNotifier, config });
+
+    // Verify notification was deleted
+    const remaining = db.prepare('SELECT id FROM failed_notifications WHERE userId = ?').all(userId);
+    expect(remaining.length).toBe(0);
+
+    // Verify send was NOT called
+    expect(telegramNotifier.send).not.toHaveBeenCalled();
+
+    // Verify info was logged
+    expect(infoSpy).toHaveBeenCalledWith(
+      expect.stringContaining('User disconnected')
+    );
+
+    infoSpy.mockRestore();
+  });
+
+  it('uses exponential backoff delays correctly', async () => {
+    const db = createDb(':memory:');
+    const userId = 'user-backoff';
+    const chatId = '987654321';
+    const signal = { recommendation: 'BUY', confidence: 0.85, summary: 'Test', components: {}, generatedAt: new Date().toISOString() };
+
+    // Create user with chat ID
+    db.prepare('INSERT INTO users (id, email, telegramChatId) VALUES (?, ?, ?)').run(userId, 'user@example.com', chatId);
+
+    const telegramNotifier = {
+      send: vi.fn().mockResolvedValue({ success: false, error: 'Network error' })
+    };
+
+    const config = { botToken: 'fake-token' };
+
+    // Test each retry with different retryCount
+    // retryCount 0 -> delay 60000ms (1 minute)
+    // retryCount 1 -> delay 300000ms (5 minutes)
+    // retryCount 2 -> delay 1800000ms (30 minutes)
+    const delays = [60000, 300000, 1800000];
+
+    for (let retryCount = 0; retryCount < 3; retryCount++) {
+      // Delete previous record
+      db.prepare('DELETE FROM failed_notifications WHERE userId = ?').run(userId);
+
+      const now = Date.now();
+      const nowISO = new Date(now).toISOString();
+
+      // Insert notification with specific retryCount
+      db.prepare(`
+        INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(userId, JSON.stringify(signal), 'Network error', retryCount, nowISO);
+
+      // Run retry job
+      await retryFailedNotifications({ db, telegramNotifier, config });
+
+      // Verify nextRetryAt is set to now + exponential backoff delay
+      const notification = db.prepare('SELECT nextRetryAt FROM failed_notifications WHERE userId = ?').get(userId);
+      const nextRetryTime = new Date(notification.nextRetryAt).getTime();
+      const expectedDelay = delays[retryCount];
+      const expectedMinDelay = now + expectedDelay;
+
+      // Allow 500ms variance for test execution time
+      expect(nextRetryTime).toBeGreaterThanOrEqual(expectedMinDelay - 500);
+      expect(nextRetryTime).toBeLessThanOrEqual(expectedMinDelay + 500);
+    }
+  });
+});
