@@ -37,6 +37,12 @@ export function formatMessage(signal) {
 
   // Parse timestamp and format it (YYYY-MM-DD HH:MM:SS UTC)
   const date = new Date(generatedAt);
+
+  // Validate timestamp is valid
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid timestamp: ${generatedAt}`);
+  }
+
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   const day = String(date.getUTCDate()).padStart(2, '0');
@@ -81,7 +87,8 @@ export function formatMessage(signal) {
   sections.push('');
   sections.push(`Generated: ${formattedTime}`);
 
-  // Join all sections, filtering out any null/undefined
+  // Join all sections with newlines
+  // Note: defensive filter included for array robustness, though sections only contains strings
   const message = sections
     .filter((section) => section !== null && section !== undefined)
     .join('\n');

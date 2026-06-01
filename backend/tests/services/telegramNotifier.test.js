@@ -147,4 +147,29 @@ describe('formatMessage', () => {
     const hasSummary = message.length > 100;
     expect(hasRecommendation && hasConfidence && hasSummary).toBe(true);
   });
+
+  it('handles null/undefined components object gracefully', () => {
+    const signalWithoutComponents = {
+      recommendation: 'BUY',
+      confidence: 0.75,
+      summary: 'Basic signal without analysis components',
+      components: null,
+      generatedAt: '2026-06-01T12:00:00Z',
+    };
+
+    const message = formatMessage(signalWithoutComponents);
+
+    // Should still format successfully
+    expect(typeof message).toBe('string');
+    expect(message.length).toBeGreaterThan(0);
+
+    // Should include basic required fields
+    expect(message).toContain('BUY');
+    expect(message).toContain('75%');
+    expect(message).toContain('Basic signal without analysis components');
+
+    // Should include timestamp even without components
+    expect(message).toContain('Generated:');
+    expect(message).not.toContain('Analysis:');
+  });
 });
