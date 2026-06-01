@@ -3,120 +3,93 @@
  * This is a CommonJS wrapper around the ES module telegramNotifier
  */
 
-const TelegramBot = require('node-telegram-bot-api');
-
-/**
- * Formats a trading signal into a Telegram message
- * @param {Object} signal - The trading signal object
- * @returns {string} Formatted Telegram message
- */
-function formatMessage(signal) {
-  if (!signal) {
-    throw new Error('Signal object is required');
-  }
-
-  const { recommendation, confidence, summary, components, generatedAt } = signal;
-
-  // Map recommendations to emojis
-  const emojiMap = {
-    BUY: '🟢',
-    SELL: '🔴',
-    HOLD: '🟡',
-  };
-
-  const emoji = emojiMap[recommendation] || '⚪';
-  const confidencePercent = Math.round(confidence * 100);
-
-  // Parse timestamp and format it (YYYY-MM-DD HH:MM:SS UTC)
-  const date = new Date(generatedAt);
-
-  // Validate timestamp is valid
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid timestamp: ${generatedAt}`);
-  }
-
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-  const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
-
-  // Build message sections
-  const sections = [];
-
-  // Header with emoji and recommendation
-  sections.push(`${emoji} ${recommendation}`);
-
-  // Confidence
-  sections.push(`Confidence: ${confidencePercent}%`);
-
-  // Summary
-  if (summary) {
-    sections.push(`Summary: ${summary}`);
-  }
-
-  // Components section
-  if (components) {
-    sections.push(''); // Empty line before components
-    sections.push('Analysis:');
-
-    const componentKeys = ['priceAction', 'sentiment', 'twitterBuzz', 'movingAverage', 'fibonacci'];
-
-    componentKeys.forEach((key) => {
-      const value = components[key];
-      if (value) {
-        // Format key name: priceAction -> Price Action
-        const displayKey = key.replace(/([A-Z])/g, ' $1').trim();
-        const capitalizedKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
-        sections.push(`• ${capitalizedKey}: ${value}`);
-      }
-    });
-  }
-
-  // Timestamp
-  sections.push('');
-  sections.push(`Generated: ${formattedTime}`);
-
-  // Join all sections with newlines
-  const message = sections
-    .filter((section) => section !== null && section !== undefined)
-    .join('\n');
-
-  return message;
-}
-
 /**
  * Creates a notifier object for sending Telegram notifications
  * @param {Object} config - Configuration object with botToken
+ * @param {Object} db - Database instance for querying users and storing failed notifications
  * @returns {Object} Notifier object with send method
  */
-function createNotifier(config) {
-  if (!config || !config.botToken) {
+function createNotifier(config, db) {
+  if (!config || !config.botToken || !db) {
     return null;
   }
 
   return {
     /**
-     * Sends a trading signal notification
+     * Sends a trading signal notification to a user via Telegram
      * @param {Object} signal - The trading signal to send
+     * @param {string} userId - The user ID to send the notification to
      * @returns {Promise<Object>} Result with success/error status
+     *   - On success: { success: true, messageId: number }
+     *   - On skip (no chat ID): { skipped: true, reason: 'no_chat_id' }
+     *   - On error with retry: { success: false, error: string, stored_for_retry: true }
+     *   - On other error: { success: false, error: string }
      */
-    async send(signal) {
+    async send(signal, userId) {
       try {
-        // For now, this is a placeholder that logs but doesn't send
-        // When full Telegram integration is ready, implement actual sending
-        console.log('[Notifier] Would send signal:', signal.recommendation);
-        return { success: true, skipped: true, reason: 'telegram_not_yet_implemented' };
+        // 1. Query database to get the user's Telegram chat ID
+        const userRow = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get(userId);
+
+        if (!userRow || !userRow.telegramChatId) {
+          return {
+            skipped: true,
+            reason: 'no_chat_id',
+          };
+        }
+
+        const chatId = userRow.telegramChatId;
+
+        // 2. Dynamically import telegramNotifier (ES module) for sending
+        const telegramNotifier = await import('./telegramNotifier.js');
+
+        // 3. Call actual telegramNotifier.send() with the chat ID, signal, and config
+        const result = await telegramNotifier.send(chatId, signal, config);
+
+        // 4. Handle the result from telegramNotifier
+        if (result.success) {
+          // Send succeeded
+          return {
+            success: true,
+            messageId: result.messageId,
+          };
+        } else {
+          // Send failed - store for retry
+          const nextRetryAt = new Date(Date.now() + 60_000); // 1 minute from now
+          db.prepare(`
+            INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(userId, JSON.stringify(signal), result.error, 0, nextRetryAt.toISOString());
+
+          return {
+            success: false,
+            error: result.error,
+            stored_for_retry: true,
+          };
+        }
       } catch (error) {
-        return {
-          success: false,
-          error: error.message,
-        };
+        // Unexpected error - store for retry if possible
+        try {
+          const nextRetryAt = new Date(Date.now() + 60_000); // 1 minute from now
+          db.prepare(`
+            INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(userId, JSON.stringify(signal), error.message, 0, nextRetryAt.toISOString());
+
+          return {
+            success: false,
+            error: error.message,
+            stored_for_retry: true,
+          };
+        } catch (dbError) {
+          // Even retry storage failed - return error
+          return {
+            success: false,
+            error: error.message,
+          };
+        }
       }
     }
   };
 }
 
-module.exports = { createNotifier, formatMessage };
+module.exports = { createNotifier };

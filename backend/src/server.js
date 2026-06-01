@@ -51,7 +51,7 @@ try {
     : null;
 
   // Create notifier if Telegram bot token is configured
-  const notifier = config.telegramBotToken ? createNotifier({ botToken: config.telegramBotToken }) : null;
+  const notifier = config.telegramBotToken ? createNotifier({ botToken: config.telegramBotToken }, db) : null;
 
   const app = createApp({ db, config, analyzeFn, notifier });
 

@@ -12,7 +12,7 @@ module.exports = function analyzeRoute({ db, analyzeFn, ttlMs, notifier }) {
       const result = await getAnalysis({ db, analyzeFn, ttlMs, force });
 
       // Signal change detection: check if signal changed to BUY or SELL
-      if (notifier && result && result.recommendation) {
+      if (notifier && result && result.recommendation && req.user && req.user.id) {
         const newSignal = result.recommendation;
         const previousSignal = getPreviousSignal(db);
 
@@ -21,7 +21,7 @@ module.exports = function analyzeRoute({ db, analyzeFn, ttlMs, notifier }) {
           // Fire and forget - don't await, don't block response
           setImmediate(async () => {
             try {
-              await notifier.send(result);
+              await notifier.send(result, req.user.id);
             } catch (notifyErr) {
               // Log but don't throw - notification failure shouldn't break the analyze endpoint
               console.error('Signal change notification failed:', notifyErr.message);
