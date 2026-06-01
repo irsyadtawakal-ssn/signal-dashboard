@@ -1,0 +1,90 @@
+/**
+ * Telegram Notifier Service
+ * Formats trading signals into Telegram-ready messages
+ */
+
+/**
+ * Formats a trading signal into a Telegram message
+ * @param {Object} signal - The trading signal object
+ * @param {string} signal.recommendation - BUY, SELL, or HOLD
+ * @param {number} signal.confidence - Confidence score (0-1)
+ * @param {string} signal.summary - Signal summary text
+ * @param {Object} signal.components - Analysis components
+ * @param {string} signal.components.priceAction - Price action analysis
+ * @param {string} signal.components.sentiment - Sentiment analysis
+ * @param {string} signal.components.twitterBuzz - Twitter activity
+ * @param {string} signal.components.movingAverage - Moving average analysis
+ * @param {string} signal.components.fibonacci - Fibonacci level analysis
+ * @param {string} signal.generatedAt - ISO timestamp
+ * @returns {string} Formatted Telegram message
+ */
+export function formatMessage(signal) {
+  if (!signal) {
+    throw new Error('Signal object is required');
+  }
+
+  const { recommendation, confidence, summary, components, generatedAt } = signal;
+
+  // Map recommendations to emojis
+  const emojiMap = {
+    BUY: '🟢',
+    SELL: '🔴',
+    HOLD: '🟡',
+  };
+
+  const emoji = emojiMap[recommendation] || '⚪';
+  const confidencePercent = Math.round(confidence * 100);
+
+  // Parse timestamp and format it (YYYY-MM-DD HH:MM:SS UTC)
+  const date = new Date(generatedAt);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
+
+  // Build message sections
+  const sections = [];
+
+  // Header with emoji and recommendation
+  sections.push(`${emoji} ${recommendation}`);
+
+  // Confidence
+  sections.push(`Confidence: ${confidencePercent}%`);
+
+  // Summary
+  if (summary) {
+    sections.push(`Summary: ${summary}`);
+  }
+
+  // Components section
+  if (components) {
+    sections.push(''); // Empty line before components
+    sections.push('Analysis:');
+
+    const componentKeys = ['priceAction', 'sentiment', 'twitterBuzz', 'movingAverage', 'fibonacci'];
+
+    componentKeys.forEach((key) => {
+      const value = components[key];
+      if (value) {
+        // Format key name: priceAction -> Price Action
+        const displayKey = key.replace(/([A-Z])/g, ' $1').trim();
+        const capitalizedKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
+        sections.push(`• ${capitalizedKey}: ${value}`);
+      }
+    });
+  }
+
+  // Timestamp
+  sections.push('');
+  sections.push(`Generated: ${formattedTime}`);
+
+  // Join all sections, filtering out any null/undefined
+  const message = sections
+    .filter((section) => section !== null && section !== undefined)
+    .join('\n');
+
+  return message;
+}
