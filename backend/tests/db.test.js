@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createDb, getCache, setCache } from '../src/db.js';
+import { createDb, getCache, setCache, addTelegramChatIdColumn, createFailedNotificationsTable, initializeTelegramSchema } from '../src/db.js';
 
 let db;
 beforeEach(() => {
@@ -22,5 +22,103 @@ describe('cache layer', () => {
     setCache(db, 'price', { oct: 0.21 });
     setCache(db, 'price', { oct: 0.25 });
     expect(getCache(db, 'price').value).toEqual({ oct: 0.25 });
+  });
+});
+
+describe('telegram schema migrations', () => {
+  it('creates users table with telegramChatId column', () => {
+    const rows = db.prepare(`
+      SELECT name FROM sqlite_master
+      WHERE type='table' AND name='users'
+    `).all();
+    expect(rows.length).toBe(1);
+
+    const columns = db.prepare(`PRAGMA table_info(users)`).all();
+    const columnNames = columns.map(c => c.name);
+    expect(columnNames).toContain('id');
+    expect(columnNames).toContain('email');
+    expect(columnNames).toContain('telegramChatId');
+    expect(columnNames).toContain('createdAt');
+  });
+
+  it('creates failed_notifications table', () => {
+    const rows = db.prepare(`
+      SELECT name FROM sqlite_master
+      WHERE type='table' AND name='failed_notifications'
+    `).all();
+    expect(rows.length).toBe(1);
+
+    const columns = db.prepare(`PRAGMA table_info(failed_notifications)`).all();
+    const columnNames = columns.map(c => c.name);
+    expect(columnNames).toContain('id');
+    expect(columnNames).toContain('userId');
+    expect(columnNames).toContain('signal');
+    expect(columnNames).toContain('messageId');
+    expect(columnNames).toContain('errorMessage');
+    expect(columnNames).toContain('retryCount');
+    expect(columnNames).toContain('nextRetryAt');
+    expect(columnNames).toContain('createdAt');
+  });
+
+  it('handles duplicate column addition gracefully', () => {
+    // First call should succeed
+    addTelegramChatIdColumn(db);
+
+    // Second call should not throw and should handle gracefully
+    expect(() => {
+      addTelegramChatIdColumn(db);
+    }).not.toThrow();
+  });
+
+  it('handles duplicate table creation gracefully', () => {
+    // First call should succeed
+    createFailedNotificationsTable(db);
+
+    // Second call should not throw and should handle gracefully
+    expect(() => {
+      createFailedNotificationsTable(db);
+    }).not.toThrow();
+  });
+
+  it('allows inserting user with telegramChatId', () => {
+    const userId = 'user-123';
+    const chatId = '987654321';
+
+    db.prepare(`
+      INSERT INTO users (id, email, telegramChatId)
+      VALUES (?, ?, ?)
+    `).run(userId, 'user@example.com', chatId);
+
+    const user = db.prepare(`
+      SELECT id, email, telegramChatId FROM users WHERE id = ?
+    `).get(userId);
+
+    expect(user.id).toBe(userId);
+    expect(user.telegramChatId).toBe(chatId);
+  });
+
+  it('allows inserting failed notification', () => {
+    const userId = 'user-123';
+
+    // First insert a user
+    db.prepare(`
+      INSERT INTO users (id, email) VALUES (?, ?)
+    `).run(userId, 'user@example.com');
+
+    // Then insert a failed notification
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, messageId, errorMessage, retryCount)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, 'BUY', null, 'Chat ID not found', 1);
+
+    const notification = db.prepare(`
+      SELECT userId, signal, errorMessage, retryCount FROM failed_notifications
+      WHERE userId = ?
+    `).get(userId);
+
+    expect(notification.userId).toBe(userId);
+    expect(notification.signal).toBe('BUY');
+    expect(notification.errorMessage).toBe('Chat ID not found');
+    expect(notification.retryCount).toBe(1);
   });
 });
