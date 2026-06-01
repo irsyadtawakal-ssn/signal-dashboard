@@ -1,7 +1,9 @@
 /**
  * Telegram Notifier Service
- * Formats trading signals into Telegram-ready messages
+ * Formats trading signals into Telegram-ready messages and sends them via Telegram Bot API
  */
+
+import TelegramBot from 'node-telegram-bot-api';
 
 /**
  * Formats a trading signal into a Telegram message
@@ -94,4 +96,56 @@ export function formatMessage(signal) {
     .join('\n');
 
   return message;
+}
+
+/**
+ * Sends a trading signal to Telegram via Bot API
+ * @param {string|null} chatId - Telegram chat ID (returns early if null/undefined)
+ * @param {Object} signal - The trading signal object (same format as formatMessage)
+ * @param {Object} config - Configuration object
+ * @param {string} config.botToken - Telegram Bot API token
+ * @returns {Promise<Object>} Response object with success/skipped/error status
+ *   - On success: { success: true, messageId: number }
+ *   - On skip: { skipped: true, reason: 'no_chat_id' }
+ *   - On error: { success: false, error: string }
+ */
+export async function send(chatId, signal, config) {
+  // Skip if no chat ID
+  if (!chatId) {
+    return {
+      skipped: true,
+      reason: 'no_chat_id',
+    };
+  }
+
+  // Validate config has botToken
+  if (!config || !config.botToken) {
+    return {
+      success: false,
+      error: 'botToken is required in config',
+    };
+  }
+
+  try {
+    // Create bot instance
+    const bot = new TelegramBot(config.botToken);
+
+    // Format the message
+    const message = formatMessage(signal);
+
+    // Send the message
+    const result = await bot.sendMessage(chatId, message);
+
+    // Return success with message ID
+    return {
+      success: true,
+      messageId: result.message_id,
+    };
+  } catch (error) {
+    // Return error without throwing
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 }

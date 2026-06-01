@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatMessage } from '../../src/services/telegramNotifier.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { formatMessage, send } from '../../src/services/telegramNotifier.js';
 
 const sampleBuySignal = {
   recommendation: 'BUY',
@@ -171,5 +171,90 @@ describe('formatMessage', () => {
     // Should include timestamp even without components
     expect(message).toContain('Generated:');
     expect(message).not.toContain('Analysis:');
+  });
+});
+
+// Mock the node-telegram-bot-api module
+const mockSendMessage = vi.fn();
+vi.mock('node-telegram-bot-api', () => ({
+  default: vi.fn(() => ({
+    sendMessage: mockSendMessage,
+  })),
+}));
+
+describe('send', () => {
+  beforeEach(() => {
+    // Clear all mocks before each test
+    vi.clearAllMocks();
+    mockSendMessage.mockResolvedValue({ message_id: 12345 });
+  });
+
+  it('sends formatted message to Telegram API for valid chatId', async () => {
+    const chatId = '123456789';
+    const config = { botToken: 'test-bot-token' };
+
+    const result = await send(chatId, sampleBuySignal, config);
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBeDefined();
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      chatId,
+      expect.stringContaining('BUY')
+    );
+  });
+
+  it('skips notification if no chat ID', async () => {
+    const config = { botToken: 'test-bot-token' };
+
+    // Test with null chatId
+    let result = await send(null, sampleBuySignal, config);
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toBe('no_chat_id');
+    expect(mockSendMessage).not.toHaveBeenCalled();
+
+    // Test with undefined chatId
+    result = await send(undefined, sampleBuySignal, config);
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toBe('no_chat_id');
+  });
+
+  it('returns error if botToken missing in config', async () => {
+    const chatId = '123456789';
+    const config = {}; // No botToken
+
+    const result = await send(chatId, sampleBuySignal, config);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(result.error).toContain('botToken');
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it('handles Telegram API errors gracefully', async () => {
+    mockSendMessage.mockRejectedValueOnce(new Error('API rate limit exceeded'));
+
+    const chatId = '123456789';
+    const config = { botToken: 'test-bot-token' };
+
+    const result = await send(chatId, sampleBuySignal, config);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('API rate limit exceeded');
+    expect(result).not.toHaveProperty('skipped');
+  });
+
+  it('calls bot.sendMessage with correct parameters', async () => {
+    const chatId = '123456789';
+    const config = { botToken: 'test-bot-token' };
+
+    await send(chatId, sampleBuySignal, config);
+
+    // Verify sendMessage was called with chatId and formatted message
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
+    const [callChatId, callMessage] = mockSendMessage.mock.calls[0];
+    expect(callChatId).toBe(chatId);
+    expect(typeof callMessage).toBe('string');
+    expect(callMessage).toContain('🟢'); // BUY emoji
+    expect(callMessage).toContain('Confidence:');
   });
 });
