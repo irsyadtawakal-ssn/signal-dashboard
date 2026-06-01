@@ -31,10 +31,12 @@ function loadConfig(env = process.env) {
     adminEmails: env.ADMIN_EMAILS
       ? env.ADMIN_EMAILS.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
       : [],
-    telegramBotToken: env.TELEGRAM_BOT_TOKEN || '',
+    telegramBotToken: env.TELEGRAM_BOT_TOKEN || undefined,
     telegramApiTimeout: Number(env.TELEGRAM_API_TIMEOUT) || 5000,
     telegramMaxRetries: Number(env.TELEGRAM_MAX_RETRIES) || 3,
-    telegramRetryBackoff: [60000, 300000, 1800000, 3600000],
+    telegramRetryBackoff: env.TELEGRAM_RETRY_BACKOFF
+      ? env.TELEGRAM_RETRY_BACKOFF.split(',').map(Number)
+      : [60000, 300000, 1800000, 3600000],
   };
 }
 

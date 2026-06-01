@@ -100,4 +100,26 @@ describe('loadConfig', () => {
     expect(cfg.analysisTtlMs).toBe(60000);
     expect(cfg.analysisModel).toBe('custom-opus');
   });
+
+  it('applies telegram config defaults', () => {
+    const cfg = loadConfig({ SUPABASE_JWT_SECRET: 'secret' });
+    expect(cfg.telegramBotToken).toBeUndefined();
+    expect(cfg.telegramApiTimeout).toBe(5000);
+    expect(cfg.telegramMaxRetries).toBe(3);
+    expect(cfg.telegramRetryBackoff).toEqual([60000, 300000, 1800000, 3600000]);
+  });
+
+  it('reads telegram config overrides', () => {
+    const cfg = loadConfig({
+      SUPABASE_JWT_SECRET: 'secret',
+      TELEGRAM_BOT_TOKEN: 'bot123',
+      TELEGRAM_API_TIMEOUT: '10000',
+      TELEGRAM_MAX_RETRIES: '5',
+      TELEGRAM_RETRY_BACKOFF: '30000,120000,600000',
+    });
+    expect(cfg.telegramBotToken).toBe('bot123');
+    expect(cfg.telegramApiTimeout).toBe(10000);
+    expect(cfg.telegramMaxRetries).toBe(5);
+    expect(cfg.telegramRetryBackoff).toEqual([30000, 120000, 600000]);
+  });
 });
