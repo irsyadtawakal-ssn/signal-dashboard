@@ -184,3 +184,214 @@ describe('POST /api/telegram/connect', () => {
     });
   });
 });
+
+describe('POST /api/telegram/verify/:code', () => {
+  let db;
+  let app;
+
+  beforeEach(() => {
+    db = createDb(':memory:');
+    app = makeApp(db);
+    // Create a test user
+    db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run('user-123', 'test@example.com');
+  });
+
+  describe('Valid code verification', () => {
+    it('verifies a valid code and saves chatId', async () => {
+      const token = signTestToken({ sub: 'user-123' });
+
+      // Step 1: Generate a code
+      const connectRes = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+
+      const code = connectRes.body.code;
+
+      // Step 2: Verify the code with chatId
+      const verifyRes = await request(app)
+        .post(`/api/telegram/verify/${code}`)
+        .send({ chatId: '12345' });
+
+      expect(verifyRes.status).toBe(200);
+      expect(verifyRes.body.success).toBe(true);
+      expect(verifyRes.body.message).toBeDefined();
+
+      // Step 3: Check that chatId was saved to database
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get('user-123');
+      expect(user.telegramChatId).toBe('12345');
+    });
+
+    it('returns success message when chatId is saved', async () => {
+      const token = signTestToken({ sub: 'user-123' });
+
+      const connectRes = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+
+      const code = connectRes.body.code;
+
+      const verifyRes = await request(app)
+        .post(`/api/telegram/verify/${code}`)
+        .send({ chatId: '12345' });
+
+      expect(verifyRes.status).toBe(200);
+      expect(verifyRes.body.success).toBe(true);
+      expect(verifyRes.body.message).toContain('successfully');
+    });
+  });
+
+  describe('Invalid code handling', () => {
+    it('returns 400 with invalid_code error for non-existent code', async () => {
+      const verifyRes = await request(app)
+        .post('/api/telegram/verify/INVALID')
+        .send({ chatId: '12345' });
+
+      expect(verifyRes.status).toBe(400);
+      expect(verifyRes.body.error).toBe('invalid_code');
+    });
+
+    it('returns 400 with invalid_code error for malformed code', async () => {
+      const verifyRes = await request(app)
+        .post('/api/telegram/verify/short')
+        .send({ chatId: '12345' });
+
+      expect(verifyRes.status).toBe(400);
+      expect(verifyRes.body.error).toBe('invalid_code');
+    });
+  });
+
+  describe('Code expiration handling', () => {
+    it('returns 400 with code_expired error for expired code', async () => {
+      const token = signTestToken({ sub: 'user-123' });
+
+      // Create a code and manually expire it
+      const connectRes = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+
+      const code = connectRes.body.code;
+
+      // Simulate time passing by manipulating the stored code
+      // We need to create an expired code in authCodes
+      const router = app._router.stack
+        .find(layer => layer.name === 'router')
+        .handle;
+
+      // Access the authCodes from the router
+      // Since authCodes is not exported, we'll test expiration by directly setting it
+      const mockExpiredCode = {
+        code,
+        expiresAt: Date.now() - 1000, // Expired 1 second ago
+      };
+
+      // For this test to work, we need to simulate an expired code
+      // We'll manually create one by crafting an app instance that has an expired code
+      vi.useFakeTimers();
+      const beforeTime = Date.now();
+      vi.setSystemTime(beforeTime);
+
+      const connectRes2 = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+      const codeToExpire = connectRes2.body.code;
+
+      // Fast forward time by 11 minutes (more than the 10-minute expiry)
+      vi.setSystemTime(beforeTime + 11 * 60 * 1000);
+
+      const verifyRes = await request(app)
+        .post(`/api/telegram/verify/${codeToExpire}`)
+        .send({ chatId: '12345' });
+
+      expect(verifyRes.status).toBe(400);
+      expect(verifyRes.body.error).toBe('code_expired');
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('Duplicate chatId handling', () => {
+    it('returns 400 if same chatId is already connected to different user', async () => {
+      // Create second user
+      db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run('user-456', 'test2@example.com');
+
+      const token1 = signTestToken({ sub: 'user-123' });
+      const token2 = signTestToken({ sub: 'user-456' });
+
+      // Connect first user with chatId
+      const connectRes1 = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({});
+      const code1 = connectRes1.body.code;
+
+      const verifyRes1 = await request(app)
+        .post(`/api/telegram/verify/${code1}`)
+        .send({ chatId: '12345' });
+
+      expect(verifyRes1.status).toBe(200);
+
+      // Try to connect second user with same chatId
+      const connectRes2 = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token2}`)
+        .send({});
+      const code2 = connectRes2.body.code;
+
+      const verifyRes2 = await request(app)
+        .post(`/api/telegram/verify/${code2}`)
+        .send({ chatId: '12345' });
+
+      expect(verifyRes2.status).toBe(400);
+      expect(verifyRes2.body.error).toBeDefined();
+    });
+  });
+
+  describe('Code cleanup', () => {
+    it('deletes the code after successful verification', async () => {
+      const token = signTestToken({ sub: 'user-123' });
+
+      const connectRes = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+      const code = connectRes.body.code;
+
+      const verifyRes = await request(app)
+        .post(`/api/telegram/verify/${code}`)
+        .send({ chatId: '12345' });
+
+      expect(verifyRes.status).toBe(200);
+
+      // Try to verify the same code again - should fail
+      const verifyRes2 = await request(app)
+        .post(`/api/telegram/verify/${code}`)
+        .send({ chatId: '67890' });
+
+      expect(verifyRes2.status).toBe(400);
+      expect(verifyRes2.body.error).toBe('invalid_code');
+    });
+  });
+
+  describe('Missing or invalid body', () => {
+    it('returns 400 if chatId is missing', async () => {
+      const token = signTestToken({ sub: 'user-123' });
+
+      const connectRes = await request(app)
+        .post('/api/telegram/connect')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+      const code = connectRes.body.code;
+
+      const verifyRes = await request(app)
+        .post(`/api/telegram/verify/${code}`)
+        .send({});
+
+      expect(verifyRes.status).toBe(400);
+      expect(verifyRes.body.error).toBeDefined();
+    });
+  });
+});

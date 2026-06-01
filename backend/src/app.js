@@ -15,10 +15,14 @@ function createApp({ db, config, analyzeFn }) {
   // Public
   app.use('/api/health', healthRoute());
 
+  // Get both public and protected telegram routes
+  const { publicRouter, protectedRouter } = telegramRoute({ db, config });
+  app.use('/api/telegram', publicRouter);
+
   // Protected — everything below requires a valid Supabase JWT
   app.use('/api/analyze', requireAuth(config), analyzeRoute({ db, analyzeFn, ttlMs: config.analysisTtlMs }));
   app.use('/api/admin', requireAuth(config), adminRoute({ config }));
-  app.use('/api/telegram', requireAuth(config), telegramRoute({ db, config }));
+  app.use('/api/telegram', requireAuth(config), protectedRouter);
   app.use('/api', requireAuth(config), cacheRoute({ db }));
 
   return app;
