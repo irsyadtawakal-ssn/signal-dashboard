@@ -11,6 +11,7 @@ async function fetchOctPrice({ getJsonFn = getJson, tokenAddress }) {
   return {
     oct: toNum(pair.priceUsd),
     octChange24h: pair.priceChange ? toNum(pair.priceChange.h24) : null,
+    octVolume24h: toNum(pair.volume?.h24),
   };
 }
 
