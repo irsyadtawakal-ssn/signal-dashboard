@@ -25,6 +25,7 @@ function loadConfig(env = process.env) {
       ? env.TWITTER_KEYWORDS.split(',').map((s) => s.trim()).filter(Boolean)
       : ['Octra', '$OCT', 'FHE layer1', 'OCT listing'],
     analysisTtlMs: Number(env.ANALYSIS_TTL_MS) || 600000,
+    analysisScheduleIntervalMs: Number(env.ANALYSIS_SCHEDULE_MS) || 600000,
     analysisModel: env.ANALYSIS_MODEL || undefined,
     corsOrigin: env.CORS_ORIGIN || undefined,
     supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY || undefined,
