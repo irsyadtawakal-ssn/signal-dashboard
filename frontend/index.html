@@ -102,6 +102,26 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 .fib-dtab{font-size:9px;padding:4px 12px;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-family:var(--font);letter-spacing:1px;transition:.15s}
 .fib-dtab.on{border-color:var(--yellow);color:var(--yellow);background:rgba(255,215,0,.06)}
 
+/* TELEGRAM MODAL */
+.tg-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:none;align-items:center;justify-content:center}
+.tg-modal-bg.open{display:flex}
+.tg-modal{background:var(--surface);border:1px solid var(--accent);padding:22px 24px;min-width:300px;max-width:420px;width:90%;position:relative}
+.tg-modal h3{font-family:var(--ui);font-size:13px;font-weight:700;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.tg-modal p{font-size:10px;color:var(--muted2);line-height:1.65;margin-bottom:12px}
+.tg-modal p a{color:var(--accent);text-decoration:none}
+.tg-modal p a:hover{text-decoration:underline}
+.tg-modal label{font-size:8px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px;text-transform:uppercase}
+.tg-modal input{background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;width:100%;outline:none;margin-bottom:12px;transition:.2s}
+.tg-modal input:focus{border-color:var(--accent)}
+.tg-modal-status{font-size:9px;padding:5px 10px;margin-bottom:12px;letter-spacing:1px;display:inline-block}
+.tg-modal-status.connected{color:var(--green);border:1px solid rgba(0,255,136,.3);background:rgba(0,255,136,.05)}
+.tg-modal-status.disconnected{color:var(--muted);border:1px solid var(--border)}
+.tg-modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.tg-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:var(--font);line-height:1}
+.tg-close:hover{color:var(--text)}
+.tg-msg{font-size:9px;margin-top:8px;min-height:14px;letter-spacing:.5px}
+.tg-msg.ok{color:var(--green)}.tg-msg.err{color:var(--red)}
+
 /* AI */
 .ai-box{border:1px solid var(--accent);background:rgba(0,229,255,.025);padding:12px 16px;margin-bottom:12px;position:relative}
 .ai-box::before{content:'⚡ AI SIGNAL';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 7px;font-size:8px;color:var(--accent);letter-spacing:2px}
@@ -322,6 +342,25 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 </div>
 <div class="wrap">
 
+<!-- TELEGRAM MODAL -->
+<div class="tg-modal-bg" id="tg-modal-bg">
+  <div class="tg-modal">
+    <button class="tg-close" id="tg-close">&#x2715;</button>
+    <h3>Telegram Notifications</h3>
+    <div id="tg-status" class="tg-modal-status disconnected">NOT CONNECTED</div>
+    <p>
+      Dapatkan sinyal BUY/SELL langsung di Telegram.<br>
+      Caranya: chat <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> &rarr;
+      bot akan balas dengan Chat ID kamu &rarr; paste di bawah.
+    </p>
+    <label for="tg-chatid-input">CHAT ID</label>
+    <input type="text" id="tg-chatid-input" placeholder="e.g. 123456789" maxlength="21" inputmode="numeric">
+    <div class="tg-modal-actions">
+      <button class="btn" id="tg-save-btn">SAVE</button>
+    </div>
+    <div class="tg-msg" id="tg-msg"></div>
+  </div>
+</div>
 <!-- HEADER -->
 <header>
   <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 · DexScreener Chart · Fibonacci · Twitter Feed</small></div>
@@ -331,6 +370,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     <button class="btn" id="rbtn">⟳ REFRESH</button>
   </div>
   <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+    <button id="tg-btn" style="font-size:9px;padding:4px 10px;background:transparent;border:1px solid rgba(0,229,255,.4);color:var(--accent);cursor:pointer;font-family:var(--font);letter-spacing:1px">TELEGRAM</button>
     <button id="admin-add-user-btn" style="display:none;font-size:9px;padding:4px 10px;background:transparent;border:1px solid var(--yellow);color:var(--yellow);cursor:pointer">+ ADD USER</button>
     <button id="logout-btn" style="font-size:9px;padding:4px 10px;background:transparent;border:1px solid #243049;color:#8aa0c0;cursor:pointer">LOGOUT</button>
   </div>
