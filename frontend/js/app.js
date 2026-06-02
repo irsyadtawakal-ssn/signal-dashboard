@@ -171,6 +171,7 @@ function renderPrice(p) {
   const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.textContent = val; };
   set('prc', p.oct != null ? `$${p.oct}` : '—');
   set('chg', p.octChange24h != null ? `${parseFloat(p.octChange24h).toFixed(2)}%` : '—');
+  set('psub', p.octChange24h != null ? `${parseFloat(p.octChange24h).toFixed(2)}% · 24h Change` : 'Loading...');
   set('btcp', p.btc != null ? `$${p.btc}` : '—');
   set('ethp', p.eth != null ? `$${p.eth}` : '—');
   set('btcv', p.btc != null ? `$${p.btc}` : '—');
