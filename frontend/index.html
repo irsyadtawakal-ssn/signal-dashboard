@@ -257,13 +257,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   /* Focus indicators for accessibility */
   button:focus,input:focus,a:focus,.tab:focus,.twf:focus,.fib-dtab:focus{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* Portfolio collapse/expand on mobile */
-  .portfolio-toggle-btn{display:flex;align-items:center;cursor:pointer;font-size:10px;color:var(--yellow);margin-left:auto;padding:8px 12px;border:1px solid var(--yellow);transition:0.2s;white-space:nowrap;min-height:40px;justify-content:center}
-  .portfolio-toggle-btn:hover{background:rgba(255,215,0,0.1)}
-  .portfolio-toggle-btn:active{opacity:0.8}
-  .port-bar input[type="number"],.port-bar .pstats{display:none}
-  #portfolio-toggle:checked ~ input[type="number"]{display:flex;width:100%;flex-basis:100%;margin-top:8px}
-  #portfolio-toggle:checked ~ .pstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;width:100%;flex-basis:100%;margin-top:8px}
+  /* Portfolio always visible — no collapse */
+  .portfolio-toggle-btn{display:none!important}
+  .port-bar input[type="number"],.port-bar .pstats{display:flex!important}
 }
 
 /* 480px - Large Mobile (2 columns) */
