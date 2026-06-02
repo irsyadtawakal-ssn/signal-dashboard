@@ -203,6 +203,112 @@ describe('POST /api/analyze', () => {
       expect(responseTime).toBeLessThan(150);
     });
 
+    it('triggers notification when MA crosses from below to above', async () => {
+      const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+      let callCount = 0;
+      const analyzeFn = vi.fn().mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          recommendation: 'HOLD',
+          confidence: 0.5,
+          summary: 's',
+          components: {
+            movingAverage: callCount === 1 ? 'Price below 50-day MA' : 'Price above 50-day MA'
+          }
+        });
+      });
+      const { app } = makeApp(analyzeFn, mockNotifier);
+      const auth = `Bearer ${signTestToken()}`;
+
+      // First call — sets lastMADirection to 'below'
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+      mockNotifier.send.mockClear();
+
+      // Second call — MA changes to 'above', should trigger notification
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+
+      expect(mockNotifier.send).toHaveBeenCalled();
+    });
+
+    it('triggers notification when MA crosses from above to below', async () => {
+      const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+      let callCount = 0;
+      const analyzeFn = vi.fn().mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          recommendation: 'HOLD',
+          confidence: 0.5,
+          summary: 's',
+          components: {
+            movingAverage: callCount === 1 ? 'Price above 20-day MA' : 'Price fell below 20-day MA'
+          }
+        });
+      });
+      const { app } = makeApp(analyzeFn, mockNotifier);
+      const auth = `Bearer ${signTestToken()}`;
+
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+      mockNotifier.send.mockClear();
+
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+
+      expect(mockNotifier.send).toHaveBeenCalled();
+    });
+
+    it('does not trigger MA notification when MA direction is unchanged', async () => {
+      const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+      const analyzeFn = vi.fn().mockResolvedValue({
+        recommendation: 'HOLD',
+        confidence: 0.5,
+        summary: 's',
+        components: { movingAverage: 'Price above 50-day MA' }
+      });
+      const { app } = makeApp(analyzeFn, mockNotifier);
+      const auth = `Bearer ${signTestToken()}`;
+
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+      mockNotifier.send.mockClear();
+
+      // Same MA direction — no notification
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+
+      expect(mockNotifier.send).not.toHaveBeenCalled();
+    });
+
+    it('sends only one notification when both signal and MA change in same analysis', async () => {
+      const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+      let callCount = 0;
+      const analyzeFn = vi.fn().mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          recommendation: callCount === 1 ? 'HOLD' : 'BUY',
+          confidence: 0.8,
+          summary: 's',
+          components: {
+            movingAverage: callCount === 1 ? 'Price below 50-day MA' : 'Price above 50-day MA'
+          }
+        });
+      });
+      const { app } = makeApp(analyzeFn, mockNotifier);
+      const auth = `Bearer ${signTestToken()}`;
+
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+      mockNotifier.send.mockClear();
+
+      // Signal changes to BUY AND MA crosses — only one notification
+      await request(app).post('/api/analyze').set('Authorization', auth).send({ force: true });
+      await new Promise(r => setTimeout(r, 50));
+
+      expect(mockNotifier.send).toHaveBeenCalledTimes(1);
+    });
+
     it('returns 200 regardless of notification status', async () => {
       const failingNotifier = { send: vi.fn().mockRejectedValue(new Error('Telegram offline')) };
       let callCount = 0;
