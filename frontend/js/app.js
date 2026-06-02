@@ -524,5 +524,5 @@ if (adminInviteForm) {
 (async function init() {
   if (!auth.isConfigured) { showLogin('Supabase not configured — see frontend/README.md'); return; }
   const token = await auth.getToken();
-  if (token) { hideLogin(); loadTgStatus(); await setupAdminUI(); renderPortfolio(); await refresh(); setInterval(refresh, 60_000); } else { showLogin(); }
+  if (token) { hideLogin(); loadTgStatus(); await setupAdminUI(); renderPortfolio(); await refresh(); setInterval(refresh, 10_000); } else { showLogin(); }
 })();
