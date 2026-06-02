@@ -6,6 +6,26 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 /**
+ * Extracts price and percentage from price action text
+ * @param {string} priceAction - Raw price action text
+ * @returns {string} Simplified price format like "$0.1258 (-2.76%)"
+ */
+function extractPriceInfo(priceAction) {
+  if (!priceAction) return '';
+
+  // Look for pattern: percentage like "-2.76%" and price like "$0.1258"
+  const percentMatch = priceAction.match(/(-?\d+\.?\d*%)/);
+  const priceMatch = priceAction.match(/\$(\d+\.?\d+)/);
+
+  if (priceMatch && percentMatch) {
+    return `$${priceMatch[1]} (${percentMatch[1]})`;
+  }
+
+  // Fallback: return original if pattern doesn't match
+  return priceAction;
+}
+
+/**
  * Formats a trading signal into a Telegram message
  * @param {Object} signal - The trading signal object
  * @param {string} signal.recommendation - BUY, SELL, or HOLD
@@ -66,7 +86,7 @@ function formatMessage(signal) {
   if (components && components.priceAction) {
     sections.push(''); // Empty line for separation
     sections.push(`*UPDATED PRICE*`);
-    sections.push(components.priceAction);
+    sections.push(extractPriceInfo(components.priceAction));
   }
 
   // Summary
