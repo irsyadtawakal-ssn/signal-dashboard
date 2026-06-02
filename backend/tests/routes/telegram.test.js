@@ -490,6 +490,18 @@ describe('PUT /api/telegram/chatid', () => {
     expect(user.telegramChatId).toBe('987654321');
   });
 
+  it('accepts negative chatId for Telegram group IDs', async () => {
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .put('/api/telegram/chatid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ chatId: '-100123456789' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    const user = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get('user-123');
+    expect(user.telegramChatId).toBe('-100123456789');
+  });
+
   it('overwrites a previously saved chatId', async () => {
     db.prepare('UPDATE users SET telegramChatId = ? WHERE id = ?').run('111111111', 'user-123');
     const token = signTestToken({ sub: 'user-123' });
