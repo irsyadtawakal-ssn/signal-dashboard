@@ -49,15 +49,18 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 }
 
 /* PORTFOLIO */
-.port-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.03);margin-bottom:12px}
-.port-bar label{font-size:9px;color:var(--yellow);letter-spacing:2px;white-space:nowrap}
-.port-bar input{background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;width:140px;outline:none;transition:.2s}
+.port-bar{display:grid;grid-template-columns:auto 1fr auto 1fr auto;align-items:center;gap:16px 12px;padding:12px 16px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.03);margin-bottom:12px}
+.port-bar label{font-size:8px;color:var(--yellow);letter-spacing:1.5px;text-transform:uppercase}
+.port-bar input{background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:11px;padding:6px 10px;width:100%;outline:none;transition:.2s}
 .port-bar input:focus{border-color:var(--accent)}
-.port-bar input::placeholder{color:var(--muted);font-size:10px}
-.pstats{display:flex;gap:14px;flex-wrap:wrap;margin-left:auto}
-.ps{text-align:center}
-.psl{font-size:8px;color:var(--muted);letter-spacing:1px}
-.psv{font-family:var(--ui);font-size:16px;font-weight:700}
+.port-bar input::placeholder{color:var(--muted);font-size:9px}
+.port-bar-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:space-between;align-items:center}
+.pstats{display:flex;gap:12px;flex-wrap:wrap;flex:1}
+.ps{text-align:center;display:flex;flex-direction:column;gap:4px}
+.psl{font-size:7px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.psv{font-family:var(--ui);font-size:14px;font-weight:700}
+#save-img-btn{background:transparent;border:1px solid var(--yellow);color:var(--yellow);font-size:8px;font-weight:700;letter-spacing:1px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:.15s;font-family:var(--font)}
+#save-img-btn:hover{background:rgba(255,215,0,.1)}
 
 /* TOP SIGNAL ROW */
 .top-row{display:grid;grid-template-columns:1.1fr .9fr 1fr 1fr;gap:2px;background:var(--border);margin-bottom:12px}
@@ -227,8 +230,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   .sb{padding:10px 12px}
   .sn{width:auto}
   .top-row{grid-template-columns:1fr;gap:2px}
-  .port-bar{flex-direction:column;gap:8px;position:relative}
-  .pstats{gap:10px}
+  .port-bar{grid-template-columns:1fr;gap:8px 10px;padding:10px 12px}
+  .port-bar label{font-size:7px}
+  .port-bar input{font-size:10px;padding:5px 8px}
+  .pstats{gap:8px}
   .fib-inputs{grid-template-columns:1fr;gap:8px}
   .fib-group label{font-size:8px}
   .fib-group input{font-size:11px;padding:4px 6px}
@@ -413,18 +418,20 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <div class="port-bar">
     <input type="checkbox" id="portfolio-toggle" style="display:none;" />
     <label for="portfolio-toggle" class="portfolio-toggle-btn">▼</label>
-    <label>JUMLAH OCT:</label>
+    <label for="oct-amt">JUMLAH OCT</label>
     <input type="number" id="oct-amt" placeholder="e.g. 10000" min="0" step="any">
-    <label>AVG BUY $:</label>
+    <label for="avg-buy">AVG BUY $</label>
     <input type="number" id="avg-buy" placeholder="e.g. 0.05" min="0" step="any">
-    <div class="pstats">
-      <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$—</div></div>
-      <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$—</div></div>
-      <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">—%</div></div>
-      <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow);font-size:11px">—</div></div>
-      <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green);font-size:12px">$—</div></div>
+    <div class="port-bar-actions">
+      <div class="pstats">
+        <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$—</div></div>
+        <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$—</div></div>
+        <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">—%</div></div>
+        <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow)">—</div></div>
+        <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green)">$—</div></div>
+      </div>
+      <button id="save-img-btn" title="Save as Image">📷 SAVE</button>
     </div>
-    <button id="save-img-btn" title="Save as Image" style="margin-left:auto;background:transparent;border:1px solid var(--yellow);color:var(--yellow);font-size:9px;font-weight:700;letter-spacing:1px;padding:5px 10px;cursor:pointer;border-radius:2px;white-space:nowrap">📷 SAVE</button>
   </div>
 </div>
 
