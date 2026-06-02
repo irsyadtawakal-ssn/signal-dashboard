@@ -8,7 +8,7 @@ const TelegramBot = require('node-telegram-bot-api');
 /**
  * Extracts price and percentage from price action text
  * @param {string} priceAction - Raw price action text
- * @returns {string} Simplified price format like "$0.1258 (-2.76%)"
+ * @returns {string} Simplified price format like "$0.1258 (24H: -2.76%)"
  */
 function extractPriceInfo(priceAction) {
   if (!priceAction) return '';
@@ -18,7 +18,7 @@ function extractPriceInfo(priceAction) {
   const priceMatch = priceAction.match(/\$(\d+\.?\d+)/);
 
   if (priceMatch && percentMatch) {
-    return `$${priceMatch[1]} (${percentMatch[1]})`;
+    return `$${priceMatch[1]} (24H: ${percentMatch[1]})`;
   }
 
   // Fallback: return original if pattern doesn't match
