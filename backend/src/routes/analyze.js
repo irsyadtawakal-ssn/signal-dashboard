@@ -9,6 +9,14 @@ module.exports = function analyzeRoute({ db, analyzeFn, ttlMs, notifier }) {
     if (!analyzeFn) return res.status(503).json({ error: 'analysis unavailable' });
     const force = !!(req.body && req.body.force === true);
     try {
+      // Auto-create users row if doesn't exist
+      const userId = req.user.id;
+      const userEmail = req.user.email;
+      const existingUser = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+      if (!existingUser) {
+        db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run(userId, userEmail);
+        console.log(`[Analyze] Created users row for ${userEmail} (${userId})`);
+      }
       const result = await getAnalysis({ db, analyzeFn, ttlMs, force });
 
       // Signal change detection: check if signal changed to BUY or SELL

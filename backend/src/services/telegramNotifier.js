@@ -3,7 +3,7 @@
  * Formats trading signals into Telegram-ready messages and sends them via Telegram Bot API
  */
 
-import TelegramBot from 'node-telegram-bot-api';
+const TelegramBot = require('node-telegram-bot-api');
 
 /**
  * Formats a trading signal into a Telegram message
@@ -20,7 +20,7 @@ import TelegramBot from 'node-telegram-bot-api';
  * @param {string} signal.generatedAt - ISO timestamp
  * @returns {string} Formatted Telegram message
  */
-export function formatMessage(signal) {
+function formatMessage(signal) {
   if (!signal) {
     throw new Error('Signal object is required');
   }
@@ -90,7 +90,6 @@ export function formatMessage(signal) {
   sections.push(`Generated: ${formattedTime}`);
 
   // Join all sections with newlines
-  // Note: defensive filter included for array robustness, though sections only contains strings
   const message = sections
     .filter((section) => section !== null && section !== undefined)
     .join('\n');
@@ -109,7 +108,7 @@ export function formatMessage(signal) {
  *   - On skip: { skipped: true, reason: 'no_chat_id' }
  *   - On error: { success: false, error: string }
  */
-export async function send(chatId, signal, config) {
+async function send(chatId, signal, config) {
   // Skip if no chat ID
   if (!chatId) {
     return {
@@ -149,3 +148,5 @@ export async function send(chatId, signal, config) {
     };
   }
 }
+
+module.exports = { formatMessage, send };
