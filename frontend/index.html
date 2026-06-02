@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -104,7 +104,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 /* AI */
 .ai-box{border:1px solid var(--accent);background:rgba(0,229,255,.025);padding:12px 16px;margin-bottom:12px;position:relative}
-.ai-box::before{content:'âš¡ AI SIGNAL';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 7px;font-size:8px;color:var(--accent);letter-spacing:2px}
+.ai-box::before{content:'⚡ AI SIGNAL';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 7px;font-size:8px;color:var(--accent);letter-spacing:2px}
 #ai-txt{font-size:12px;line-height:1.75;color:var(--text);font-family:var(--ui)}
 .ld::after{content:'...';animation:ld 1.4s steps(4) infinite}
 @keyframes ld{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
@@ -309,7 +309,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <body>
 <div id="login-overlay" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:#0a0e17">
   <form id="login-form" style="background:#121826;border:1px solid #243049;padding:28px;width:320px;font-family:'Space Mono',monospace">
-    <div style="color:#ff6b35;letter-spacing:2px;font-size:11px;margin-bottom:16px">OCT SIGNAL â€” LOGIN</div>
+    <div style="color:#ff6b35;letter-spacing:2px;font-size:11px;margin-bottom:16px">OCT SIGNAL — LOGIN</div>
     <input id="login-email" type="email" placeholder="email" required style="width:100%;margin-bottom:10px;padding:9px;background:#0d1320;border:1px solid #243049;color:#e6edf7" />
     <input id="login-password" type="password" placeholder="password" required style="width:100%;margin-bottom:14px;padding:9px;background:#0d1320;border:1px solid #243049;color:#e6edf7" />
     <button type="submit" style="width:100%;padding:10px;background:#ff6b35;border:0;color:#0a0e17;font-weight:700;cursor:pointer">SIGN IN</button>
@@ -320,11 +320,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 <!-- HEADER -->
 <header>
-  <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 Â· DexScreener Chart Â· Fibonacci Â· Twitter Feed</small></div>
+  <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 · DexScreener Chart · Fibonacci · Twitter Feed</small></div>
   <div class="hdr-r">
     <div class="live"><div class="dot"></div>LIVE</div>
-    <div id="ts" style="font-size:9px;color:var(--muted)">â€”</div>
-    <button class="btn" id="rbtn">âŸ³ REFRESH</button>
+    <div id="ts" style="font-size:9px;color:var(--muted)">—</div>
+    <button class="btn" id="rbtn">⟳ REFRESH</button>
   </div>
   <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
     <button id="admin-add-user-btn" style="display:none;font-size:9px;padding:4px 10px;background:transparent;border:1px solid var(--yellow);color:var(--yellow);cursor:pointer">+ ADD USER</button>
@@ -336,7 +336,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <div id="admin-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--yellow);padding:28px 24px;width:320px;position:relative">
     <div style="font-size:10px;letter-spacing:2px;color:var(--yellow);margin-bottom:16px">ADD USER</div>
-    <button id="admin-modal-close" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer">âœ•</button>
+    <button id="admin-modal-close" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer">✕</button>
     <form id="admin-invite-form">
       <div style="margin-bottom:10px">
         <label style="font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">EMAIL</label>
@@ -362,13 +362,13 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     <label>AVG BUY $:</label>
     <input type="number" id="avg-buy" placeholder="e.g. 0.05" min="0" step="any">
     <div class="pstats">
-      <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$â€”</div></div>
-      <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$â€”</div></div>
-      <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">â€”%</div></div>
-      <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow);font-size:11px">â€”</div></div>
-      <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green);font-size:12px">$â€”</div></div>
+      <div class="ps"><div class="psl">VALUE NOW</div><div class="psv" id="pv" style="color:var(--accent)">$—</div></div>
+      <div class="ps"><div class="psl">P&L</div><div class="psv" id="ppnl">$—</div></div>
+      <div class="ps"><div class="psl">P&L %</div><div class="psv" id="ppnlp">—%</div></div>
+      <div class="ps"><div class="psl">NEXT TARGET</div><div class="psv" id="pnxt" style="color:var(--yellow);font-size:11px">—</div></div>
+      <div class="ps"><div class="psl">VALUE @ T2 ($0.40)</div><div class="psv" id="pt2" style="color:var(--green);font-size:12px">$—</div></div>
     </div>
-    <button id="save-img-btn" title="Save as Image" style="margin-left:auto;background:transparent;border:1px solid var(--yellow);color:var(--yellow);font-size:9px;font-weight:700;letter-spacing:1px;padding:5px 10px;cursor:pointer;border-radius:2px;white-space:nowrap">ðŸ“· SAVE</button>
+    <button id="save-img-btn" title="Save as Image" style="margin-left:auto;background:transparent;border:1px solid var(--yellow);color:var(--yellow);font-size:9px;font-weight:700;letter-spacing:1px;padding:5px 10px;cursor:pointer;border-radius:2px;white-space:nowrap">📷 SAVE</button>
   </div>
 </div>
 
@@ -376,12 +376,12 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <div class="top-row">
   <div class="sb">
     <div class="sl">OCT / USD PRICE</div>
-    <div class="sv" id="prc" style="color:var(--accent)">â€”</div>
+    <div class="sv" id="prc" style="color:var(--accent)">—</div>
     <div style="font-size:9px;color:var(--muted);margin-top:3px" id="psub">Loading...</div>
     <div style="display:flex;gap:12px;margin-top:8px">
-      <div><div class="sl">HIGH</div><div style="font-size:11px;color:var(--green)" id="phi">â€”</div></div>
-      <div><div class="sl">LOW</div><div style="font-size:11px;color:var(--red)" id="plo">â€”</div></div>
-      <div><div class="sl">VOL 24H</div><div style="font-size:11px;color:var(--muted)" id="pvol">â€”</div></div>
+      <div><div class="sl">HIGH</div><div style="font-size:11px;color:var(--green)" id="phi">—</div></div>
+      <div><div class="sl">LOW</div><div style="font-size:11px;color:var(--red)" id="plo">—</div></div>
+      <div><div class="sl">VOL 24H</div><div style="font-size:11px;color:var(--muted)" id="pvol">—</div></div>
     </div>
   </div>
   <div class="sb sig-card HOLD" id="scrd">
@@ -391,28 +391,28 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   </div>
   <div class="sb">
     <div class="sl">24H CHANGE</div>
-    <div class="sv" id="chg" style="font-size:24px">â€”</div>
+    <div class="sv" id="chg" style="font-size:24px">—</div>
     <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:7px">
       <div style="display:flex;gap:12px">
-        <div><div class="sl">BTC</div><div style="font-size:11px" id="btcp">â€”</div></div>
-        <div><div class="sl">ETH</div><div style="font-size:11px" id="ethp">â€”</div></div>
+        <div><div class="sl">BTC</div><div style="font-size:11px" id="btcp">—</div></div>
+        <div><div class="sl">ETH</div><div style="font-size:11px" id="ethp">—</div></div>
       </div>
     </div>
   </div>
   <div class="scores">
     <div class="sl" style="margin-bottom:9px">SIGNAL SCORES</div>
-    <div class="srow"><div class="sn">Price Action</div><div class="sbg"><div class="sf" id="bp" style="width:0%;background:var(--accent)"></div></div><div class="snum" id="np">â€”</div></div>
-    <div class="srow"><div class="sn">Sentiment</div><div class="sbg"><div class="sf" id="bs" style="width:0%;background:var(--green)"></div></div><div class="snum" id="ns">â€”</div></div>
-    <div class="srow"><div class="sn">Twitter Buzz</div><div class="sbg"><div class="sf" id="bt" style="width:0%;background:var(--tw)"></div></div><div class="snum" id="nt">â€”</div></div>
-    <div class="srow"><div class="sn">MA Trend</div><div class="sbg"><div class="sf" id="bm" style="width:0%;background:var(--accent2)"></div></div><div class="snum" id="nm">â€”</div></div>
-    <div class="srow"><div class="sn">Fib Position</div><div class="sbg"><div class="sf" id="bf" style="width:0%;background:var(--fib-618)"></div></div><div class="snum" id="nf">â€”</div></div>
+    <div class="srow"><div class="sn">Price Action</div><div class="sbg"><div class="sf" id="bp" style="width:0%;background:var(--accent)"></div></div><div class="snum" id="np">—</div></div>
+    <div class="srow"><div class="sn">Sentiment</div><div class="sbg"><div class="sf" id="bs" style="width:0%;background:var(--green)"></div></div><div class="snum" id="ns">—</div></div>
+    <div class="srow"><div class="sn">Twitter Buzz</div><div class="sbg"><div class="sf" id="bt" style="width:0%;background:var(--tw)"></div></div><div class="snum" id="nt">—</div></div>
+    <div class="srow"><div class="sn">MA Trend</div><div class="sbg"><div class="sf" id="bm" style="width:0%;background:var(--accent2)"></div></div><div class="snum" id="nm">—</div></div>
+    <div class="srow"><div class="sn">Fib Position</div><div class="sbg"><div class="sf" id="bf" style="width:0%;background:var(--fib-618)"></div></div><div class="snum" id="nf">—</div></div>
   </div>
 </div>
 
 <!-- CHART + FIBONACCI -->
 <div class="chart-wrap">
   <div class="chart-hdr">
-    <span>ðŸ“ˆ OCT/ETH LIVE CHART â€” DEXSCREENER (Uniswap V4)</span>
+    <span>📈 OCT/ETH LIVE CHART — DEXSCREENER (Uniswap V4)</span>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <div class="tabs" id="itabs">
         <div class="tab on" data-int="1">1m</div>
@@ -422,11 +422,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
         <div class="tab" data-int="240">4H</div>
         <div class="tab" data-int="D">1D</div>
       </div>
-      <a href="https://dexscreener.com/ethereum/0x5eb459d3fc44f3f412ef43f93fa1e44ecb4ca9cb62a16bcbd94b5d0b834ff854" target="_blank" style="font-size:8px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:3px 8px">â†— OPEN FULL</a>
+      <a href="https://dexscreener.com/ethereum/0x5eb459d3fc44f3f412ef43f93fa1e44ecb4ca9cb62a16bcbd94b5d0b834ff854" target="_blank" style="font-size:8px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:3px 8px">↗ OPEN FULL</a>
     </div>
   </div>
   <div class="chart-note">
-    âœ… Chart harga <strong style="color:var(--green)">OCT/USD</strong> langsung Â· Uniswap V4 Ethereum via DexScreener Â· Token: <code style="font-size:9px;color:var(--accent)">0x4647...6E80</code> Â· Ganti interval di tombol atas
+    ✅ Chart harga <strong style="color:var(--green)">OCT/USD</strong> langsung · Uniswap V4 Ethereum via DexScreener · Token: <code style="font-size:9px;color:var(--accent)">0x4647...6E80</code> · Ganti interval di tombol atas
   </div>
   <div class="chart-container">
     <iframe id="dex-frame"
@@ -439,25 +439,25 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <!-- FIBONACCI CALCULATOR -->
   <div class="fib-panel">
     <div class="fib-title">
-      <span>ðŸ“ FIBONACCI RETRACEMENT & EXTENSION CALCULATOR</span>
+      <span>📐 FIBONACCI RETRACEMENT & EXTENSION CALCULATOR</span>
       <div class="fib-direction-tabs">
-        <div class="fib-dtab on" id="fib-up" onclick="setFibDir('up',this)">â¬†ï¸ UPTREND (Retracement)</div>
-        <div class="fib-dtab" id="fib-down" onclick="setFibDir('down',this)">â¬‡ï¸ DOWNTREND (Retracement)</div>
-        <div class="fib-dtab" id="fib-ext" onclick="setFibDir('ext',this)">ðŸš€ EXTENSION (Targets)</div>
+        <div class="fib-dtab on" id="fib-up" onclick="setFibDir('up',this)">⬆️ UPTREND (Retracement)</div>
+        <div class="fib-dtab" id="fib-down" onclick="setFibDir('down',this)">⬇️ DOWNTREND (Retracement)</div>
+        <div class="fib-dtab" id="fib-ext" onclick="setFibDir('ext',this)">🚀 EXTENSION (Targets)</div>
       </div>
     </div>
     <div class="fib-inputs">
       <div class="fib-group">
-        <label id="fib-low-lbl">SWING LOW (bottom) â€” Harga OCT/USD</label>
+        <label id="fib-low-lbl">SWING LOW (bottom) — Harga OCT/USD</label>
         <input type="number" id="fib-low" placeholder="e.g. 0.025" step="0.00001" oninput="calcFib()">
       </div>
       <div class="fib-group">
-        <label id="fib-high-lbl">SWING HIGH (top) â€” Harga OCT/USD $</label>
+        <label id="fib-high-lbl">SWING HIGH (top) — Harga OCT/USD $</label>
         <input type="number" id="fib-high" placeholder="e.g. 0.104" step="0.00001" oninput="calcFib()">
       </div>
     </div>
     <div style="margin-bottom:10px;padding:8px 10px;background:var(--s3);border:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.6">
-      <strong style="color:var(--text)">ðŸ’¡ Cara pakai:</strong> Lihat chart OCT/USD di atas â†’ identifikasi Swing Low dan Swing High â†’ masukkan harga <strong style="color:var(--yellow)">USD $</strong> langsung â†’ Fibonacci level otomatis dihitung. Harga OCT sekarang: <strong style="color:var(--accent)" id="fib-current-ref">loading...</strong>
+      <strong style="color:var(--text)">💡 Cara pakai:</strong> Lihat chart OCT/USD di atas → identifikasi Swing Low dan Swing High → masukkan harga <strong style="color:var(--yellow)">USD $</strong> langsung → Fibonacci level otomatis dihitung. Harga OCT sekarang: <strong style="color:var(--accent)" id="fib-current-ref">loading...</strong>
     </div>
     <div id="fib-table-wrap">
       <table class="fib-table">
@@ -482,7 +482,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <!-- AI ANALYSIS -->
 <div class="ai-box">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-    <button id="analyze-btn" style="background:var(--accent);color:#000;border:none;padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;border-radius:2px">â–¶ ANALYZE</button>
+    <button id="analyze-btn" style="background:var(--accent);color:#000;border:none;padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;border-radius:2px">▶ ANALYZE</button>
     <span id="analyze-status" style="font-size:9px;color:var(--muted)">Belum dianalisa</span>
   </div>
   <div id="ai-txt" style="font-size:12px;line-height:1.75;color:var(--muted)">Klik ANALYZE untuk mulai analisis AI.</div>
@@ -494,29 +494,29 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <!-- TWITTER -->
   <div class="panel">
     <div class="ph">
-      <span>ð• TWITTER/X â€” OCTRA LIVE FEED</span>
+      <span>𝕏 TWITTER/X — OCTRA LIVE FEED</span>
       <div style="display:flex;gap:6px;align-items:center">
         <span id="tw-cnt" style="font-size:8px;color:var(--muted)">Loading...</span>
-        <button class="btn" style="font-size:8px;padding:3px 8px">â†º</button>
+        <button class="btn" style="font-size:8px;padding:3px 8px">↺</button>
       </div>
     </div>
-    <div class="tw-notice">âš ï¸ Twitter/X API resmi berbayar. Feed ini menggunakan <strong>AI-curated intelligence</strong> berdasarkan keyword monitoring: "Octra", "$OCT", "FHE layer1", "OCT listing". Auto-refresh tiap 3 menit.</div>
+    <div class="tw-notice">⚠️ Twitter/X API resmi berbayar. Feed ini menggunakan <strong>AI-curated intelligence</strong> berdasarkan keyword monitoring: "Octra", "$OCT", "FHE layer1", "OCT listing". Auto-refresh tiap 3 menit.</div>
     <div class="tw-search-bar">
       <input type="text" id="tw-q" placeholder='Keyword: "octra listing", "OCT whale", "FHE"...' value="octra OCT">
       <button class="btn" style="font-size:8px">SEARCH</button>
     </div>
     <div class="tw-filter">
       <div class="twf on" onclick="twFilter('all',this)">ALL</div>
-      <div class="twf" onclick="twFilter('pos',this)">ðŸŸ¢ BULLISH</div>
-      <div class="twf" onclick="twFilter('neg',this)">ðŸ”´ BEARISH</div>
-      <div class="twf" onclick="twFilter('whale',this)">ðŸ³ WHALE</div>
+      <div class="twf" onclick="twFilter('pos',this)">🟢 BULLISH</div>
+      <div class="twf" onclick="twFilter('neg',this)">🔴 BEARISH</div>
+      <div class="twf" onclick="twFilter('whale',this)">🐳 WHALE</div>
     </div>
     <div class="tw-stats-bar" id="tw-stats" style="display:none">
       <div class="tws"><div class="tws-l">TOTAL</div><div class="tws-v" id="tws-t" style="color:var(--accent)">0</div></div>
       <div class="tws"><div class="tws-l">BULLISH</div><div class="tws-v" id="tws-p" style="color:var(--green)">0</div></div>
       <div class="tws"><div class="tws-l">BEARISH</div><div class="tws-v" id="tws-n" style="color:var(--red)">0</div></div>
       <div class="tws"><div class="tws-l">NEUTRAL</div><div class="tws-v" id="tws-u" style="color:var(--yellow)">0</div></div>
-      <div class="tws"><div class="tws-l">SENTIMENT</div><div class="tws-v" id="tws-a" style="font-size:12px">â€”</div></div>
+      <div class="tws"><div class="tws-l">SENTIMENT</div><div class="tws-v" id="tws-a" style="font-size:12px">—</div></div>
     </div>
     <div class="pb" id="tw-feed"><div class="tw-loading ld">Fetching tweets Octra</div></div>
   </div>
@@ -525,23 +525,23 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <div class="right-col">
     <!-- MA -->
     <div class="panel">
-      <div class="ph">ðŸ“Š MA ANALYSIS (5m chart)</div>
-      <div class="ma-row"><div><div class="mal">MA9 â€” Fast</div><div style="font-family:var(--ui);font-weight:600" id="ma9v">0.1301</div></div><div class="chip bull">PRICE ABOVE âœ“</div></div>
-      <div class="ma-row"><div><div class="mal">MA14</div><div style="font-family:var(--ui);font-weight:600" id="ma14v">0.1298</div></div><div class="chip bull">BULLISH âœ“</div></div>
-      <div class="ma-row"><div><div class="mal">MA21</div><div style="font-family:var(--ui);font-weight:600" id="ma21v">0.1278</div></div><div class="chip bull">UPTREND âœ“</div></div>
-      <div class="ma-row"><div><div class="mal">MA35 â€” Slow</div><div style="font-family:var(--ui);font-weight:600" id="ma35v">0.1238</div></div><div class="chip bull">STRONG BULL âœ“</div></div>
+      <div class="ph">📊 MA ANALYSIS (5m chart)</div>
+      <div class="ma-row"><div><div class="mal">MA9 — Fast</div><div style="font-family:var(--ui);font-weight:600" id="ma9v">0.1301</div></div><div class="chip bull">PRICE ABOVE ✓</div></div>
+      <div class="ma-row"><div><div class="mal">MA14</div><div style="font-family:var(--ui);font-weight:600" id="ma14v">0.1298</div></div><div class="chip bull">BULLISH ✓</div></div>
+      <div class="ma-row"><div><div class="mal">MA21</div><div style="font-family:var(--ui);font-weight:600" id="ma21v">0.1278</div></div><div class="chip bull">UPTREND ✓</div></div>
+      <div class="ma-row"><div><div class="mal">MA35 — Slow</div><div style="font-family:var(--ui);font-weight:600" id="ma35v">0.1238</div></div><div class="chip bull">STRONG BULL ✓</div></div>
       <div style="padding:9px 13px;background:rgba(0,255,136,.04);border-top:1px solid rgba(0,255,136,.12);font-size:10px;color:var(--green);font-family:var(--ui);line-height:1.5">
-        âœ… Triple MA Bullish Stack â€” Price > MA9 > MA14 > MA21 > MA35. Selama â‰¥ MA9 (0.1301 ETH), tren aman.
+        ✅ Triple MA Bullish Stack — Price > MA9 > MA14 > MA21 > MA35. Selama ≥ MA9 (0.1301 ETH), tren aman.
       </div>
     </div>
     <!-- News -->
     <div class="panel">
-      <div class="ph">ðŸ“° CRYPTO NEWS <span id="ncnt" style="font-size:8px;color:var(--muted)">â€”</span></div>
+      <div class="ph">📰 CRYPTO NEWS <span id="ncnt" style="font-size:8px;color:var(--muted)">—</span></div>
       <div class="pb" style="max-height:240px" id="nfeed"><div style="padding:12px;font-size:11px;color:var(--muted)">Fetching...</div></div>
     </div>
     <!-- Exit -->
     <div class="panel">
-      <div class="ph">ðŸŽ¯ EXIT LEVELS <span style="font-size:8px;color:var(--muted)">$0.25â†’$3.00</span></div>
+      <div class="ph">🎯 EXIT LEVELS <span style="font-size:8px;color:var(--muted)">$0.25→$3.00</span></div>
       <div id="exits"></div>
     </div>
   </div>
@@ -550,49 +550,49 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <!-- BOTTOM -->
 <div class="bot-grid">
   <div class="panel">
-    <div class="ph">ðŸ“¡ SENTIMENT</div>
+    <div class="ph">📡 SENTIMENT</div>
     <div style="padding:12px">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px">
-        <div class="st" style="text-align:center"><div class="stl">BULLISH</div><div class="stv" style="color:var(--green)" id="sbull">â€”</div></div>
-        <div class="st" style="text-align:center"><div class="stl">NEUTRAL</div><div class="stv" style="color:var(--yellow)" id="sneu">â€”</div></div>
-        <div class="st" style="text-align:center"><div class="stl">BEARISH</div><div class="stv" style="color:var(--red)" id="sbear">â€”</div></div>
+        <div class="st" style="text-align:center"><div class="stl">BULLISH</div><div class="stv" style="color:var(--green)" id="sbull">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">NEUTRAL</div><div class="stv" style="color:var(--yellow)" id="sneu">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">BEARISH</div><div class="stv" style="color:var(--red)" id="sbear">—</div></div>
       </div>
       <div style="text-align:center">
         <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:3px">OVERALL</div>
-        <div style="font-family:var(--ui);font-size:42px;font-weight:800" id="sovr">â€”</div>
-        <div style="font-size:10px;margin-top:2px" id="slbl">â€”</div>
+        <div style="font-family:var(--ui);font-size:42px;font-weight:800" id="sovr">—</div>
+        <div style="font-size:10px;margin-top:2px" id="slbl">—</div>
       </div>
     </div>
   </div>
   <div class="panel">
-    <div class="ph">â‚¿ MACRO MARKET</div>
+    <div class="ph">₿ MACRO MARKET</div>
     <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:7px">
-      <div class="st"><div class="stl">BTC Price</div><div class="stv" id="btcv">â€”</div></div>
-      <div class="st"><div class="stl">BTC 24H</div><div class="stv" id="btcc">â€”</div></div>
-      <div class="st"><div class="stl">ETH Price</div><div class="stv" id="ethv">â€”</div></div>
-      <div class="st"><div class="stl">Market Mood</div><div class="stv" id="mmood" style="font-size:10px">â€”</div></div>
+      <div class="st"><div class="stl">BTC Price</div><div class="stv" id="btcv">—</div></div>
+      <div class="st"><div class="stl">BTC 24H</div><div class="stv" id="btcc">—</div></div>
+      <div class="st"><div class="stl">ETH Price</div><div class="stv" id="ethv">—</div></div>
+      <div class="st"><div class="stl">Market Mood</div><div class="stv" id="mmood" style="font-size:10px">—</div></div>
     </div>
     <div style="margin:0 12px 12px;padding:9px;background:var(--s3);border:1px solid var(--border);font-size:9px;color:var(--muted);line-height:1.5;font-family:var(--ui)">
-      OCT trade di Uniswap V4 pair ETH. Harga USD = harga OCT/ETH Ã— harga ETH/USD. Pantau ETH movement untuk estimasi value USD lo.
+      OCT trade di Uniswap V4 pair ETH. Harga USD = harga OCT/ETH × harga ETH/USD. Pantau ETH movement untuk estimasi value USD lo.
     </div>
   </div>
 </div>
 
 </div><!-- /wrap -->
 <script>
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // STATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 let CUR_PRICE = null, ETH_PRICE = null;
 let ALL_TWEETS = [], CUR_FILTER = 'all';
 let FIB_DIR = 'up';
 let CUR_INT = '5';
 
-const PAIR = '0x4647e1fe715c9e23959022c2416c71867f5a6e80'; // OCT token address â†’ chart USD
+const PAIR = '0x4647e1fe715c9e23959022c2416c71867f5a6e80'; // OCT token address → chart USD
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // DEXSCREENER CHART
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 const INT_MAP = {'1':'1','5':'5','15':'15','60':'60','240':'240','D':'D'};
 
 document.getElementById('itabs').addEventListener('click', e => {
@@ -605,15 +605,15 @@ document.getElementById('itabs').addEventListener('click', e => {
   f.src = `https://dexscreener.com/ethereum/${PAIR}?embed=1&theme=dark&trades=0&info=0&interval=${CUR_INT}`;
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // FIBONACCI
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 const FIB_LEVELS_RETRACE = [
   {r:0,    label:'0%',      color:'#e06c75', note:'Swing High / Low'},
   {r:.236, label:'23.6%',   color:'#e5c07b', note:'Weak retracement'},
   {r:.382, label:'38.2%',   color:'#98c379', note:'First support/resist'},
   {r:.5,   label:'50%',     color:'#61afef', note:'Mid level (psikologis)'},
-  {r:.618, label:'61.8%',   color:'#c678dd', note:'Golden ratio â€” kuat!'},
+  {r:.618, label:'61.8%',   color:'#c678dd', note:'Golden ratio — kuat!'},
   {r:.786, label:'78.6%',   color:'#e06c75', note:'Deep retracement'},
   {r:1,    label:'100%',    color:'#abb2bf', note:'Full retrace'},
 ];
@@ -621,7 +621,7 @@ const FIB_LEVELS_RETRACE = [
 const FIB_LEVELS_EXT = [
   {r:1.272, label:'127.2%', color:'#98c379', note:'First extension target'},
   {r:1.414, label:'141.4%', color:'#e5c07b', note:'Extension'},
-  {r:1.618, label:'161.8%', color:'#c678dd', note:'Golden ext â€” target kuat'},
+  {r:1.618, label:'161.8%', color:'#c678dd', note:'Golden ext — target kuat'},
   {r:2,     label:'200%',   color:'#e06c75', note:'Double'},
   {r:2.618, label:'261.8%', color:'#61afef', note:'Mega extension'},
   {r:3.618, label:'361.8%', color:'#e06c75', note:'Full extension target'},
@@ -633,9 +633,9 @@ function setFibDir(dir, el) {
   el.classList.add('on');
   const ll = document.getElementById('fib-low-lbl');
   const hl = document.getElementById('fib-high-lbl');
-  if(dir==='up') { ll.textContent='SWING LOW (bottom keluar) â€” Harga OCT/USD $'; hl.textContent='SWING HIGH (top tertinggi) â€” Harga OCT/USD $'; }
-  else if(dir==='down') { ll.textContent='SWING HIGH (sebelum turun) â€” Harga OCT/USD $'; hl.textContent='SWING LOW (bottom setelah turun) â€” Harga OCT/USD $'; }
-  else { ll.textContent='SWING LOW (start of move) â€” Harga OCT/USD $'; hl.textContent='SWING HIGH (end of move) â€” Harga OCT/USD $'; }
+  if(dir==='up') { ll.textContent='SWING LOW (bottom keluar) — Harga OCT/USD $'; hl.textContent='SWING HIGH (top tertinggi) — Harga OCT/USD $'; }
+  else if(dir==='down') { ll.textContent='SWING HIGH (sebelum turun) — Harga OCT/USD $'; hl.textContent='SWING LOW (bottom setelah turun) — Harga OCT/USD $'; }
+  else { ll.textContent='SWING LOW (start of move) — Harga OCT/USD $'; hl.textContent='SWING HIGH (end of move) — Harga OCT/USD $'; }
   calcFib();
 }
 
@@ -669,7 +669,7 @@ function calcFib() {
     const isSupport = (FIB_DIR==='up' || FIB_DIR==='ext') && price < cur;
     const isResist  = (FIB_DIR==='up' || FIB_DIR==='ext') && price > cur;
     const badgeCls = isCur ? 'fib-badge current' : isSupport ? 'fib-badge support' : 'fib-badge resist';
-    const badgeTxt = isCur ? 'â—‰ CURRENT ZONE' : isSupport ? 'â†‘ SUPPORT' : 'â†“ RESIST';
+    const badgeTxt = isCur ? '◉ CURRENT ZONE' : isSupport ? '↑ SUPPORT' : '↓ RESIST';
 
     const highlight = isCur ? 'background:rgba(0,229,255,.04);' : '';
 
@@ -695,30 +695,30 @@ function calcFib() {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// TWITTER â€” render helpers
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
+// TWITTER — render helpers
+// ═══════════════════════════════════
 function fallbackTweets(){return[
-  {handle:'@OctraNetwork',name:'Octra Network',text:'âš¡ Dev update: EVM compatibility milestone achieved on testnet. 12,400 TPS in stress tests. Mainnet prep underway. Public sandbox live: sandbox.octra.org ðŸ§µ',likes:1243,retweets:445,time:'8m ago',sentiment:'positive',tag:'dev',avatar_letter:'O'},
-  {handle:'@oct_ta_desk',name:'OCT TA Desk',text:'$OCT/ETH Fibonacci analysis 5m chart:\nðŸ“ Swing Low: 0.0802\nðŸ“ Swing High: 0.1349\nðŸŸ¢ 61.8% support: 0.1011 ETH\nðŸŸ¢ 50% support: 0.1076 ETH\nðŸ”´ Ext 127.2%: 0.1547 ETH\nðŸ”´ Ext 161.8%: 0.1686 ETH\nCurrent: 0.1349 â€” AT THE TOP ðŸ‘€',likes:567,retweets:234,time:'12m ago',sentiment:'neutral',tag:'fib',avatar_letter:'T'},
-  {handle:'@gate_alpha_hunter',name:'Gate Alpha',text:'Multiple sources confirm $OCT listing review active at @gate_io. Usually 2-3 weeks from this stage to live. Price discovery will be ðŸ”¥ given thin OTC float.',likes:892,retweets:334,time:'18m ago',sentiment:'positive',tag:'listing',avatar_letter:'G'},
-  {handle:'@whale_oct_tracker',name:'OCT Whale Watch',text:'ðŸ³ Alert: 3.2M $OCT moved from OTC wallet to cold storage 2h ago. Accumulation pattern, not selling. Smart money is patient before listing.',likes:723,retweets:289,time:'25m ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
-  {handle:'@hodler_bandung',name:'Budi | Indonesia',text:'Udah hold $OCT OTC dari 4 bulan lalu. Sekarang chart breakout terus ðŸš€ Strategi gw: jual 20% di T2 ($0.40), sisa moonbag sampai listing CEX. Pray for us ðŸ™ #Octra',likes:234,retweets:89,time:'32m ago',sentiment:'positive',tag:'all',avatar_letter:'B'},
+  {handle:'@OctraNetwork',name:'Octra Network',text:'⚡ Dev update: EVM compatibility milestone achieved on testnet. 12,400 TPS in stress tests. Mainnet prep underway. Public sandbox live: sandbox.octra.org 🧵',likes:1243,retweets:445,time:'8m ago',sentiment:'positive',tag:'dev',avatar_letter:'O'},
+  {handle:'@oct_ta_desk',name:'OCT TA Desk',text:'$OCT/ETH Fibonacci analysis 5m chart:\n📐 Swing Low: 0.0802\n📐 Swing High: 0.1349\n🟢 61.8% support: 0.1011 ETH\n🟢 50% support: 0.1076 ETH\n🔴 Ext 127.2%: 0.1547 ETH\n🔴 Ext 161.8%: 0.1686 ETH\nCurrent: 0.1349 — AT THE TOP 👀',likes:567,retweets:234,time:'12m ago',sentiment:'neutral',tag:'fib',avatar_letter:'T'},
+  {handle:'@gate_alpha_hunter',name:'Gate Alpha',text:'Multiple sources confirm $OCT listing review active at @gate_io. Usually 2-3 weeks from this stage to live. Price discovery will be 🔥 given thin OTC float.',likes:892,retweets:334,time:'18m ago',sentiment:'positive',tag:'listing',avatar_letter:'G'},
+  {handle:'@whale_oct_tracker',name:'OCT Whale Watch',text:'🐳 Alert: 3.2M $OCT moved from OTC wallet to cold storage 2h ago. Accumulation pattern, not selling. Smart money is patient before listing.',likes:723,retweets:289,time:'25m ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
+  {handle:'@hodler_bandung',name:'Budi | Indonesia',text:'Udah hold $OCT OTC dari 4 bulan lalu. Sekarang chart breakout terus 🚀 Strategi gw: jual 20% di T2 ($0.40), sisa moonbag sampai listing CEX. Pray for us 🙏 #Octra',likes:234,retweets:89,time:'32m ago',sentiment:'positive',tag:'all',avatar_letter:'B'},
   {handle:'@fhe_crypto_dev',name:'FHE Developer',text:'Deployed first privacy-preserving smart contract on @OctraNetwork testnet. FHE computation on encrypted data without decryption is genuinely working. This is real tech, not vaporware.',likes:445,retweets:167,time:'45m ago',sentiment:'positive',tag:'dev',avatar_letter:'F'},
   {handle:'@defi_skeptic_x',name:'DeFi Skeptic',text:'$OCT still pre-listing with thin Uniswap liquidity. Easy to pump price with small capital. "Whale accumulation" could just be team wallet shuffling. DYOR, not financial advice.',likes:89,retweets:34,time:'55m ago',sentiment:'negative',tag:'all',avatar_letter:'D'},
   {handle:'@okx_listing_alpha',name:'OKX Alpha',text:'$OCT on @okx watchlist for Q3 2026. FHE narrative + strong community + active dev = good listing candidate. Their compliance team reviewing. Not confirmed yet but looking good.',likes:634,retweets:245,time:'1h ago',sentiment:'positive',tag:'listing',avatar_letter:'K'},
-  {handle:'@crypto_maria_es',name:'MarÃ­a | Crypto ES',text:'$OCT/ETH subiendo con fuerza ðŸ’ª AnÃ¡lisis fibonacci muestra soporte en 0.618 (0.1011 ETH). Si mantiene, prÃ³ximo objetivo extensiÃ³n 1.618 = 0.1686 ETH. Acumulando! ðŸ‡ªðŸ‡¸',likes:178,retweets:67,time:'1h ago',sentiment:'positive',tag:'fib',avatar_letter:'M'},
+  {handle:'@crypto_maria_es',name:'María | Crypto ES',text:'$OCT/ETH subiendo con fuerza 💪 Análisis fibonacci muestra soporte en 0.618 (0.1011 ETH). Si mantiene, próximo objetivo extensión 1.618 = 0.1686 ETH. Acumulando! 🇪🇸',likes:178,retweets:67,time:'1h ago',sentiment:'positive',tag:'fib',avatar_letter:'M'},
   {handle:'@layer1_researcher',name:'L1 Research',text:'Comparing FHE L1 projects: @OctraNetwork leads in GitHub commits (47 last 30d), testnet stability (99.2% uptime), and community retention. Closest competitor has 23 commits.',likes:512,retweets:198,time:'1h ago',sentiment:'positive',tag:'dev',avatar_letter:'L'},
   {handle:'@oct_bear_case',name:'Bear Case',text:'$OCT Uniswap volume is $1.5M/day. That\'s literally nothing. When Gate.io lists it, market makers will control price. Don\'t expect smooth price discovery. Prepare for volatility.',likes:112,retweets:56,time:'2h ago',sentiment:'negative',tag:'all',avatar_letter:'B'},
-  {handle:'@whale_watch_2',name:'Whale Alert',text:'ðŸ³ New: OCT/ETH Uniswap pool added $180K liquidity in last 4 hours. Someone is preparing for a big move. Only 1 LP provider â€” likely team/insider. Watch closely.',likes:834,retweets:312,time:'2h ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
-  {handle:'@crypto_jakarta',name:'Ahmad | Jakarta',text:'Komunitas Octra Indonesia udah 4500+ member! Proyek ini beneran, gw udah review whitepaper dan roadmap-nya. Tech FHE-nya solid, beda dari kebanyakan proyek hype. $OCT ðŸ‡®ðŸ‡©',likes:267,retweets:98,time:'2h ago',sentiment:'positive',tag:'all',avatar_letter:'A'},
-  {handle:'@listing_monitor',name:'Listing Monitor',text:'Tracking $OCT: Gate.io review stage 2/3 âœ“ | OKX initial review âœ“ | Coinbase: too early | Binance: too small cap. Gate/OKX listing within 4-8 weeks is my base case.',likes:445,retweets:167,time:'3h ago',sentiment:'positive',tag:'listing',avatar_letter:'L'},
-  {handle:'@neutral_oct_take',name:'Neutral Analysis',text:'$OCT objective view: strong tech âœ“, active devs âœ“, growing community âœ“. BUT: pre-listing = high uncertainty, one LP = thin liquidity, FHE still early adoption. Position accordingly.',likes:134,retweets:52,time:'3h ago',sentiment:'neutral',tag:'all',avatar_letter:'N'},
-  {handle:'@fib_trader_pro',name:'Fib Trader Pro',text:'$OCT/ETH fib extension targets from current base:\n127.2% â†’ 0.1547 ETH ($X)\n161.8% â†’ 0.1686 ETH (golden ext)\n261.8% â†’ 0.2100 ETH\n\nSupports: 0.618 retrace = 0.1011 ETH. This is a clean setup.',likes:389,retweets:145,time:'4h ago',sentiment:'positive',tag:'fib',avatar_letter:'F'},
+  {handle:'@whale_watch_2',name:'Whale Alert',text:'🐳 New: OCT/ETH Uniswap pool added $180K liquidity in last 4 hours. Someone is preparing for a big move. Only 1 LP provider — likely team/insider. Watch closely.',likes:834,retweets:312,time:'2h ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
+  {handle:'@crypto_jakarta',name:'Ahmad | Jakarta',text:'Komunitas Octra Indonesia udah 4500+ member! Proyek ini beneran, gw udah review whitepaper dan roadmap-nya. Tech FHE-nya solid, beda dari kebanyakan proyek hype. $OCT 🇮🇩',likes:267,retweets:98,time:'2h ago',sentiment:'positive',tag:'all',avatar_letter:'A'},
+  {handle:'@listing_monitor',name:'Listing Monitor',text:'Tracking $OCT: Gate.io review stage 2/3 ✓ | OKX initial review ✓ | Coinbase: too early | Binance: too small cap. Gate/OKX listing within 4-8 weeks is my base case.',likes:445,retweets:167,time:'3h ago',sentiment:'positive',tag:'listing',avatar_letter:'L'},
+  {handle:'@neutral_oct_take',name:'Neutral Analysis',text:'$OCT objective view: strong tech ✓, active devs ✓, growing community ✓. BUT: pre-listing = high uncertainty, one LP = thin liquidity, FHE still early adoption. Position accordingly.',likes:134,retweets:52,time:'3h ago',sentiment:'neutral',tag:'all',avatar_letter:'N'},
+  {handle:'@fib_trader_pro',name:'Fib Trader Pro',text:'$OCT/ETH fib extension targets from current base:\n127.2% → 0.1547 ETH ($X)\n161.8% → 0.1686 ETH (golden ext)\n261.8% → 0.2100 ETH\n\nSupports: 0.618 retrace = 0.1011 ETH. This is a clean setup.',likes:389,retweets:145,time:'4h ago',sentiment:'positive',tag:'fib',avatar_letter:'F'},
   {handle:'@oct_whale_3',name:'Silent Whale',text:'Loaded another bag at 0.0850 ETH range. Average now 0.0920 ETH. $OCT fib 61.8% held perfectly as support twice. Not selling until 161.8% extension minimum. Trust the process.',likes:567,retweets:201,time:'4h ago',sentiment:'positive',tag:'whale',avatar_letter:'S'},
   {handle:'@crypto_pessimist',name:'Crypto Realist',text:'Hot take: 90% of "pre-listing alpha" tweets about $OCT are from bag holders trying to hype their exit. The actual tech might be good but social media signal is very noisy rn.',likes:78,retweets:45,time:'5h ago',sentiment:'negative',tag:'all',avatar_letter:'C'},
   {handle:'@privacy_chain_analyst',name:'Privacy Chain',text:'FHE chains in 2026 comparison: $OCT (Octra) leads by multiple metrics. The key differentiator is their hypergraph architecture enabling parallel FHE computation. Real innovation.',likes:334,retweets:123,time:'6h ago',sentiment:'positive',tag:'dev',avatar_letter:'P'},
-  {handle:'@oct_long_term',name:'Long Term Vision',text:'$OCT 12-month thesis: listing â†’ price discovery â†’ EVM launch â†’ dApp ecosystem â†’ real usage. If they execute on roadmap, $3-5 range is conservative. FHE infrastructure will be essential.',likes:456,retweets:178,time:'7h ago',sentiment:'positive',tag:'fib',avatar_letter:'V'},
+  {handle:'@oct_long_term',name:'Long Term Vision',text:'$OCT 12-month thesis: listing → price discovery → EVM launch → dApp ecosystem → real usage. If they execute on roadmap, $3-5 range is conservative. FHE infrastructure will be essential.',likes:456,retweets:178,time:'7h ago',sentiment:'positive',tag:'fib',avatar_letter:'V'},
 ];}
 
 function renderTweets(tweets){
@@ -744,9 +744,9 @@ function renderTweets(tweets){
       </div>
       <div class="tw-body">${txt}</div>
       <div class="tw-foot">
-        <span class="tw-st">â¤ï¸ ${t.likes}</span>
-        <span class="tw-st">ðŸ” ${t.retweets}</span>
-        <a href="https://x.com/search?q=Octra+%24OCT" target="_blank" style="font-size:7px;color:var(--muted);text-decoration:none">view on X â†’</a>
+        <span class="tw-st">❤️ ${t.likes}</span>
+        <span class="tw-st">🔁 ${t.retweets}</span>
+        <a href="https://x.com/search?q=Octra+%24OCT" target="_blank" style="font-size:7px;color:var(--muted);text-decoration:none">view on X →</a>
         <span class="tw-sent ${sc}">${sl}</span>
       </div>
     </div>`;
@@ -779,7 +779,7 @@ function updateTwStats(tweets){
   document.getElementById('sbear').textContent=neg;
   document.getElementById('sovr').textContent=avg+'%';
   document.getElementById('sovr').style.color=avg>65?'var(--green)':avg>45?'var(--yellow)':'var(--red)';
-  document.getElementById('slbl').textContent=avg>65?'ðŸ”¥ BULLISH ZONE':avg>45?'ðŸ˜ NEUTRAL':'â„ï¸ BEARISH';
+  document.getElementById('slbl').textContent=avg>65?'🔥 BULLISH ZONE':avg>45?'😐 NEUTRAL':'❄️ BEARISH';
   document.getElementById('slbl').style.color=avg>65?'var(--green)':avg>45?'var(--yellow)':'var(--red)';
   setBar('bs',avg); document.getElementById('ns').textContent=avg;
   setBar('bt',avg); document.getElementById('nt').textContent=avg;
@@ -788,9 +788,9 @@ function updateTwStats(tweets){
 function avCol1(h){const c=['#1d9bf0','#a78bfa','#ff6b35','#00e5ff','#00ff88','#ff3366','#ffd700'];return c[h.charCodeAt(1)%c.length]}
 function avCol2(h){const c=['#a78bfa','#00e5ff','#ff3366','#ffd700','#1d9bf0','#00ff88','#ff6b35'];return c[h.charCodeAt(2)%c.length]}
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // NEWS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 function renderNews(items){
   const html=items.map(item=>{
     const v=item.votes||{},p=(v.positive||0)+(v.liked||0),n=(v.negative||0)+(v.disliked||0);
@@ -802,11 +802,11 @@ function renderNews(items){
 }
 function renderStaticNews(){
   const items=[
-    {t:'Octra FHE Layer-1 Gains Momentum â€” Gate.io Listing Expected Q3 2026',s:'positive',src:'CryptoInsider',time:'2h'},
-    {t:'FHE Privacy Chains Surge â€” Confidential Smart Contracts Growing Demand',s:'positive',src:'The Block',time:'4h'},
+    {t:'Octra FHE Layer-1 Gains Momentum — Gate.io Listing Expected Q3 2026',s:'positive',src:'CryptoInsider',time:'2h'},
+    {t:'FHE Privacy Chains Surge — Confidential Smart Contracts Growing Demand',s:'positive',src:'The Block',time:'4h'},
     {t:'Layer-1 Altcoins Outperforming BTC in Current Halving Cycle Phase',s:'positive',src:'CoinDesk',time:'6h'},
     {t:'OKX Q3 Listing Pipeline Includes Privacy-Focused L1 Projects',s:'positive',src:'OKX Blog',time:'8h'},
-    {t:'Uniswap V4 OCT/ETH Volume Spike â€” Whale Accumulation Pattern Detected',s:'positive',src:'DexScreener',time:'10h'},
+    {t:'Uniswap V4 OCT/ETH Volume Spike — Whale Accumulation Pattern Detected',s:'positive',src:'DexScreener',time:'10h'},
     {t:'Macro Outlook: BTC Holding Key Support, Alts Primed for Move',s:'neutral',src:'CoinTelegraph',time:'12h'},
     {t:'Selective Altcoin Exposure Recommended Amid Macro Uncertainty',s:'negative',src:'CryptoQuant',time:'1d'},
   ];
@@ -814,26 +814,26 @@ function renderStaticNews(){
   document.getElementById('ncnt').textContent=items.length+' curated';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// SIGNAL â€” F5 scores now computed in js/signal.js, rendered by app.js
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
+// SIGNAL — F5 scores now computed in js/signal.js, rendered by app.js
+// ═══════════════════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// AI â€” default fallback text
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function defAI(){return 'Chart OCT sekarang lagi breakout dengan MA Triple semua bullish alignment â€” tren kuat, Twitter juga mayoritas bullish 70%+ terutama dari sisi listing Gate.io/OKX alpha. Rekomendasi: hold penuh jangan panic sell, kalau mau tambah posisi tunggu pullback ke MA9 dulu bukan beli di puncak spike. Level kritis yang paling penting: kalau harga tutup di bawah MA14 (0.1278 ETH) selama 2 candle berturut, itu sinyal pertama untuk siap-siap exit T1.';}
+// ═══════════════════════════════════
+// AI — default fallback text
+// ═══════════════════════════════════
+function defAI(){return 'Chart OCT sekarang lagi breakout dengan MA Triple semua bullish alignment — tren kuat, Twitter juga mayoritas bullish 70%+ terutama dari sisi listing Gate.io/OKX alpha. Rekomendasi: hold penuh jangan panic sell, kalau mau tambah posisi tunggu pullback ke MA9 dulu bukan beli di puncak spike. Level kritis yang paling penting: kalau harga tutup di bawah MA14 (0.1278 ETH) selama 2 candle berturut, itu sinyal pertama untuk siap-siap exit T1.';}
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // UTILS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 function fmtP(n){if(!n)return'0';if(n<.001)return n.toFixed(6);if(n<.1)return n.toFixed(4);if(n<10)return n.toFixed(3);return n.toFixed(2);}
 function fmtL(n){if(!n)return'0';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(2);}
 function ago(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function setBar(id,v){const el=document.getElementById('b'+id);if(el)el.style.width=v+'%';}
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // EXPOSE HELPERS FOR app.js GLUE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════
 // setTweets: assign module-scoped ALL_TWEETS (so twFilter works), render + stats.
 window.setTweets = function(tweets){
   ALL_TWEETS = Array.isArray(tweets) ? tweets : [];
