@@ -101,7 +101,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 /* FIBONACCI PANEL */
 .fib-panel{border-top:1px solid var(--border);padding:12px 16px;background:var(--s2)}
-.fib-title{font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.fib-title{font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
 .fib-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .fib-group label{font-size:8px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:3px}
 .fib-group input{background:var(--s3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;width:100%;outline:none;transition:.2s}
@@ -503,11 +503,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <div class="fib-panel">
     <div class="fib-title">
       <span>📐 FIBONACCI RETRACEMENT & EXTENSION CALCULATOR</span>
-      <div class="fib-direction-tabs">
-        <div class="fib-dtab on" id="fib-up" onclick="setFibDir('up',this)">⬆️ UPTREND (Retracement)</div>
-        <div class="fib-dtab" id="fib-down" onclick="setFibDir('down',this)">⬇️ DOWNTREND (Retracement)</div>
-        <div class="fib-dtab" id="fib-ext" onclick="setFibDir('ext',this)">🚀 EXTENSION (Targets)</div>
-      </div>
+    </div>
+    <div class="fib-direction-tabs">
+      <div class="fib-dtab on" id="fib-up" onclick="setFibDir('up',this)">⬆️ UPTREND (Retracement)</div>
+      <div class="fib-dtab" id="fib-down" onclick="setFibDir('down',this)">⬇️ DOWNTREND (Retracement)</div>
+      <div class="fib-dtab" id="fib-ext" onclick="setFibDir('ext',this)">🚀 EXTENSION (Targets)</div>
     </div>
     <div class="fib-inputs">
       <div class="fib-group">
