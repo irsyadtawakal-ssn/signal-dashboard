@@ -22,12 +22,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .wrap{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:14px}
 
 /* HEADER */
-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border:1px solid var(--border);background:var(--surface);margin-bottom:12px;position:relative;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border:1px solid var(--border);background:var(--surface);margin-bottom:12px;position:relative;overflow:hidden}
 header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4}
-.logo{font-family:var(--ui);font-size:16px;font-weight:800;flex-shrink:0}
+.logo{font-family:var(--ui);font-size:15px;font-weight:800;flex-shrink:0;min-width:0}
 .logo em{color:var(--accent);font-style:normal}
 .logo small{font-size:8px;color:var(--muted);letter-spacing:1.5px;display:block}
-.hdr-r{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.hdr-r{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden}
 .live{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--green);border:1px solid rgba(0,255,136,.3);padding:3px 7px;white-space:nowrap}
 .dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.2s ease infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
@@ -38,13 +38,14 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 .tg-chip{font-size:8px;color:var(--green);border:1px solid rgba(0,255,136,.35);padding:3px 8px;letter-spacing:.5px;white-space:nowrap;line-height:1;max-width:160px;overflow:hidden;text-overflow:ellipsis}
 .tg-btn-el.connected{border-color:rgba(0,255,136,.5);color:var(--green)}
 @media(max-width:600px){
-  header{padding:8px 12px}
+  header{padding:8px 10px;gap:6px}
   .logo{font-size:13px}
   .logo small{display:none}
-  .hdr-r{gap:4px}
+  .hdr-r{gap:3px}
   #ts{display:none}
-  .btn{padding:3px 7px;font-size:8px;letter-spacing:1px}
-  .tg-chip{max-width:110px}
+  #rbtn{display:none}
+  .btn{padding:3px 6px;font-size:7px;letter-spacing:.5px}
+  .tg-chip{max-width:100px;font-size:7px;padding:2px 6px}
 }
 
 /* PORTFOLIO */
