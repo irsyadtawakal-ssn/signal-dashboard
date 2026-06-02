@@ -15,27 +15,37 @@
   --font:'Space Mono',monospace;--ui:'Syne',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+html,body{overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.01) 2px,rgba(0,229,255,.01) 4px);pointer-events:none;z-index:9000}
 body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
 .wrap{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:14px}
 
 /* HEADER */
-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border:1px solid var(--border);background:var(--surface);margin-bottom:12px;position:relative;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border:1px solid var(--border);background:var(--surface);margin-bottom:12px;position:relative;overflow:hidden}
 header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4}
-.logo{font-family:var(--ui);font-size:18px;font-weight:800}
+.logo{font-family:var(--ui);font-size:16px;font-weight:800;flex-shrink:0}
 .logo em{color:var(--accent);font-style:normal}
-.logo small{font-size:9px;color:var(--muted);letter-spacing:2px;display:block}
-.hdr-r{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
-.live{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--green);border:1px solid rgba(0,255,136,.3);padding:3px 9px}
+.logo small{font-size:8px;color:var(--muted);letter-spacing:1.5px;display:block}
+.hdr-r{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.live{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--green);border:1px solid rgba(0,255,136,.3);padding:3px 7px;white-space:nowrap}
 .dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.2s ease infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:5px 12px;font-family:var(--font);font-size:9px;letter-spacing:2px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:4px 10px;font-family:var(--font);font-size:8px;letter-spacing:1.5px;cursor:pointer;transition:.15s;white-space:nowrap}
 .btn:hover{background:var(--accent);color:var(--bg)}.btn:disabled{opacity:.35;cursor:not-allowed}
 .btn-yellow{border-color:var(--yellow);color:var(--yellow)}.btn-yellow:hover{background:var(--yellow);color:var(--bg)}
 .btn-dim{border-color:#243049;color:#8aa0c0}.btn-dim:hover{background:#243049;color:var(--text)}
-.tg-chip{font-size:9px;color:var(--green);border:1px solid rgba(0,255,136,.35);padding:3px 9px;letter-spacing:1px;white-space:nowrap;line-height:1}
+.tg-chip{font-size:8px;color:var(--green);border:1px solid rgba(0,255,136,.35);padding:3px 8px;letter-spacing:.5px;white-space:nowrap;line-height:1;max-width:160px;overflow:hidden;text-overflow:ellipsis}
 .tg-btn-el.connected{border-color:rgba(0,255,136,.5);color:var(--green)}
+@media(max-width:600px){
+  header{padding:8px 12px}
+  .logo{font-size:13px}
+  .logo small{display:none}
+  .hdr-r{gap:4px}
+  #ts{display:none}
+  .btn{padding:3px 7px;font-size:8px;letter-spacing:1px}
+  .tg-chip{max-width:110px}
+}
 
 /* PORTFOLIO */
 .port-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.03);margin-bottom:12px}
@@ -372,9 +382,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 · DexScreener Chart · Fibonacci · Twitter Feed</small></div>
   <div class="hdr-r">
     <div class="live"><div class="dot"></div>LIVE</div>
-    <div id="ts" style="font-size:9px;color:var(--muted)">—</div>
-    <button class="btn" id="rbtn">⟳ REFRESH</button>
     <div id="tg-chip" class="tg-chip" style="display:none"></div>
+    <div id="ts" style="font-size:8px;color:var(--muted)">—</div>
+    <button class="btn" id="rbtn">⟳ REFRESH</button>
     <button class="btn tg-btn-el" id="tg-btn">TELEGRAM</button>
     <button id="admin-add-user-btn" class="btn btn-yellow" style="display:none">+ ADD USER</button>
     <button id="logout-btn" class="btn btn-dim">LOGOUT</button>
