@@ -13,7 +13,7 @@ const { createAnthropicComplete } = require('./ai/providers/anthropic');
 const { buildTweets } = require('./tweetsService');
 const { buildPrice } = require('./priceService');
 const { analyzeMarket } = require('./ai/analysis');
-const { runPriceUpdate, runCacheUpdate, startScheduler, retryFailedNotifications } = require('./scheduler');
+const { runPriceUpdate, runCacheUpdate, startScheduler, retryFailedNotifications, runAnalysisUpdate } = require('./scheduler');
 const { createNotifier } = require('./services/notifierFactory');
 
 try {
@@ -82,6 +82,15 @@ try {
       intervalMs: config.twitterIntervalMs,
     },
   ];
+
+  // Add auto-analysis job if both AI and Telegram are configured
+  if (analyzeFn && notifier) {
+    baseTasks.push({
+      run: () => runAnalysisUpdate({ db, analyzeFn, ttlMs: config.analysisTtlMs, notifier }),
+      intervalMs: config.analysisScheduleIntervalMs,
+    });
+    console.log(`[Server] Auto-analysis scheduler registered (every ${config.analysisScheduleIntervalMs / 1000 / 60} minutes)`);
+  }
 
   // Start scheduler with base tasks
   startScheduler({ tasks: baseTasks });
