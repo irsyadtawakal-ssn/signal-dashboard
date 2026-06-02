@@ -62,17 +62,25 @@ function formatMessage(signal) {
   // Confidence
   sections.push(`Confidence: ${confidencePercent}%`);
 
+  // Price Action (highlighted at the top)
+  if (components && components.priceAction) {
+    sections.push(''); // Empty line for separation
+    sections.push(`*📊 PRICE ACTION*`);
+    sections.push(`_${components.priceAction}_`);
+  }
+
   // Summary
   if (summary) {
+    sections.push('');
     sections.push(`Summary: ${summary}`);
   }
 
-  // Components section
+  // Components section (without priceAction since it's already at top)
   if (components) {
     sections.push(''); // Empty line before components
     sections.push('Analysis:');
 
-    const componentKeys = ['priceAction', 'sentiment', 'twitterBuzz', 'movingAverage', 'fibonacci'];
+    const componentKeys = ['sentiment', 'twitterBuzz', 'movingAverage', 'fibonacci'];
 
     componentKeys.forEach((key) => {
       const value = components[key];
