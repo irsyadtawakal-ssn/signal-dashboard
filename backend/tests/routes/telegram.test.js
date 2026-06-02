@@ -395,3 +395,110 @@ describe('POST /api/telegram/verify/:code', () => {
     });
   });
 });
+
+describe('GET /api/telegram/status', () => {
+  let db;
+  let app;
+
+  beforeEach(() => {
+    db = createDb(':memory:');
+    app = makeApp(db);
+    db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run('user-123', 'test@example.com');
+  });
+
+  it('returns 401 without a token', async () => {
+    const res = await request(app).get('/api/telegram/status');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns connected: false when no chatId saved', async () => {
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .get('/api/telegram/status')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.connected).toBe(false);
+    expect(res.body.chatId).toBeNull();
+  });
+
+  it('returns connected: true with chatId when saved', async () => {
+    db.prepare('UPDATE users SET telegramChatId = ? WHERE id = ?').run('987654321', 'user-123');
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .get('/api/telegram/status')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.connected).toBe(true);
+    expect(res.body.chatId).toBe('987654321');
+  });
+});
+
+describe('PUT /api/telegram/chatid', () => {
+  let db;
+  let app;
+
+  beforeEach(() => {
+    db = createDb(':memory:');
+    app = makeApp(db);
+    db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run('user-123', 'test@example.com');
+  });
+
+  it('returns 401 without a token', async () => {
+    const res = await request(app).put('/api/telegram/chatid').send({ chatId: '123456' });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 400 if chatId is missing', async () => {
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .put('/api/telegram/chatid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('missing_chat_id');
+  });
+
+  it('returns 400 if chatId is not numeric', async () => {
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .put('/api/telegram/chatid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ chatId: 'not-a-number' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('invalid_chat_id');
+  });
+
+  it('returns 400 if chatId exceeds 20 characters', async () => {
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .put('/api/telegram/chatid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ chatId: '123456789012345678901' }); // 21 digits
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('invalid_chat_id');
+  });
+
+  it('saves chatId and returns success', async () => {
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .put('/api/telegram/chatid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ chatId: '987654321' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    const user = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get('user-123');
+    expect(user.telegramChatId).toBe('987654321');
+  });
+
+  it('overwrites a previously saved chatId', async () => {
+    db.prepare('UPDATE users SET telegramChatId = ? WHERE id = ?').run('111111111', 'user-123');
+    const token = signTestToken({ sub: 'user-123' });
+    const res = await request(app)
+      .put('/api/telegram/chatid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ chatId: '999999999' });
+    expect(res.status).toBe(200);
+    const user = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get('user-123');
+    expect(user.telegramChatId).toBe('999999999');
+  });
+});

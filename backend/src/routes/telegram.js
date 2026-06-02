@@ -127,6 +127,43 @@ module.exports = function telegramRoute({ db, config }) {
     }
   });
 
+  /**
+   * GET /api/telegram/status
+   * Returns whether the current user has a Telegram chatId saved
+   */
+  protectedRouter.get('/status', (req, res) => {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+    const user = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get(req.user.id);
+    const chatId = user?.telegramChatId || null;
+    res.json({ connected: !!chatId, chatId });
+  });
+
+  /**
+   * PUT /api/telegram/chatid
+   * Saves a manually-entered Telegram chatId for the current user
+   */
+  protectedRouter.put('/chatid', (req, res) => {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+    const { chatId } = req.body;
+    if (!chatId) {
+      return res.status(400).json({ error: 'missing_chat_id' });
+    }
+    if (!/^-?\d{1,20}$/.test(String(chatId))) {
+      return res.status(400).json({ error: 'invalid_chat_id' });
+    }
+    try {
+      db.prepare('UPDATE users SET telegramChatId = ? WHERE id = ?').run(String(chatId), req.user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error saving telegram chatId:', error);
+      res.status(500).json({ error: 'internal_error' });
+    }
+  });
+
   // Export for testing purposes
   protectedRouter.validateCode = function(userId, code) {
     const stored = authCodes[userId];
