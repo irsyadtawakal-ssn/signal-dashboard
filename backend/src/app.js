@@ -9,10 +9,16 @@ const telegramRoute = require('./routes/telegram');
 
 function createApp({ db, config, analyzeFn, notifier }) {
   const app = express();
+  app.disable('etag');
   app.use(cors(config.corsOrigin ? { origin: config.corsOrigin } : {}));
   app.use(express.json());
   app.use((req, res, next) => {
     res.setHeader('Permissions-Policy', 'unload=*');
+    if (req.path.startsWith('/api/')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
     next();
   });
 
