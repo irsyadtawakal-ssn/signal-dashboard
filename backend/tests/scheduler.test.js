@@ -499,6 +499,47 @@ describe('runAnalysisUpdate', () => {
     expect(mockNotifier.send).toHaveBeenCalledTimes(1);
   });
 
+  it('updates lastMADirection cache after MA direction changes', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'HOLD');
+    setCache(db, 'lastMADirection', 'below');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'HOLD', confidence: 0.5, summary: 's',
+      components: { movingAverage: 'Price above 50-day MA' }
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(getCache(db, 'lastMADirection').value).toBe('above');
+  });
+
+  it('updates lastMADirection cache even when signal trigger fires', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'HOLD');
+    setCache(db, 'lastMADirection', 'below');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'BUY', confidence: 0.85, summary: 's',
+      components: { movingAverage: 'Price above 50-day MA' }
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    // Trigger 1 fired (signal change), but MA direction should still be updated
+    expect(getCache(db, 'lastMADirection').value).toBe('above');
+    // Only one notification sent (trigger 1 wins)
+    expect(mockNotifier.send).toHaveBeenCalledTimes(1);
+  });
+
   it('does not send notification when signal is unchanged', async () => {
     const db = makeDb();
     addUser(db, 'user-1', '111111111');

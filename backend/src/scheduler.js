@@ -185,22 +185,26 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
 
     setCache(db, 'lastSignal', newSignal);
 
-    // Trigger 2: MA direction crossed (only if signal trigger didn't fire)
-    if (!notificationFired && result.components) {
+    // MA direction state — always update when detected
+    if (result.components) {
       const newMaDir = getMaDirection(result.components.movingAverage);
-      const prevMaDirCache = getCache(db, 'lastMADirection');
-      const prevMaDir = prevMaDirCache ? prevMaDirCache.value : null;
 
-      if (newMaDir && prevMaDir && newMaDir !== prevMaDir) {
-        const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
-        for (const user of users) {
-          setImmediate(async () => {
-            try {
-              await notifier.send(result, user.id);
-            } catch (err) {
-              console.error(`[Scheduler] MA crossover notification failed for user ${user.id}:`, err.message);
-            }
-          });
+      // Trigger 2: MA direction crossed, only if signal trigger didn't fire
+      if (!notificationFired) {
+        const prevMaDirCache = getCache(db, 'lastMADirection');
+        const prevMaDir = prevMaDirCache ? prevMaDirCache.value : null;
+
+        if (newMaDir && prevMaDir && newMaDir !== prevMaDir) {
+          const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
+          for (const user of users) {
+            setImmediate(async () => {
+              try {
+                await notifier.send(result, user.id);
+              } catch (err) {
+                console.error(`[Scheduler] MA crossover notification failed for user ${user.id}:`, err.message);
+              }
+            });
+          }
         }
       }
 
