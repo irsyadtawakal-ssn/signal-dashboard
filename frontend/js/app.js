@@ -368,6 +368,7 @@ const tgStatus = $('tg-status');
 const tgMsg = $('tg-msg');
 
 function setTgStatus(connected, chatId) {
+  if (!tgStatus) return;
   if (connected) {
     tgStatus.textContent = `CONNECTED · ${chatId}`;
     tgStatus.className = 'tg-modal-status connected';
@@ -407,25 +408,21 @@ if (tgSaveBtn) {
   tgSaveBtn.addEventListener('click', async () => {
     const chatId = tgInput?.value?.trim();
     if (!chatId) {
-      tgMsg.textContent = 'Enter your Chat ID first.';
-      tgMsg.className = 'tg-msg err';
+      if (tgMsg) { tgMsg.textContent = 'Enter your Chat ID first.'; tgMsg.className = 'tg-msg err'; }
       return;
     }
     if (!/^-?\d{1,20}$/.test(chatId)) {
-      tgMsg.textContent = 'Chat ID must be numeric (e.g. 123456789).';
-      tgMsg.className = 'tg-msg err';
+      if (tgMsg) { tgMsg.textContent = 'Chat ID must be numeric (e.g. 123456789).'; tgMsg.className = 'tg-msg err'; }
       return;
     }
     tgSaveBtn.disabled = true;
-    tgMsg.textContent = '';
+    if (tgMsg) tgMsg.textContent = '';
     try {
       await api.saveTelegramChatId(chatId);
       setTgStatus(true, chatId);
-      tgMsg.textContent = 'Connected! You will receive BUY/SELL alerts.';
-      tgMsg.className = 'tg-msg ok';
+      if (tgMsg) { tgMsg.textContent = 'Connected! You will receive BUY/SELL alerts.'; tgMsg.className = 'tg-msg ok'; }
     } catch (err) {
-      tgMsg.textContent = 'Failed to save. Try again.';
-      tgMsg.className = 'tg-msg err';
+      if (tgMsg) { tgMsg.textContent = 'Failed to save. Try again.'; tgMsg.className = 'tg-msg err'; }
     } finally {
       tgSaveBtn.disabled = false;
     }
