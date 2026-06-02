@@ -348,6 +348,7 @@ if (loginForm) {
     try {
       await auth.login($('login-email').value, $('login-password').value);
       hideLogin();
+      loadTgStatus();
       await setupAdminUI();
       await refresh();
     }
@@ -356,6 +357,81 @@ if (loginForm) {
 }
 const logoutBtn = $('logout-btn');
 if (logoutBtn) logoutBtn.addEventListener('click', async () => { await auth.logout(); showLogin(); });
+
+// ── Telegram modal ──
+const tgModalBg = $('tg-modal-bg');
+const tgBtn = $('tg-btn');
+const tgClose = $('tg-close');
+const tgSaveBtn = $('tg-save-btn');
+const tgInput = $('tg-chatid-input');
+const tgStatus = $('tg-status');
+const tgMsg = $('tg-msg');
+
+function setTgStatus(connected, chatId) {
+  if (connected) {
+    tgStatus.textContent = `CONNECTED · ${chatId}`;
+    tgStatus.className = 'tg-modal-status connected';
+    if (tgInput) tgInput.value = chatId;
+  } else {
+    tgStatus.textContent = 'NOT CONNECTED';
+    tgStatus.className = 'tg-modal-status disconnected';
+  }
+}
+
+async function loadTgStatus() {
+  try {
+    const data = await api.getTelegramStatus();
+    setTgStatus(data.connected, data.chatId);
+  } catch { /* silent — user not logged in yet or network error */ }
+}
+
+if (tgBtn) {
+  tgBtn.addEventListener('click', () => {
+    if (tgModalBg) tgModalBg.classList.add('open');
+    if (tgMsg) tgMsg.textContent = '';
+    loadTgStatus();
+  });
+}
+
+if (tgClose) {
+  tgClose.addEventListener('click', () => tgModalBg?.classList.remove('open'));
+}
+
+if (tgModalBg) {
+  tgModalBg.addEventListener('click', (e) => {
+    if (e.target === tgModalBg) tgModalBg.classList.remove('open');
+  });
+}
+
+if (tgSaveBtn) {
+  tgSaveBtn.addEventListener('click', async () => {
+    const chatId = tgInput?.value?.trim();
+    if (!chatId) {
+      tgMsg.textContent = 'Enter your Chat ID first.';
+      tgMsg.className = 'tg-msg err';
+      return;
+    }
+    if (!/^-?\d{1,20}$/.test(chatId)) {
+      tgMsg.textContent = 'Chat ID must be numeric (e.g. 123456789).';
+      tgMsg.className = 'tg-msg err';
+      return;
+    }
+    tgSaveBtn.disabled = true;
+    tgMsg.textContent = '';
+    try {
+      await api.saveTelegramChatId(chatId);
+      setTgStatus(true, chatId);
+      tgMsg.textContent = 'Connected! You will receive BUY/SELL alerts.';
+      tgMsg.className = 'tg-msg ok';
+    } catch (err) {
+      tgMsg.textContent = 'Failed to save. Try again.';
+      tgMsg.className = 'tg-msg err';
+    } finally {
+      tgSaveBtn.disabled = false;
+    }
+  });
+}
+
 const refreshBtn = $('rbtn');
 if (refreshBtn) refreshBtn.addEventListener('click', refresh);
 

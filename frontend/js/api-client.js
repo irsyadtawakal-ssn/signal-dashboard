@@ -30,6 +30,9 @@ function createApiClient({ baseUrl, getToken, fetchFn = fetch }) {
       call('/api/analyze', { method: 'POST', body: JSON.stringify({ force }) }),
     adminInvite: ({ email, password }) =>
       call('/api/admin/invite', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    getTelegramStatus: () => call('/api/telegram/status'),
+    saveTelegramChatId: (chatId) =>
+      call('/api/telegram/chatid', { method: 'PUT', body: JSON.stringify({ chatId }) }),
   };
 }
 
