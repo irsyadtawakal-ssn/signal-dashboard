@@ -170,11 +170,11 @@ function renderPrice(p) {
   if (!p || p.pending) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.textContent = val; };
   set('prc', p.oct != null ? `$${p.oct}` : '—');
-  set('chg', p.octChange24h != null ? `${p.octChange24h}%` : '—');
+  set('chg', p.octChange24h != null ? `${parseFloat(p.octChange24h).toFixed(2)}%` : '—');
   set('btcp', p.btc != null ? `$${p.btc}` : '—');
   set('ethp', p.eth != null ? `$${p.eth}` : '—');
   set('btcv', p.btc != null ? `$${p.btc}` : '—');
-  set('btcc', p.btcChange24h != null ? `${p.btcChange24h}%` : '—');
+  set('btcc', p.btcChange24h != null ? `${parseFloat(p.btcChange24h).toFixed(2)}%` : '—');
   set('ethv', p.eth != null ? `$${p.eth}` : '—');
   set('fib-current-ref', p.oct != null ? `$${p.oct}` : '—');
   // Keep module-scoped CUR_PRICE in sync (drives calcFib / calcPort / buildExits).
