@@ -11,6 +11,10 @@ function createApp({ db, config, analyzeFn, notifier }) {
   const app = express();
   app.use(cors(config.corsOrigin ? { origin: config.corsOrigin } : {}));
   app.use(express.json());
+  app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'unload=*');
+    next();
+  });
 
   // Public
   app.use('/api/health', healthRoute());
