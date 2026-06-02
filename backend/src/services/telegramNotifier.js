@@ -65,8 +65,8 @@ function formatMessage(signal) {
   // Price Action (highlighted at the top)
   if (components && components.priceAction) {
     sections.push(''); // Empty line for separation
-    sections.push(`*📊 PRICE ACTION*`);
-    sections.push(`_${components.priceAction}_`);
+    sections.push(`*UPDATED PRICE*`);
+    sections.push(components.priceAction);
   }
 
   // Summary
