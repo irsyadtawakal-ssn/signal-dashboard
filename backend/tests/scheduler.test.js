@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createDb, getCache } from '../src/db.js';
+import { createDb, getCache, setCache } from '../src/db.js';
 
 // We need to reset the scheduler module between tests to clear failure counts
-let runPriceUpdate, runCacheUpdate, startScheduler, getFailureStatus;
+let runPriceUpdate, runCacheUpdate, startScheduler, getFailureStatus, runAnalysisUpdate;
 
 beforeEach(async () => {
   // Clear the module cache to reset failure counts
@@ -12,6 +12,7 @@ beforeEach(async () => {
   runCacheUpdate = scheduler.runCacheUpdate;
   startScheduler = scheduler.startScheduler;
   getFailureStatus = scheduler.getFailureStatus;
+  runAnalysisUpdate = scheduler.runAnalysisUpdate;
 });
 
 describe('runPriceUpdate', () => {
@@ -410,5 +411,233 @@ describe('retryFailedNotifications', () => {
       expect(nextRetryTime).toBeGreaterThanOrEqual(expectedMinDelay - 500);
       expect(nextRetryTime).toBeLessThanOrEqual(expectedMinDelay + 500);
     }
+  });
+});
+
+describe('runAnalysisUpdate', () => {
+  function makeDb() {
+    const db = createDb(':memory:');
+    return db;
+  }
+
+  function addUser(db, id, chatId = null) {
+    db.prepare('INSERT INTO users (id, email) VALUES (?, ?)').run(id, `${id}@example.com`);
+    if (chatId) {
+      db.prepare('UPDATE users SET telegramChatId = ? WHERE id = ?').run(chatId, id);
+    }
+  }
+
+  it('sends notification to all users with telegramChatId when signal changes to BUY', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+    addUser(db, 'user-2', '222222222');
+    addUser(db, 'user-3'); // no chatId
+
+    setCache(db, 'lastSignal', 'HOLD');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({ recommendation: 'BUY', confidence: 0.8, summary: 's', components: {} });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).toHaveBeenCalledTimes(2); // user-1 and user-2 only
+  });
+
+  it('sends notification to all users with telegramChatId when signal changes to SELL', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'BUY');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'SELL', confidence: 0.7, summary: 's', components: {}
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends notification when MA direction crosses below to above', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'HOLD');
+    setCache(db, 'lastMADirection', 'below');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'HOLD', confidence: 0.5, summary: 's',
+      components: { movingAverage: 'Price above 50-day MA' }
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends notification when MA direction crosses above to below', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'HOLD');
+    setCache(db, 'lastMADirection', 'above');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'HOLD', confidence: 0.5, summary: 's',
+      components: { movingAverage: 'Price fell below 20-day MA' }
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send notification when signal is unchanged', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'BUY');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'BUY', confidence: 0.8, summary: 's', components: {}
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).not.toHaveBeenCalled();
+  });
+
+  it('does not send notification when signal changes to HOLD', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'BUY');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'HOLD', confidence: 0.5, summary: 's', components: {}
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).not.toHaveBeenCalled();
+  });
+
+  it('does not send notification when MA direction is unchanged', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'HOLD');
+    setCache(db, 'lastMADirection', 'above');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'HOLD', confidence: 0.5, summary: 's',
+      components: { movingAverage: 'Price still above 50-day MA' }
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).not.toHaveBeenCalled();
+  });
+
+  it('does not notify users without telegramChatId', async () => {
+    const db = makeDb();
+    addUser(db, 'user-no-chat'); // no chatId
+
+    setCache(db, 'lastSignal', 'HOLD');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'BUY', confidence: 0.8, summary: 's', components: {}
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).not.toHaveBeenCalled();
+  });
+
+  it('sends only one notification when signal and MA both change', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+
+    setCache(db, 'lastSignal', 'HOLD');
+    setCache(db, 'lastMADirection', 'below');
+
+    const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'BUY', confidence: 0.85, summary: 's',
+      components: { movingAverage: 'Price above 50-day MA' }
+    });
+
+    await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(mockNotifier.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns success even when notifier throws for one user', async () => {
+    const db = makeDb();
+    addUser(db, 'user-1', '111111111');
+    addUser(db, 'user-2', '222222222');
+
+    setCache(db, 'lastSignal', 'HOLD');
+
+    const mockNotifier = {
+      send: vi.fn()
+        .mockRejectedValueOnce(new Error('Telegram down'))
+        .mockResolvedValueOnce({ success: true })
+    };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'BUY', confidence: 0.8, summary: 's', components: {}
+    });
+
+    const result = await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(result.status).toBe('success');
+  });
+
+  it('returns failed status when analyzeFn throws', async () => {
+    const db = makeDb();
+    const mockNotifier = { send: vi.fn() };
+    const analyzeFn = vi.fn().mockRejectedValue(new Error('AI API down'));
+
+    const result = await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+
+    expect(result.status).toBe('failed');
+    expect(result.error).toBe('AI API down');
+    expect(result.timestamp).toBeDefined();
+    expect(mockNotifier.send).not.toHaveBeenCalled();
+  });
+
+  it('returns success with recommendation on successful run', async () => {
+    const db = makeDb();
+    setCache(db, 'lastSignal', 'HOLD');
+
+    const mockNotifier = { send: vi.fn() };
+    const analyzeFn = vi.fn().mockResolvedValue({
+      recommendation: 'SELL', confidence: 0.75, summary: 's', components: {}
+    });
+
+    addUser(db, 'user-1', '111111111');
+    const result = await runAnalysisUpdate({ db, analyzeFn, ttlMs: 0, notifier: mockNotifier });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(result.status).toBe('success');
+    expect(result.recommendation).toBe('SELL');
+    expect(result.timestamp).toBeDefined();
   });
 });

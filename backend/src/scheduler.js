@@ -1,4 +1,5 @@
-const { setCache } = require('./db');
+const { setCache, getCache } = require('./db');
+const { getAnalysis, getPreviousSignal, getMaDirection } = require('./analysisService');
 
 const FAILURE_THRESHOLD = 3;
 const MAX_RETRIES = 3;
@@ -160,6 +161,61 @@ async function retryFailedNotifications({ db, telegramNotifier, config }) {
   }
 }
 
+async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
+  try {
+    const result = await getAnalysis({ db, analyzeFn, ttlMs, force: true });
+    const newSignal = result.recommendation;
+    const previousSignal = getPreviousSignal(db);
+    let notificationFired = false;
+
+    // Trigger 1: signal changed to BUY or SELL
+    if (previousSignal && previousSignal !== newSignal && ['BUY', 'SELL'].includes(newSignal)) {
+      notificationFired = true;
+      const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
+      for (const user of users) {
+        setImmediate(async () => {
+          try {
+            await notifier.send(result, user.id);
+          } catch (err) {
+            console.error(`[Scheduler] Signal notification failed for user ${user.id}:`, err.message);
+          }
+        });
+      }
+    }
+
+    setCache(db, 'lastSignal', newSignal);
+
+    // Trigger 2: MA direction crossed (only if signal trigger didn't fire)
+    if (!notificationFired && result.components) {
+      const newMaDir = getMaDirection(result.components.movingAverage);
+      const prevMaDirCache = getCache(db, 'lastMADirection');
+      const prevMaDir = prevMaDirCache ? prevMaDirCache.value : null;
+
+      if (newMaDir && prevMaDir && newMaDir !== prevMaDir) {
+        const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
+        for (const user of users) {
+          setImmediate(async () => {
+            try {
+              await notifier.send(result, user.id);
+            } catch (err) {
+              console.error(`[Scheduler] MA crossover notification failed for user ${user.id}:`, err.message);
+            }
+          });
+        }
+      }
+
+      if (newMaDir) {
+        setCache(db, 'lastMADirection', newMaDir);
+      }
+    }
+
+    return { status: 'success', timestamp: Date.now(), recommendation: newSignal };
+  } catch (err) {
+    console.error('[Scheduler] Analysis update failed:', err.message);
+    return { status: 'failed', error: err.message, timestamp: Date.now() };
+  }
+}
+
 function startScheduler({ tasks }) {
   const timers = tasks.map(({ run, intervalMs }) => {
     run(); // run immediately on start
@@ -170,4 +226,4 @@ function startScheduler({ tasks }) {
   };
 }
 
-module.exports = { runPriceUpdate, runCacheUpdate, startScheduler, getFailureStatus, retryFailedNotifications };
+module.exports = { runPriceUpdate, runCacheUpdate, startScheduler, getFailureStatus, retryFailedNotifications, runAnalysisUpdate };
