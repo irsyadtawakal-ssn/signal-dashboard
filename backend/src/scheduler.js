@@ -169,19 +169,17 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
     const previousSignal = getPreviousSignal(db);
     let notificationFired = false;
 
-    // Trigger 1: signal changed to BUY or SELL
-    if (previousSignal && previousSignal !== newSignal && ['BUY', 'SELL'].includes(newSignal)) {
-      notificationFired = true;
-      const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
-      for (const user of users) {
-        setImmediate(async () => {
-          try {
-            await notifier.send(result, user.id);
-          } catch (err) {
-            console.error(`[Scheduler] Signal notification failed for user ${user.id}:`, err.message);
-          }
-        });
-      }
+    // Send notification to all users every run (periodic report mode)
+    // This sends a status update every scheduler interval regardless of signal changes
+    const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
+    for (const user of users) {
+      setImmediate(async () => {
+        try {
+          await notifier.send(result, user.id);
+        } catch (err) {
+          console.error(`[Scheduler] Periodic notification failed for user ${user.id}:`, err.message);
+        }
+      });
     }
 
     setCache(db, 'lastSignal', newSignal);
@@ -190,27 +188,7 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
     if (result.components) {
       const newMaDir = getMaDirection(result.components.movingAverage);
 
-      // Trigger 2: MA direction crossed, only if signal trigger didn't fire
-      if (!notificationFired) {
-        const prevMaDirCache = getCache(db, 'lastMADirection');
-        const prevMaDir = prevMaDirCache ? prevMaDirCache.value : null;
-
-        if (newMaDir && prevMaDir && newMaDir !== prevMaDir) {
-          const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
-          for (const user of users) {
-            setImmediate(async () => {
-              try {
-                await notifier.send(result, user.id);
-              } catch (err) {
-                console.error(`[Scheduler] MA crossover notification failed for user ${user.id}:`, err.message);
-              }
-            });
-          }
-        }
-      }
-
-      // Always update MA direction cache regardless of which trigger fired,
-      // so the next run gets an accurate baseline for crossover detection
+      // Always update MA direction cache for tracking
       if (newMaDir) {
         setCache(db, 'lastMADirection', newMaDir);
       }
