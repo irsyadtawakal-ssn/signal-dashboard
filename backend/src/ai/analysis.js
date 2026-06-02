@@ -23,8 +23,32 @@ const SYSTEM_PROMPT = [
 
 function extractJsonObject(text) {
   const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1 || end < start) {
+  if (start === -1) {
+    throw new Error('no JSON object in analysis reply');
+  }
+
+  // Track nesting depth to find the exact matching closing brace,
+  // ignoring braces inside string values
+  let depth = 0;
+  let end = -1;
+  let inString = false;
+  let escape = false;
+
+  for (let i = start; i < text.length; i++) {
+    const char = text[i];
+    if (escape) { escape = false; continue; }
+    if (char === '\\' && inString) { escape = true; continue; }
+    if (char === '"') { inString = !inString; continue; }
+    if (!inString) {
+      if (char === '{') depth++;
+      else if (char === '}') {
+        depth--;
+        if (depth === 0) { end = i; break; }
+      }
+    }
+  }
+
+  if (end === -1) {
     throw new Error('no JSON object in analysis reply');
   }
 
