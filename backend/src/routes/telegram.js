@@ -132,11 +132,12 @@ module.exports = function telegramRoute({ db, config }) {
    * Returns whether the current user has a Telegram chatId saved
    */
   protectedRouter.get('/status', (req, res) => {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
     const user = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get(req.user.id);
-    const chatId = user?.telegramChatId || null;
+    if (!user) {
+      console.warn(`[telegram/status] No users row for authenticated user ${req.user.id}`);
+      return res.json({ connected: false, chatId: null });
+    }
+    const chatId = user.telegramChatId || null;
     res.json({ connected: !!chatId, chatId });
   });
 
@@ -145,9 +146,6 @@ module.exports = function telegramRoute({ db, config }) {
    * Saves a manually-entered Telegram chatId for the current user
    */
   protectedRouter.put('/chatid', (req, res) => {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
     const { chatId } = req.body;
     if (!chatId) {
       return res.status(400).json({ error: 'missing_chat_id' });

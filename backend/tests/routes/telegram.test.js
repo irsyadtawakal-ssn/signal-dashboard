@@ -346,7 +346,7 @@ describe('POST /api/telegram/verify/:code', () => {
         .send({ chatId: '12345' });
 
       expect(verifyRes2.status).toBe(400);
-      expect(verifyRes2.body.error).toBeDefined();
+      expect(verifyRes2.body.error).toBe('chat_id_in_use');
     });
   });
 
@@ -391,7 +391,7 @@ describe('POST /api/telegram/verify/:code', () => {
         .send({});
 
       expect(verifyRes.status).toBe(400);
-      expect(verifyRes.body.error).toBeDefined();
+      expect(verifyRes.body.error).toBe('missing_chat_id');
     });
   });
 });
