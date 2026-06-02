@@ -7,59 +7,86 @@ SQLite cache.
 ## Setup
 
 1. `cd backend && npm install`
-2. Copy env: `cp .env.example .env` (Windows: `copy .env.example .env`) and fill
-   `SUPABASE_JWT_SECRET` (Supabase dashboard → Settings → API → JWT Secret).
+2. Copy env: `cp .env.example .env` (Windows: `copy .env.example .env`) and fill in required values.
 3. Run tests: `npm test`
 4. Start: `npm start` (or `npm run dev` to auto-reload).
 
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `SUPABASE_JWT_SECRET` | ✅ | Supabase → Settings → API → JWT Secret |
+| `OPENROUTER_API_KEY` | Optional | AI analysis via OpenRouter |
+| `ANTHROPIC_API_KEY` | Optional | AI analysis via Anthropic directly |
+| `CRYPTOPANIC_TOKEN` | Optional | CryptoPanic news API token |
+| `CORS_ORIGIN` | Optional | Allowed CORS origin (default: `*`) |
+| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token from BotFather |
+| `TELEGRAM_API_TIMEOUT` | Optional | Telegram API timeout in ms (default: 5000) |
+| `TELEGRAM_MAX_RETRIES` | Optional | Max retry attempts for failed notifications (default: 3) |
+| `TELEGRAM_RETRY_BACKOFF` | Optional | Comma-separated backoff delays in ms (default: 60000,300000,1800000,3600000) |
+
 ## Endpoints
 
-- `GET /api/health` — public liveness check → `{ "status": "ok" }`
-- `GET /api/price` — **protected**; returns the cached price object
-  `{ oct, octChange24h, btc, btcChange24h, eth, ethChange24h, fetchedAt }`,
-  or `503` until the first scheduled fetch completes.
-- `GET /api/news` — **protected**; returns cached crypto-news items
-  `[{ title, url, source, publishedAt, sentiment }]`, or `503` until the first
-  scheduled fetch completes.
-- `GET /api/tweets` — **protected**; returns cached, AI-classified tweets
-  `[{ id, text, author, url, createdAt, sentiment }]` where `sentiment` is
-  `Bullish | Bearish | Whale | Unrated`, or `503` until the first scheduled fetch.
-- `POST /api/analyze` — **protected**; runs Claude Opus on the cached price/tweets/news and
-  returns `{ recommendation: BUY|HOLD|SELL, confidence, summary, components, generatedAt }`.
-  The result is cached for `ANALYSIS_TTL_MS` (default 10 min); send `{ "force": true }` to
-  re-run immediately. `503` if no AI key is configured; `502` if the analysis call fails.
+### Public
+- `GET /api/health` — liveness check → `{ "status": "ok" }`
 
-## Background jobs
+### Protected (Bearer token required)
+- `GET /api/price` — cached price: `{ oct, octChange24h, btc, btcChange24h, eth, ethChange24h, fetchedAt }`
+- `GET /api/news` — cached news: `[{ title, url, source, publishedAt, sentiment }]`
+- `GET /api/tweets` — cached tweets: `[{ id, text, author, url, createdAt, sentiment }]` where `sentiment` is `Bullish | Bearish | Whale | Unrated`
+- `POST /api/analyze` — run AI analysis on cached data → `{ recommendation: BUY|HOLD|SELL, confidence, summary, components, generatedAt }`. Send `{ "force": true }` to bypass cache. Result cached for `ANALYSIS_TTL_MS` (default 10 min).
+- `GET /api/cache` — view current cache state (admin)
 
-On startup the server schedules a price update (DexScreener for OCT, CoinGecko
-for BTC/ETH) every `PRICE_INTERVAL_MS` (default 5 min) and writes it to the
-`price` cache key. If one upstream fails, the other's data is still served (the
-failed fields are `null`).
+### Admin (admin email required)
+- `POST /api/admin/add-user` — add a new Supabase user by email
 
-A news update (CryptoPanic, hourly by default via `NEWS_INTERVAL_MS`) writes the
-`news` cache key. The free public endpoint is used unless `CRYPTOPANIC_TOKEN` is set.
+### Telegram
+- `POST /api/telegram/connect` — generate a 6-char auth code to connect Telegram (requires JWT)
+- `POST /api/telegram/verify/:code` — verify auth code and save Telegram chat ID (called by bot)
 
-A tweets update (Twitter scraper, every `TWITTER_INTERVAL_MS`, default 5 min) writes the
-`tweets` cache key. Each tweet is classified by Claude Sonnet via `AI_PROVIDER`
-(`openrouter` default, or `anthropic`); when no AI key is set the tweets are stored
-`Unrated`. A scraper failure leaves the feed at `503` until the next successful cycle.
+## Telegram Notifications
 
-`POST /api/analyze` is **on-demand** (not scheduled): it reads the existing cache keys, calls
-Opus via `AI_PROVIDER`, and stores the result under the `analysis` cache key with a TTL to
-keep Opus cost low.
+When a BUY or SELL signal is detected (and differs from the previous signal), the backend sends a Telegram notification to users who have connected their Telegram account.
+
+**Setup:**
+1. Create a bot via BotFather → get `TELEGRAM_BOT_TOKEN`
+2. Add token to `.env`
+3. User connects via the app: Settings → Connect Telegram → follow code flow
+
+**Message format:** Includes signal recommendation, confidence %, all 5 analysis components (price action, sentiment, Twitter buzz, moving average, Fibonacci), summary, and timestamp.
+
+Failed notifications are stored in the `failed_notifications` table and retried automatically with exponential backoff (1m → 5m → 30m → 1h, max 3 retries).
+
+## Background Jobs
+
+- **Price** — DexScreener (OCT) + CoinGecko (BTC/ETH), every `PRICE_INTERVAL_MS` (default 5 min)
+- **News** — CryptoPanic, every `NEWS_INTERVAL_MS` (default 60 min)
+- **Tweets** — Twitter scraper + AI sentiment classification, every `TWITTER_INTERVAL_MS` (default 5 min)
+- **Telegram retry** — retries failed notifications every 1 min with exponential backoff
 
 ## Auth
 
-Send the Supabase access token as `Authorization: Bearer <token>`. The backend
-verifies it locally (HS256) against `SUPABASE_JWT_SECRET`. No token / invalid
-token → `401`.
+Send the Supabase access token as `Authorization: Bearer <token>`. Verified locally (HS256) against `SUPABASE_JWT_SECRET`. No token / invalid token → `401`.
 
-> Cache-population (cron pulling DexScreener / CoinGecko / Twitter / Claude /
-> CryptoPanic) is implemented in Phase 2.
+## Database
+
+SQLite at `backend/signal-dashboard.db`.
+
+Tables:
+- `cache` — key/value store for price, news, tweets, analysis data
+- `users` — user records with `email` and `telegramChatId`
+- `failed_notifications` — failed Telegram sends pending retry
+
+## Tests
+
+180 tests across 25 files:
+```bash
+cd backend && npm test
+```
 
 ## Deploy to VPS
 
-The backend is designed to run as a managed pm2 process on a Linux VPS.
+The backend runs as a managed pm2 process on a Linux VPS.
 
 ### First-time setup
 
@@ -73,21 +100,18 @@ cd backend && npm ci --omit=dev
 # 3. Copy env and fill required values
 cp .env.example .env
 # Edit .env — at minimum set SUPABASE_JWT_SECRET
-# Optional: OPENROUTER_API_KEY / ANTHROPIC_API_KEY, CRYPTOPANIC_TOKEN, TWITTER_SCRAPER_TOKEN, CORS_ORIGIN
+# Optional: OPENROUTER_API_KEY / ANTHROPIC_API_KEY, CRYPTOPANIC_TOKEN, TELEGRAM_BOT_TOKEN
 
-# 4. Start the process (must run from inside the backend/ directory)
+# 4. Start the process
 cd backend && pm2 start pm2.config.js
 
 # 5. Register pm2 with the OS so it survives reboots
 pm2 startup
-# ↑ Prints something like: "sudo env PATH=... pm2 startup systemd -u user --hp /home/user"
-# Copy and paste the ENTIRE printed command (including 'sudo') and run it
+# Copy and paste the ENTIRE printed command and run it
 
 # 6. Save the current process list
 pm2 save
 ```
-
-After steps 5 and 6 are both complete, pm2 will restart automatically after any VPS reboot.
 
 ### Day-to-day operations
 
