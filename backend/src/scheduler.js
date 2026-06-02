@@ -163,6 +163,7 @@ async function retryFailedNotifications({ db, telegramNotifier, config }) {
 
 async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
   try {
+    // force:true — scheduler owns analysis freshness independently of the user-facing cache TTL
     const result = await getAnalysis({ db, analyzeFn, ttlMs, force: true });
     const newSignal = result.recommendation;
     const previousSignal = getPreviousSignal(db);
@@ -208,6 +209,8 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
         }
       }
 
+      // Always update MA direction cache regardless of which trigger fired,
+      // so the next run gets an accurate baseline for crossover detection
       if (newMaDir) {
         setCache(db, 'lastMADirection', newMaDir);
       }

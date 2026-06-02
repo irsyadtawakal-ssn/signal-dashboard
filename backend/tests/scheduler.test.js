@@ -433,6 +433,7 @@ describe('runAnalysisUpdate', () => {
     addUser(db, 'user-2', '222222222');
     addUser(db, 'user-3'); // no chatId
 
+    // previousSignal seeded via setCache; analyzeFn always returns BUY so HOLD→BUY transition fires trigger 1
     setCache(db, 'lastSignal', 'HOLD');
 
     const mockNotifier = { send: vi.fn().mockResolvedValue({ success: true }) };
