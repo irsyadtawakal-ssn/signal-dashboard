@@ -32,6 +32,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:5px 12px;font-family:var(--font);font-size:9px;letter-spacing:2px;cursor:pointer;transition:.15s;white-space:nowrap}
 .btn:hover{background:var(--accent);color:var(--bg)}.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-yellow{border-color:var(--yellow);color:var(--yellow)}.btn-yellow:hover{background:var(--yellow);color:var(--bg)}
+.btn-dim{border-color:#243049;color:#8aa0c0}.btn-dim:hover{background:#243049;color:var(--text)}
+.tg-chip{font-size:9px;color:var(--green);border:1px solid rgba(0,255,136,.35);padding:3px 9px;letter-spacing:1px;white-space:nowrap;line-height:1}
+.tg-btn-el.connected{border-color:rgba(0,255,136,.5);color:var(--green)}
 
 /* PORTFOLIO */
 .port-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.03);margin-bottom:12px}
@@ -353,6 +357,8 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
       Caranya: chat <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> &rarr;
       bot akan balas dengan Chat ID kamu &rarr; paste di bawah.
     </p>
+    <label for="tg-name-input">DISPLAY NAME (opsional)</label>
+    <input type="text" id="tg-name-input" placeholder="e.g. John" maxlength="64">
     <label for="tg-chatid-input">CHAT ID</label>
     <input type="text" id="tg-chatid-input" placeholder="e.g. 123456789" maxlength="21" inputmode="numeric">
     <div class="tg-modal-actions">
@@ -368,11 +374,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     <div class="live"><div class="dot"></div>LIVE</div>
     <div id="ts" style="font-size:9px;color:var(--muted)">—</div>
     <button class="btn" id="rbtn">⟳ REFRESH</button>
-  </div>
-  <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
-    <button id="tg-btn" style="font-size:9px;padding:4px 10px;background:transparent;border:1px solid rgba(0,229,255,.4);color:var(--accent);cursor:pointer;font-family:var(--font);letter-spacing:1px">TELEGRAM</button>
-    <button id="admin-add-user-btn" style="display:none;font-size:9px;padding:4px 10px;background:transparent;border:1px solid var(--yellow);color:var(--yellow);cursor:pointer">+ ADD USER</button>
-    <button id="logout-btn" style="font-size:9px;padding:4px 10px;background:transparent;border:1px solid #243049;color:#8aa0c0;cursor:pointer">LOGOUT</button>
+    <div id="tg-chip" class="tg-chip" style="display:none"></div>
+    <button class="btn tg-btn-el" id="tg-btn">TELEGRAM</button>
+    <button id="admin-add-user-btn" class="btn btn-yellow" style="display:none">+ ADD USER</button>
+    <button id="logout-btn" class="btn btn-dim">LOGOUT</button>
   </div>
 </header>
 

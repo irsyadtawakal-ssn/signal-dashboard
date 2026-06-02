@@ -31,8 +31,8 @@ function createApiClient({ baseUrl, getToken, fetchFn = fetch }) {
     adminInvite: ({ email, password }) =>
       call('/api/admin/invite', { method: 'POST', body: JSON.stringify({ email, password }) }),
     getTelegramStatus: () => call('/api/telegram/status'),
-    saveTelegramChatId: (chatId) =>
-      call('/api/telegram/chatid', { method: 'PUT', body: JSON.stringify({ chatId }) }),
+    saveTelegramChatId: (chatId, name) =>
+      call('/api/telegram/chatid', { method: 'PUT', body: JSON.stringify({ chatId, name }) }),
   };
 }
 

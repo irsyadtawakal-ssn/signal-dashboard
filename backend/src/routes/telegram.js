@@ -132,13 +132,14 @@ module.exports = function telegramRoute({ db, config }) {
    * Returns whether the current user has a Telegram chatId saved
    */
   protectedRouter.get('/status', (req, res) => {
-    const user = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get(req.user.id);
+    const user = db.prepare('SELECT telegramChatId, telegramName FROM users WHERE id = ?').get(req.user.id);
     if (!user) {
       console.warn(`[telegram/status] No users row for authenticated user ${req.user.id}`);
-      return res.json({ connected: false, chatId: null });
+      return res.json({ connected: false, chatId: null, name: null });
     }
     const chatId = user.telegramChatId || null;
-    res.json({ connected: !!chatId, chatId });
+    const name = user.telegramName || null;
+    res.json({ connected: !!chatId, chatId, name });
   });
 
   /**
@@ -146,15 +147,18 @@ module.exports = function telegramRoute({ db, config }) {
    * Saves a manually-entered Telegram chatId for the current user
    */
   protectedRouter.put('/chatid', (req, res) => {
-    const { chatId } = req.body;
+    const { chatId, name } = req.body;
     if (!chatId) {
       return res.status(400).json({ error: 'missing_chat_id' });
     }
     if (!/^-?\d{1,20}$/.test(String(chatId))) {
       return res.status(400).json({ error: 'invalid_chat_id' });
     }
+    const telegramName = name ? String(name).trim().slice(0, 64) : null;
     try {
-      db.prepare('UPDATE users SET telegramChatId = ? WHERE id = ?').run(String(chatId), req.user.id);
+      db.prepare('UPDATE users SET telegramChatId = ?, telegramName = ? WHERE id = ?').run(
+        String(chatId), telegramName, req.user.id
+      );
       res.json({ success: true });
     } catch (error) {
       console.error('Error saving telegram chatId:', error);

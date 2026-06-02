@@ -364,25 +364,35 @@ const tgBtn = $('tg-btn');
 const tgClose = $('tg-close');
 const tgSaveBtn = $('tg-save-btn');
 const tgInput = $('tg-chatid-input');
+const tgNameInput = $('tg-name-input');
 const tgStatus = $('tg-status');
 const tgMsg = $('tg-msg');
+const tgChip = $('tg-chip');
 
-function setTgStatus(connected, chatId) {
+function setTgStatus(connected, chatId, name) {
   if (!tgStatus) return;
   if (connected) {
     tgStatus.textContent = `CONNECTED · ${chatId}`;
     tgStatus.className = 'tg-modal-status connected';
     if (tgInput) tgInput.value = chatId;
+    if (tgNameInput) tgNameInput.value = name || '';
+    if (tgChip) {
+      tgChip.textContent = name ? `● ${name} · ${chatId}` : `● ${chatId}`;
+      tgChip.style.display = '';
+    }
+    if (tgBtn) tgBtn.classList.add('connected');
   } else {
     tgStatus.textContent = 'NOT CONNECTED';
     tgStatus.className = 'tg-modal-status disconnected';
+    if (tgChip) tgChip.style.display = 'none';
+    if (tgBtn) tgBtn.classList.remove('connected');
   }
 }
 
 async function loadTgStatus() {
   try {
     const data = await api.getTelegramStatus();
-    setTgStatus(data.connected, data.chatId);
+    setTgStatus(data.connected, data.chatId, data.name);
   } catch { /* silent — user not logged in yet or network error */ }
 }
 
@@ -407,6 +417,7 @@ if (tgModalBg) {
 if (tgSaveBtn) {
   tgSaveBtn.addEventListener('click', async () => {
     const chatId = tgInput?.value?.trim();
+    const name = tgNameInput?.value?.trim() || null;
     if (!chatId) {
       if (tgMsg) { tgMsg.textContent = 'Enter your Chat ID first.'; tgMsg.className = 'tg-msg err'; }
       return;
@@ -418,8 +429,8 @@ if (tgSaveBtn) {
     tgSaveBtn.disabled = true;
     if (tgMsg) tgMsg.textContent = '';
     try {
-      await api.saveTelegramChatId(chatId);
-      setTgStatus(true, chatId);
+      await api.saveTelegramChatId(chatId, name);
+      setTgStatus(true, chatId, name);
       if (tgMsg) { tgMsg.textContent = 'Connected! You will receive BUY/SELL alerts.'; tgMsg.className = 'tg-msg ok'; }
     } catch (err) {
       if (tgMsg) { tgMsg.textContent = 'Failed to save. Try again.'; tgMsg.className = 'tg-msg err'; }

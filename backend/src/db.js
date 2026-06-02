@@ -56,6 +56,19 @@ function addTelegramChatIdColumn(db) {
   }
 }
 
+function addTelegramNameColumn(db) {
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN telegramName TEXT;`);
+    console.log('✓ Added telegramName column to users table');
+  } catch (e) {
+    if (e.message.includes('duplicate column')) {
+      console.log('✓ telegramName column already exists');
+    } else {
+      throw e;
+    }
+  }
+}
+
 /**
  * Create failed_notifications table for retry logic
  * Gracefully handles if the table already exists
@@ -113,6 +126,7 @@ function createUsersTable(db) {
 function initializeTelegramSchema(db) {
   createUsersTable(db);
   addTelegramChatIdColumn(db);
+  addTelegramNameColumn(db);
   createFailedNotificationsTable(db);
 }
 
