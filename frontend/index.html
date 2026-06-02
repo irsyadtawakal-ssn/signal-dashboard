@@ -110,7 +110,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 @keyframes ld{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
 
 /* MAIN GRID */
-.main-grid{display:grid;grid-template-columns:1fr 400px;gap:12px;margin-bottom:12px}
+.main-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
 .panel{border:1px solid var(--border);background:var(--surface);overflow:hidden}
 .ph{padding:9px 13px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pb{padding:0;max-height:480px;overflow-y:auto}
@@ -185,7 +185,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   .sv{font-size:16px}
   #msig{font-size:28px!important}
   .wrap{padding:8px}
-  header{padding:8px 10px}
+  header{padding:8px 10px;flex-wrap:wrap;gap:6px;row-gap:4px}
+  .logo{font-size:12px;width:100%}
+  .logo small{display:none}
+  .hdr-r{gap:5px}
   .sb{padding:10px 12px}
   .sn{width:auto}
   .top-row{grid-template-columns:1fr;gap:2px}
