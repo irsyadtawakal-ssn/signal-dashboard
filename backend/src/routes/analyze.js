@@ -1,6 +1,6 @@
 const { Router } = require('express');
-const { getAnalysis, getPreviousSignal } = require('../analysisService');
-const { setCache } = require('../db');
+const { getAnalysis, getPreviousSignal, getMaDirection } = require('../analysisService');
+const { setCache, getCache } = require('../db');
 
 module.exports = function analyzeRoute({ db, analyzeFn, ttlMs, notifier }) {
   const r = Router();
@@ -19,27 +19,46 @@ module.exports = function analyzeRoute({ db, analyzeFn, ttlMs, notifier }) {
       }
       const result = await getAnalysis({ db, analyzeFn, ttlMs, force });
 
-      // Signal change detection: check if signal changed to BUY or SELL
       if (notifier && result && result.recommendation && req.user && req.user.id) {
         const newSignal = result.recommendation;
         const previousSignal = getPreviousSignal(db);
+        let notificationFired = false;
 
-        // Trigger notification if signal changed to BUY or SELL (async, non-blocking)
+        // Trigger 1: signal changed to BUY or SELL (async, non-blocking)
         if (previousSignal && previousSignal !== newSignal && ['BUY', 'SELL'].includes(newSignal)) {
-          // Fire and forget - don't await, don't block response
+          notificationFired = true;
           setImmediate(async () => {
             try {
               await notifier.send(result, req.user.id);
             } catch (notifyErr) {
-              // Log but don't throw - notification failure shouldn't break the analyze endpoint
               console.error('Signal change notification failed:', notifyErr.message);
             }
           });
         }
 
-        // Update previous signal for next comparison (always, even if no notification)
-        // Store just the string, getCache will wrap it with { value: ... }
+        // Update previous signal for next comparison
         setCache(db, 'lastSignal', newSignal);
+
+        // Trigger 2: MA direction crossed (above ↔ below), only if signal trigger didn't already fire
+        if (!notificationFired && result.components) {
+          const newMaDir = getMaDirection(result.components.movingAverage);
+          const prevMaDirCache = getCache(db, 'lastMADirection');
+          const prevMaDir = prevMaDirCache ? prevMaDirCache.value : null;
+
+          if (newMaDir && prevMaDir && newMaDir !== prevMaDir) {
+            setImmediate(async () => {
+              try {
+                await notifier.send(result, req.user.id);
+              } catch (notifyErr) {
+                console.error('MA crossover notification failed:', notifyErr.message);
+              }
+            });
+          }
+
+          if (newMaDir) {
+            setCache(db, 'lastMADirection', newMaDir);
+          }
+        }
       }
 
       return res.json(result);

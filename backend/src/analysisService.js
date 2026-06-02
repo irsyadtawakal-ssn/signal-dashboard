@@ -31,4 +31,12 @@ function getPreviousSignal(db) {
   return lastSignal ? lastSignal.value : null;
 }
 
-module.exports = { getAnalysis, getPreviousSignal };
+function getMaDirection(maText) {
+  if (!maText) return null;
+  const lower = maText.toLowerCase();
+  if (lower.includes('above')) return 'above';
+  if (lower.includes('below')) return 'below';
+  return null;
+}
+
+module.exports = { getAnalysis, getPreviousSignal, getMaDirection };
