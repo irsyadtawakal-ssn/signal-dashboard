@@ -176,6 +176,7 @@ function renderPrice(p) {
   set('btcv', p.btc != null ? `$${p.btc}` : '—');
   set('btcc', p.btcChange24h != null ? `${parseFloat(p.btcChange24h).toFixed(2)}%` : '—');
   set('ethv', p.eth != null ? `$${p.eth}` : '—');
+  set('pvol', p.octVolume24h != null ? `$${fmtMoney(p.octVolume24h)}` : '—');
   set('fib-current-ref', p.oct != null ? `$${p.oct}` : '—');
   // Keep module-scoped CUR_PRICE in sync (drives calcFib / calcPort / buildExits).
   if (typeof window.setPrice === 'function') window.setPrice(p.oct);
