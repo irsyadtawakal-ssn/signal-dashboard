@@ -170,8 +170,30 @@ function renderPrice(p) {
   if (!p || p.pending) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.textContent = val; };
   set('prc', p.oct != null ? `$${p.oct}` : '—');
-  set('chg', p.octChange24h != null ? `${parseFloat(p.octChange24h).toFixed(2)}%` : '—');
-  set('psub', p.octChange24h != null ? `${parseFloat(p.octChange24h).toFixed(2)}% · 24h Change` : 'Loading...');
+  // Color price based on 24h change
+  const prcEl = document.getElementById('prc');
+  if (prcEl && p.octChange24h != null) {
+    const chg = parseFloat(p.octChange24h);
+    prcEl.style.color = chg > 0 ? 'var(--green)' : chg < 0 ? 'var(--red)' : 'var(--accent)';
+    prcEl.style.textShadow = chg > 0
+      ? '0 0 30px rgba(0,255,136,.4),0 0 60px rgba(0,255,136,.15)'
+      : chg < 0
+      ? '0 0 30px rgba(255,51,102,.4),0 0 60px rgba(255,51,102,.15)'
+      : '0 0 30px rgba(0,229,255,.4),0 0 60px rgba(0,229,255,.15)';
+  }
+  const chgEl = document.getElementById('chg');
+  if (chgEl && p.octChange24h != null) {
+    const chg = parseFloat(p.octChange24h);
+    chgEl.textContent = (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
+    chgEl.style.color = chg > 0 ? 'var(--green)' : chg < 0 ? 'var(--red)' : 'var(--muted)';
+  }
+  const psubEl = document.getElementById('psub');
+  if (psubEl && p.octChange24h != null) {
+    const chg = parseFloat(p.octChange24h);
+    const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
+    const color = chg > 0 ? 'var(--green)' : chg < 0 ? 'var(--red)' : 'var(--muted)';
+    psubEl.innerHTML = `<span style="color:${color}">${arrow} ${Math.abs(chg).toFixed(2)}%</span> <span style="color:var(--muted)">· 24h Change</span>`;
+  }
   set('btcp', p.btc != null ? `$${p.btc}` : '—');
   set('ethp', p.eth != null ? `$${p.eth}` : '—');
   set('btcv', p.btc != null ? `$${p.btc}` : '—');

@@ -65,6 +65,13 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 /* TOP SIGNAL ROW */
 .top-row{display:grid;grid-template-columns:1.1fr .9fr 1fr 1fr;gap:2px;background:var(--border);margin-bottom:12px}
 .sb{background:var(--surface);padding:14px 16px}
+
+/* PRICE HERO */
+.price-hero{text-align:center;padding:16px;background:var(--surface);position:relative;overflow:hidden}
+.price-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,229,255,.06) 0%,transparent 70%);pointer-events:none}
+.price-main{font-family:var(--ui);font-size:44px;font-weight:800;color:var(--accent);line-height:1;margin:6px 0;text-shadow:0 0 30px rgba(0,229,255,.4),0 0 60px rgba(0,229,255,.15);letter-spacing:-1px}
+@media(max-width:600px){.price-main{font-size:32px}}
+@media(max-width:479px){.price-main{font-size:28px}}
 .sl{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 .sv{font-family:var(--ui);font-size:28px;font-weight:800;line-height:1}
 .sig-card{text-align:center;border:2px solid var(--yellow);transition:.3s;position:relative;overflow:hidden}
@@ -437,14 +444,16 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 <!-- TOP SIGNAL ROW -->
 <div class="top-row">
-  <div class="sb">
-    <div class="sl">OCT / USD PRICE</div>
-    <div class="sv" id="prc" style="color:var(--accent)">—</div>
-    <div style="font-size:9px;color:var(--muted);margin-top:3px" id="psub">Loading...</div>
-    <div style="display:flex;gap:12px;margin-top:8px">
-      <div><div class="sl">HIGH</div><div style="font-size:11px;color:var(--green)" id="phi">—</div></div>
-      <div><div class="sl">LOW</div><div style="font-size:11px;color:var(--red)" id="plo">—</div></div>
-      <div><div class="sl">VOL 24H</div><div style="font-size:11px;color:var(--muted)" id="pvol">—</div></div>
+  <div class="sb price-hero">
+    <div class="sl" style="text-align:center;letter-spacing:3px">OCT / USD PRICE</div>
+    <div id="prc" class="price-main">—</div>
+    <div style="font-size:9px;text-align:center;margin-top:4px" id="psub">
+      <span style="color:var(--muted)">Loading...</span>
+    </div>
+    <div style="display:flex;justify-content:center;gap:16px;margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+      <div style="text-align:center"><div class="sl">HIGH</div><div style="font-size:10px;color:var(--green)" id="phi">—</div></div>
+      <div style="text-align:center"><div class="sl">LOW</div><div style="font-size:10px;color:var(--red)" id="plo">—</div></div>
+      <div style="text-align:center"><div class="sl">VOL 24H</div><div style="font-size:10px;color:var(--muted2)" id="pvol">—</div></div>
     </div>
   </div>
   <div class="sb sig-card HOLD" id="scrd">
