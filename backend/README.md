@@ -136,3 +136,38 @@ pm2 restart signal-dashboard
 
 Logs are written to `backend/logs/app.log` (stdout) and `backend/logs/error.log` (stderr).
 The `logs/` directory is created automatically by pm2 on first start.
+
+## Technical Analysis Engine
+
+The Signal Dashboard now includes a **zero-cost technical analysis engine** that generates trading signals every 10 minutes using pure math (no AI calls).
+
+**Features:**
+- Moving Average (MA50/MA200) trend detection
+- RSI (Relative Strength Index) for overbought/oversold levels
+- Volume analysis (current vs. 30-day average)
+- Macro trend context (BTC/ETH direction)
+- Score-based signal combining all 4 indicators
+- Signal-change-only notifications (no spam)
+
+**Quick Start:**
+
+```bash
+# 1. Backfill 200 days of price history (one-time)
+npm run backfill
+
+# 2. Ensure ANALYSIS_STRATEGY=technical in backend/.env
+
+# 3. Start the server
+npm start
+
+# 4. Watch logs for signals
+# [Technical] Signal: BUY (85%)
+```
+
+**Full Documentation:**
+
+See [`docs/TECHNICAL_ANALYSIS.md`](../docs/TECHNICAL_ANALYSIS.md) for complete guide, testing, troubleshooting, and configuration.
+
+**2-Week Validation:**
+
+The technical analysis engine is designed to run live for 2 weeks to validate signal accuracy against actual price movement. After validation, decide whether to keep it or revert to Twitter-based analysis (see `REVERT_PROCEDURE.md`).
