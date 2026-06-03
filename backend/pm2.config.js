@@ -5,6 +5,7 @@ module.exports = {
       script: 'src/server.js',
       cwd: './',
       instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       max_restarts: 20,
       restart_delay: 5000,
