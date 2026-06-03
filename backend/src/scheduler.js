@@ -15,6 +15,7 @@ async function runPriceUpdate({ db, buildPriceFn }) {
   try {
     const price = await buildPriceFn();
     setCache(db, 'price', price);
+    setCache(db, 'macro', { btc: { change24h: price.btcChange24h }, eth: { change24h: price.ethChange24h } });
     failureCount.price = 0;
 
     return {
