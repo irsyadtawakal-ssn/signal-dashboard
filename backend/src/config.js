@@ -41,8 +41,8 @@ function loadConfig(env = process.env) {
     signalUpdateIntervalMs: parseInt(process.env.SIGNAL_UPDATE_INTERVAL_MS || '600000'),
     telegramNotifyOnChange: process.env.TELEGRAM_NOTIFY_ON_CHANGE === 'true',
     analysisStrategy: process.env.ANALYSIS_STRATEGY || 'twitter',
+    disableTwitter: process.env.DISABLE_TWITTER === 'true',
   };
 }
 
 module.exports = { loadConfig };
-    disableTwitter: process.env.DISABLE_TWITTER === 'true',
