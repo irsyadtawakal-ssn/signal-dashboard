@@ -14,12 +14,14 @@ describe('Signal Generator', () => {
   it('should generate BUY signal for strong uptrend', async () => {
     const strongUptrend = {
       ...mockData,
-      // Create prices that show clear uptrend but with some volatility to keep RSI moderate
+      // Create prices with pullbacks to keep RSI in realistic range
       prices: Array.from({ length: 200 }, (_, i) => {
-        const base = 0.00130 + (i * 0.0000005);
-        const noise = (Math.sin(i / 5) * 0.00000005);
-        return base + noise;
+        const base = 0.00130 + (i * 0.00000010); // Moderate slope
+        // Add noise with some pullback cycles to avoid extreme RSI
+        const wave = Math.sin(i / 10) * 0.00000008;
+        return base + wave;
       }),
+      currentPrice: 0.00160, // Higher than base at index 200
       currentVolume: 300000, // High volume
       avgVolume: 150000
     };
@@ -40,12 +42,13 @@ describe('Signal Generator', () => {
     const downtrend = {
       ...mockData,
       prices: Array.from({ length: 200 }, (_, i) => {
-        const base = 0.00150 - (i * 0.0000005);
-        const noise = (Math.sin(i / 5) * 0.00000005);
-        return base + noise;
+        const base = 0.00150 - (i * 0.00000010); // Moderate decline
+        // Add noise with some rally attempts to avoid extreme RSI
+        const wave = Math.sin(i / 10) * 0.00000008;
+        return base + wave;
       }),
-      currentPrice: 0.00130, // At the end of the downtrend
-      currentVolume: 300000, // High volume on downtrend
+      currentPrice: 0.00120, // At the end of the downtrend
+      currentVolume: 120000, // Below average volume (bearish)
       avgVolume: 150000,
       btcChange24h: -3,
       ethChange24h: -2
