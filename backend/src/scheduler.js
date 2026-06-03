@@ -205,16 +205,19 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
 async function runTechnicalAnalysis({ db, config }) {
   try {
     // 1. Fetch current data from cache
-    const price = getCache(db, 'price');
-    const macro = getCache(db, 'macro');
+    const priceCache = getCache(db, 'price');
+    const macroCache = getCache(db, 'macro');
 
-    if (!price || !macro) {
+    if (!priceCache || !macroCache) {
       return {
         status: 'failed',
         error: 'Missing price or macro data',
         timestamp: Date.now()
       };
     }
+
+    const price = priceCache.value;
+    const macro = macroCache.value;
 
     // 2. Get price history (last 200 days for MA calculation)
     const priceHistory = db.prepare(`
@@ -247,8 +250,8 @@ async function runTechnicalAnalysis({ db, config }) {
     });
 
     // 5. Check if signal changed
-    const previousSignal = getCache(db, 'technicalSignal');
-    const signalChanged = !previousSignal || previousSignal.signal !== signal.signal;
+    const previousSignalCache = getCache(db, 'technicalSignal');
+    const signalChanged = !previousSignalCache || previousSignalCache.value.signal !== signal.signal;
 
     // 6. Store to database
     const today = new Date().toISOString().split('T')[0];
