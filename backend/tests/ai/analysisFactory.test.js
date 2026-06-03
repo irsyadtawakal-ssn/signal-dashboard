@@ -44,7 +44,7 @@ describe('Analysis Factory', () => {
 
       const data = {
         priceHistory: Array.from({ length: 200 }, (_, i) => ({
-          oct_price: 0.20 + (Math.random() * 0.02)
+          oct_price: 0.001 + (i * 0.0000005) // Deterministic uptrend
         })),
         price: {
           oct: 0.21
@@ -70,6 +70,65 @@ describe('Analysis Factory', () => {
       expect(typeof result.confidence).toBe('number');
       expect(result.confidence).toBeGreaterThanOrEqual(0);
       expect(result.confidence).toBeLessThanOrEqual(1);
+    });
+  });
+
+  describe('Error cases', () => {
+    it('should throw for unknown strategy type', () => {
+      expect(() => {
+        AnalysisFactory.create('unknown_type');
+      }).toThrow();
+    });
+
+    it('TechnicalAnalysis should throw for invalid priceHistory', async () => {
+      const strategy = AnalysisFactory.create('technical');
+      const invalidData = {
+        priceHistory: null,
+        price: { oct: 0.001 },
+        macro: { btc: { change24h: 1 }, eth: { change24h: 1 } },
+        volume: { current: 100000, avg: 100000 }
+      };
+
+      await expect(strategy.analyze(invalidData)).rejects.toThrow('priceHistory');
+    });
+
+    it('TechnicalAnalysis should throw for missing price.oct', async () => {
+      const strategy = AnalysisFactory.create('technical');
+      const prices = Array.from({ length: 200 }, (_, i) => 0.001 + i * 0.000001);
+      const invalidData = {
+        priceHistory: prices.map((p, i) => ({ oct_price: p, date: `2025-${i % 12 + 1}-01` })),
+        price: null, // Invalid
+        macro: { btc: { change24h: 1 }, eth: { change24h: 1 } },
+        volume: { current: 100000, avg: 100000 }
+      };
+
+      await expect(strategy.analyze(invalidData)).rejects.toThrow('price');
+    });
+
+    it('TechnicalAnalysis should throw for missing macro.btc.change24h', async () => {
+      const strategy = AnalysisFactory.create('technical');
+      const prices = Array.from({ length: 200 }, (_, i) => 0.001 + i * 0.000001);
+      const invalidData = {
+        priceHistory: prices.map((p, i) => ({ oct_price: p })),
+        price: { oct: 0.00145 },
+        macro: { btc: {}, eth: { change24h: 1 } }, // Missing btc.change24h
+        volume: { current: 100000, avg: 100000 }
+      };
+
+      await expect(strategy.analyze(invalidData)).rejects.toThrow('macro');
+    });
+
+    it('TechnicalAnalysis should throw for missing volume data', async () => {
+      const strategy = AnalysisFactory.create('technical');
+      const prices = Array.from({ length: 200 }, (_, i) => 0.001 + i * 0.000001);
+      const invalidData = {
+        priceHistory: prices.map((p, i) => ({ oct_price: p })),
+        price: { oct: 0.00145 },
+        macro: { btc: { change24h: 1 }, eth: { change24h: 1 } },
+        volume: undefined // Invalid
+      };
+
+      await expect(strategy.analyze(invalidData)).rejects.toThrow('volume');
     });
   });
 
