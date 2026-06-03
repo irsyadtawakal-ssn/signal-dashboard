@@ -45,3 +45,4 @@ function loadConfig(env = process.env) {
 }
 
 module.exports = { loadConfig };
+    disableTwitter: process.env.DISABLE_TWITTER === 'true',

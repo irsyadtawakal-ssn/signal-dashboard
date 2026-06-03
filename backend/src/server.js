@@ -88,7 +88,7 @@ try {
   ];
 
   // Add auto-analysis job if both AI and Telegram are configured
-  if (analyzeFn && notifier) {
+  if (analyzeFn && notifier && !config.disableTwitter) {
     baseTasks.push({
       run: () => runAnalysisUpdate({ db, analyzeFn, ttlMs: config.analysisTtlMs, notifier }),
       intervalMs: config.analysisScheduleIntervalMs,
