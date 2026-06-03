@@ -3,6 +3,7 @@ const cors = require('cors');
 const { requireAuth } = require('./auth');
 const healthRoute = require('./routes/health');
 const cacheRoute = require('./routes/cache');
+const signalsRoute = require('./routes/signals');
 const analyzeRoute = require('./routes/analyze');
 const adminRoute = require('./routes/admin');
 const telegramRoute = require('./routes/telegram');
@@ -24,6 +25,7 @@ function createApp({ db, config, analyzeFn, notifier }) {
 
   // Public
   app.use('/api/health', healthRoute());
+  app.use('/api/signals', signalsRoute({ db }));
 
   // Get both public and protected telegram routes
   const { publicRouter, protectedRouter } = telegramRoute({ db, config });
