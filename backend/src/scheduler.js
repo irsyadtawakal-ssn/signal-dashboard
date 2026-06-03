@@ -1,5 +1,6 @@
 const { setCache, getCache } = require('./db');
 const { getAnalysis, getPreviousSignal, getMaDirection } = require('./analysisService');
+const { generateSignal } = require('./ai/signalGenerator');
 
 const FAILURE_THRESHOLD = 3;
 const MAX_RETRIES = 3;
@@ -201,6 +202,121 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
   }
 }
 
+async function runTechnicalAnalysis({ db, config }) {
+  try {
+    // 1. Fetch current data from cache
+    const price = getCache(db, 'price');
+    const macro = getCache(db, 'macro');
+
+    if (!price || !macro) {
+      return {
+        status: 'failed',
+        error: 'Missing price or macro data',
+        timestamp: Date.now()
+      };
+    }
+
+    // 2. Get price history (last 200 days for MA calculation)
+    const priceHistory = db.prepare(`
+      SELECT oct_price FROM price_history
+      ORDER BY date DESC LIMIT 200
+    `).all();
+
+    if (priceHistory.length < 50) {
+      console.warn('[Technical] Insufficient price history for MA calculation');
+    }
+
+    const prices = priceHistory.map(p => p.oct_price).reverse();
+
+    // 3. Calculate average volume
+    const volumeData = db.prepare(`
+      SELECT AVG(oct_volume) as avg_volume FROM price_history
+      WHERE date >= DATE('now', '-30 days')
+    `).get();
+
+    const avgVolume = volumeData?.avg_volume || price.volume24h;
+
+    // 4. Generate signal
+    const signal = await generateSignal({
+      prices,
+      currentPrice: price.oct,
+      currentVolume: price.volume24h,
+      avgVolume: avgVolume,
+      btcChange24h: macro.btc.change24h,
+      ethChange24h: macro.eth.change24h
+    });
+
+    // 5. Check if signal changed
+    const previousSignal = getCache(db, 'technicalSignal');
+    const signalChanged = !previousSignal || previousSignal.signal !== signal.signal;
+
+    // 6. Store to database
+    const today = new Date().toISOString().split('T')[0];
+
+    // Store 10-min update
+    db.prepare(`
+      INSERT OR REPLACE INTO technical_signals_10min
+      (timestamp, signal, confidence, score, ma_50, ma_200, rsi_14, volume_ratio)
+      VALUES (datetime('now'), ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      signal.signal,
+      signal.confidence,
+      signal.score,
+      signal.indicators.ma50,
+      signal.indicators.ma200,
+      signal.indicators.rsi,
+      signal.indicators.volumeRatio
+    );
+
+    // Store daily signal (once per day)
+    db.prepare(`
+      INSERT OR REPLACE INTO technical_signals_daily
+      (date, signal, confidence, ma_50, ma_200, rsi_14, volume_ratio, reasoning)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      today,
+      signal.signal,
+      signal.confidence,
+      signal.indicators.ma50,
+      signal.indicators.ma200,
+      signal.indicators.rsi,
+      signal.indicators.volumeRatio,
+      signal.reasoning
+    );
+
+    // 7. Cleanup old 10-min data (keep only 30 days)
+    db.prepare(`
+      DELETE FROM technical_signals_10min
+      WHERE created_at < datetime('now', '-30 days')
+    `).run();
+
+    // 8. Cache signal
+    setCache(db, 'technicalSignal', {
+      ...signal,
+      strategy: 'TECHNICAL',
+      signalChanged
+    });
+
+    console.log(`[Technical] Signal: ${signal.signal} (${(signal.confidence * 100).toFixed(0)}%)`);
+
+    return {
+      status: 'success',
+      signal: signal.signal,
+      confidence: signal.confidence,
+      signalChanged: signalChanged,
+      timestamp: Date.now()
+    };
+
+  } catch (err) {
+    console.error('[Technical Analysis] Failed:', err.message);
+    return {
+      status: 'failed',
+      error: err.message,
+      timestamp: Date.now()
+    };
+  }
+}
+
 function startScheduler({ tasks }) {
   const timers = tasks.map(({ run, intervalMs }) => {
     run(); // run immediately on start
@@ -211,4 +327,4 @@ function startScheduler({ tasks }) {
   };
 }
 
-module.exports = { runPriceUpdate, runCacheUpdate, startScheduler, getFailureStatus, retryFailedNotifications, runAnalysisUpdate };
+module.exports = { runPriceUpdate, runCacheUpdate, startScheduler, getFailureStatus, retryFailedNotifications, runAnalysisUpdate, runTechnicalAnalysis };

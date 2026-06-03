@@ -13,7 +13,7 @@ const { createAnthropicComplete } = require('./ai/providers/anthropic');
 const { buildTweets } = require('./tweetsService');
 const { buildPrice } = require('./priceService');
 const { analyzeMarket } = require('./ai/analysis');
-const { runPriceUpdate, runCacheUpdate, startScheduler, retryFailedNotifications, runAnalysisUpdate } = require('./scheduler');
+const { runPriceUpdate, runCacheUpdate, startScheduler, retryFailedNotifications, runAnalysisUpdate, runTechnicalAnalysis } = require('./scheduler');
 const { createNotifier } = require('./services/notifierFactory');
 
 try {
@@ -80,6 +80,10 @@ try {
             }),
         }),
       intervalMs: config.twitterIntervalMs,
+    },
+    {
+      run: () => runTechnicalAnalysis({ db, config }),
+      intervalMs: config.signalUpdateIntervalMs || 600000  // 10 minutes default
     },
   ];
 
