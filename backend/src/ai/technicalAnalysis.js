@@ -123,4 +123,4 @@ function analyzeMacro(btcChange24h, ethChange24h) {
   return { signal: 'MIXED', score: 0 };
 }
 
-export { calculateMA, calculateRSI, analyzeVolume, analyzeMacro };
+module.exports = { calculateMA, calculateRSI, analyzeVolume, analyzeMacro };
