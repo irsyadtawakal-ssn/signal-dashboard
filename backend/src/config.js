@@ -38,6 +38,9 @@ function loadConfig(env = process.env) {
     telegramRetryBackoff: env.TELEGRAM_RETRY_BACKOFF
       ? env.TELEGRAM_RETRY_BACKOFF.split(',').map(Number)
       : [60000, 300000, 1800000, 3600000],
+    signalUpdateIntervalMs: parseInt(process.env.SIGNAL_UPDATE_INTERVAL_MS || '600000'),
+    telegramNotifyOnChange: process.env.TELEGRAM_NOTIFY_ON_CHANGE === 'true',
+    analysisStrategy: process.env.ANALYSIS_STRATEGY || 'twitter',
   };
 }
 
