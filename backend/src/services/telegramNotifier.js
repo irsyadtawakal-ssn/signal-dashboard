@@ -1,186 +1,195 @@
 /**
- * Telegram Notifier Service
+ * Telegram notifier service
  * Formats trading signals into Telegram-ready messages and sends them via Telegram Bot API
  */
 
-const TelegramBot = require('node-telegram-bot-api');
+const https = require('https');
+
+const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
 
 /**
- * Extracts price and percentage from price action text
- * @param {string} priceAction - Raw price action text
- * @returns {string} Simplified price format like "$0.1258 (24H: -2.76%)"
+ * Creates a notifier that sends Telegram messages
+ * @param {Object} config - Config with botToken
+ * @param {Object} db - Database connection
+ * @returns {Object} Notifier with send() method
  */
-function extractPriceInfo(priceAction) {
-  if (!priceAction) return '';
-
-  // Look for pattern: percentage like "-2.76%" and price like "$0.1258"
-  const percentMatch = priceAction.match(/(-?\d+\.?\d*%)/);
-  const priceMatch = priceAction.match(/\$(\d+\.?\d+)/);
-
-  if (priceMatch && percentMatch) {
-    return `$${priceMatch[1]} (24H: ${percentMatch[1]})`;
+function createNotifier(config, db) {
+  if (!config.botToken) {
+    throw new Error('botToken is required in config');
   }
 
-  // Fallback: return original if pattern doesn't match
-  return priceAction;
-}
+  const botToken = config.botToken;
 
-/**
- * Formats a trading signal into a Telegram message
- * @param {Object} signal - The trading signal object
- * @param {string} signal.recommendation - BUY, SELL, or HOLD
- * @param {number} signal.confidence - Confidence score (0-1)
- * @param {string} signal.summary - Signal summary text
- * @param {Object} signal.components - Analysis components
- * @param {string} signal.components.priceAction - Price action analysis
- * @param {string} signal.components.sentiment - Sentiment analysis
- * @param {string} signal.components.twitterBuzz - Twitter activity
- * @param {string} signal.components.movingAverage - Moving average analysis
- * @param {string} signal.components.fibonacci - Fibonacci level analysis
- * @param {string} signal.generatedAt - ISO timestamp
- * @returns {string} Formatted Telegram message
- */
-function formatMessage(signal) {
-  if (!signal) {
-    throw new Error('Signal object is required');
+  /**
+   * Formats technical signals for Telegram
+   */
+  function formatTechnicalMessage(signal) {
+    const emojiMap = { BUY: '🟢', SELL: '🔴', HOLD: '🟡' };
+    const emoji = emojiMap[signal.signal] || '⚪';
+    const confidencePercent = Math.round(signal.confidence * 100);
+
+    const lines = [
+      `${emoji} *TECHNICAL SIGNAL: ${signal.signal}*`,
+      `Confidence: ${confidencePercent}%`,
+      ``,
+      `*Indicators:*`,
+      `• MA50: $${signal.indicators.ma50.toFixed(6)}`,
+      `• MA200: $${signal.indicators.ma200.toFixed(6)}`,
+      `• RSI(14): ${signal.indicators.rsi.toFixed(2)}`,
+      `• Volume Ratio: ${signal.indicators.volumeRatio.toFixed(2)}x`,
+      ``,
+      `*Analysis:*`,
+      signal.reasoning,
+    ];
+
+    return lines.join('\n');
   }
 
-  const { recommendation, confidence, summary, components, generatedAt } = signal;
+  /**
+   * Formats sentiment signals for Telegram (legacy format)
+   */
+  function formatSentimentMessage(signal) {
+    const { recommendation, confidence, summary, components, generatedAt } = signal;
+    const emojiMap = { BUY: '🟢', SELL: '🔴', HOLD: '🟡' };
+    const emoji = emojiMap[recommendation] || '⚪';
+    const confidencePercent = Math.round(confidence * 100);
 
-  // Map recommendations to emojis
-  const emojiMap = {
-    BUY: '🟢',
-    SELL: '🔴',
-    HOLD: '🟡',
-  };
+    const sections = [
+      `${emoji} ${recommendation}`,
+      `Confidence: ${confidencePercent}%`,
+    ];
 
-  const emoji = emojiMap[recommendation] || '⚪';
-  const confidencePercent = Math.round(confidence * 100);
-
-  // Parse timestamp and format it (YYYY-MM-DD HH:MM:SS UTC)
-  const date = new Date(generatedAt);
-
-  // Validate timestamp is valid
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid timestamp: ${generatedAt}`);
-  }
-
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-  const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
-
-  // Build message sections
-  const sections = [];
-
-  // Header with emoji and recommendation
-  sections.push(`${emoji} ${recommendation}`);
-
-  // Confidence
-  sections.push(`Confidence: ${confidencePercent}%`);
-
-  // Price Action (highlighted at the top)
-  if (components && components.priceAction) {
-    sections.push(''); // Empty line for separation
-    sections.push(`*UPDATED PRICE*`);
-    sections.push(extractPriceInfo(components.priceAction));
-  }
-
-  // Summary
-  if (summary) {
-    sections.push('');
-    sections.push(`Summary: ${summary}`);
-  }
-
-  // Components section (without priceAction since it's already at top)
-  if (components) {
-    sections.push(''); // Empty line before components
-    sections.push('Analysis:');
-
-    const componentKeys = ['sentiment', 'twitterBuzz', 'movingAverage', 'fibonacci'];
-
-    componentKeys.forEach((key) => {
-      const value = components[key];
-      if (value) {
-        // Format key name: priceAction -> Price Action
-        const displayKey = key.replace(/([A-Z])/g, ' $1').trim();
-        const capitalizedKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
-        sections.push(`• ${capitalizedKey}: ${value}`);
-      }
-    });
-  }
-
-  // Timestamp
-  sections.push('');
-  sections.push(`Generated: ${formattedTime}`);
-
-  // Join all sections with newlines
-  const message = sections
-    .filter((section) => section !== null && section !== undefined)
-    .join('\n');
-
-  return message;
-}
-
-/**
- * Sends a trading signal to Telegram via Bot API
- * @param {string|null} chatId - Telegram chat ID (returns early if null/undefined)
- * @param {Object} signal - The trading signal object (same format as formatMessage)
- * @param {Object} config - Configuration object
- * @param {string} config.botToken - Telegram Bot API token
- * @returns {Promise<Object>} Response object with success/skipped/error status
- *   - On success: { success: true, messageId: number }
- *   - On skip: { skipped: true, reason: 'no_chat_id' }
- *   - On error: { success: false, error: string }
- */
-async function send(chatId, signal, config) {
-  // Skip if no chat ID
-  if (!chatId) {
-    return {
-      skipped: true,
-      reason: 'no_chat_id',
-    };
-  }
-
-  // Validate config has botToken
-  if (!config || !config.botToken) {
-    return {
-      success: false,
-      error: 'botToken is required in config',
-    };
-  }
-
-  try {
-    // Check if signal changed (for technical analysis) - don't spam notifications
-    if (signal.signalChanged === false) {
-      console.log(`[Telegram] Signal unchanged (${signal.recommendation}), skipping notification`);
-      return { success: true, skipped: true };
+    if (components && components.priceAction) {
+      sections.push('');
+      sections.push(`*UPDATED PRICE*`);
+      sections.push(extractPriceInfo(components.priceAction));
     }
 
-    // Create bot instance
-    const bot = new TelegramBot(config.botToken);
+    if (summary) {
+      sections.push('');
+      sections.push(`Summary: ${summary}`);
+    }
 
-    // Format the message
-    const message = formatMessage(signal);
+    if (components) {
+      sections.push('');
+      sections.push('Analysis:');
+      const componentKeys = ['sentiment', 'twitterBuzz', 'movingAverage', 'fibonacci'];
+      componentKeys.forEach((key) => {
+        const value = components[key];
+        if (value) {
+          const displayKey = key.replace(/([A-Z])/g, ' $1').trim();
+          const capitalizedKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
+          sections.push(`• ${capitalizedKey}: ${value}`);
+        }
+      });
+    }
 
-    // Send the message
-    const result = await bot.sendMessage(chatId, message);
+    const date = new Date(generatedAt);
+    if (!isNaN(date.getTime())) {
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+      const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
+      sections.push('');
+      sections.push(`Generated: ${formattedTime}`);
+    }
 
-    // Return success with message ID
-    return {
-      success: true,
-      messageId: result.message_id,
-    };
-  } catch (error) {
-    // Return error without throwing
-    return {
-      success: false,
-      error: error.message,
-    };
+    return sections.filter((s) => s !== null && s !== undefined).join('\n');
   }
+
+  /**
+   * Route to appropriate formatter based on signal type
+   */
+  function formatMessage(signal) {
+    if (!signal) throw new Error('Signal object is required');
+
+    // Technical signal format
+    if (signal.strategy === 'TECHNICAL' || signal.indicators) {
+      return formatTechnicalMessage(signal);
+    }
+
+    // Legacy sentiment format
+    return formatSentimentMessage(signal);
+  }
+
+  function extractPriceInfo(priceAction) {
+    if (!priceAction) return '';
+    const match = priceAction.match(/\$?([\d.]+)\s*\(24H:\s*([^)]+)\)/);
+    return match ? `$${match[1]} (24H: ${match[2]})` : priceAction;
+  }
+
+  /**
+   * Sends a message to all users subscribed to signal notifications
+   */
+  async function send(signal, userId) {
+    if (!signal) throw new Error('Signal is required');
+
+    try {
+      const message = formatMessage(signal);
+
+      // Get user's Telegram chat ID
+      const user = userId ? db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get(userId) : null;
+      const chatId = user?.telegramChatId;
+
+      if (!chatId) {
+        console.error(`[Telegram] No chat ID found for user ${userId || 'unknown'}`);
+        return { success: false, error: 'no_chat_id' };
+      }
+
+      // Send via Telegram API
+      return new Promise((resolve, reject) => {
+        const url = `${TELEGRAM_API_URL}${botToken}/sendMessage`;
+        const postData = JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown',
+        });
+
+        const options = {
+          hostname: 'api.telegram.org',
+          path: `/bot${botToken}/sendMessage`,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData),
+          },
+        };
+
+        const req = https.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+          res.on('end', () => {
+            try {
+              const response = JSON.parse(data);
+              if (response.ok) {
+                console.log(`[Telegram] Message sent to ${chatId}`);
+                resolve({ success: true });
+              } else {
+                console.error(`[Telegram] API error: ${response.description}`);
+                resolve({ success: false, error: response.description });
+              }
+            } catch (err) {
+              reject(err);
+            }
+          });
+        });
+
+        req.on('error', reject);
+        req.write(postData);
+        req.end();
+      });
+    } catch (err) {
+      console.error('[Telegram] Send failed:', err.message);
+      throw err;
+    }
+  }
+
+  return { send, formatMessage };
 }
 
-module.exports = { formatMessage, send };
+module.exports = { createNotifier };
