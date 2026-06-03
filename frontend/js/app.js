@@ -271,17 +271,7 @@ async function refresh() {
     console.error('[Price] Fetch failed, keeping stale value:', error.message);
   }
 
-  // Fetch tweets independently
-  try {
-    const tweets = await api.getTweets();
-    // setTweets sets ALL_TWEETS (so filter buttons work) + renders + updates stats.
-    if (!tweets.pending) {
-      if (typeof window.setTweets === 'function') window.setTweets(mapTweets(tweets));
-      else if (window.renderTweets) window.renderTweets(mapTweets(tweets));
-    }
-  } catch (error) {
-    console.error('[Tweets] Fetch failed:', error.message);
-  }
+  // Tweets fetch disabled — Twitter replaced by Technical Analysis engine
 
   // Fetch news independently
   let news = [];
@@ -305,13 +295,9 @@ async function refresh() {
   // Always render portfolio and signal with current state (using stale price if necessary)
   debouncedRenderPortfolio();
 
-  // F5: signal scores from signal.js (uses raw backend sentiment fields + Fib inputs).
-  try {
-    const tweets = Array.isArray(window.ALL_TWEETS) ? window.ALL_TWEETS : [];
-    renderSignal({ price, tweets, news });
-  } catch (error) {
-    console.error('[Signal] Computation failed:', error.message);
-  }
+  // F5: signal scores — now handled by Technical Analysis engine (renderTechnicalSignal in index.html)
+  // renderSignal (old AI/Twitter scoring) disabled — replaced by pure math technical analysis
+  // Technical signals auto-refresh every 10 minutes via loadTechnicalSignals()
 
   // Show staleness warning if price is stale
   if (lastPrice.isStale && lastPrice.value) {
