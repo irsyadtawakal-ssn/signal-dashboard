@@ -100,20 +100,12 @@ try {
   startScheduler({ tasks: baseTasks });
 
   // Add retry failed notifications job if Telegram is configured
-  if (config.telegramBotToken) {
-    // Dynamically import the ES module telegramNotifier and add retry job
-    import('./services/telegramNotifier.js')
-      .then((telegramNotifier) => {
-        // Schedule the retry job (runs every 60 seconds / 1 minute)
-        setInterval(
-          () => retryFailedNotifications({ db, telegramNotifier, config }),
-          60000
-        );
-        console.log('[Server] Retry scheduler for failed notifications initialized (1 minute interval)');
-      })
-      .catch((err) => {
-        console.warn('[Server] Failed to load telegramNotifier module for retry job:', err.message);
-      });
+  if (config.telegramBotToken && notifier) {
+    setInterval(
+      () => retryFailedNotifications({ db, telegramNotifier: notifier, config }),
+      60000
+    );
+    console.log('[Server] Retry scheduler for failed notifications initialized (1 minute interval)');
   }
 
   app.listen(config.port, () => {
