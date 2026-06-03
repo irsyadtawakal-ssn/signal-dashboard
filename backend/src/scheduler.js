@@ -15,7 +15,6 @@ async function runPriceUpdate({ db, buildPriceFn }) {
   try {
     const price = await buildPriceFn();
     setCache(db, 'price', price);
-    setCache(db, 'macro', { btc: { change24h: price.btcChange24h }, eth: { change24h: price.ethChange24h } });
     failureCount.price = 0;
 
     return {
@@ -203,7 +202,7 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
   }
 }
 
-async function runTechnicalAnalysis({ db, config }) {
+async function runTechnicalAnalysis({ db, config, notifier }) {
   try {
     // 1. Fetch current data from cache
     const priceCache = getCache(db, 'price');
@@ -238,13 +237,13 @@ async function runTechnicalAnalysis({ db, config }) {
       WHERE date >= DATE('now', '-30 days')
     `).get();
 
-    const avgVolume = volumeData?.avg_volume || price.octVolume24h;
+    const avgVolume = volumeData?.avg_volume || price.volume24h;
 
     // 4. Generate signal
     const signal = await generateSignal({
       prices,
       currentPrice: price.oct,
-      currentVolume: price.octVolume24h,
+      currentVolume: price.volume24h,
       avgVolume: avgVolume,
       btcChange24h: macro.btc.change24h,
       ethChange24h: macro.eth.change24h
@@ -311,6 +310,17 @@ async function runTechnicalAnalysis({ db, config }) {
       timestamp: Date.now()
     };
 
+
+    // 9. Send notification if signal changed
+    if (notifier && signalChanged) {
+      setImmediate(async () => {
+        try {
+          await notifier.send(signal);
+        } catch (err) {
+          console.error('[Technical] Notification failed:', err.message);
+        }
+      });
+    }
   } catch (err) {
     console.error('[Technical Analysis] Failed:', err.message);
     return {

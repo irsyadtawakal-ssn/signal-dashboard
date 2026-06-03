@@ -82,7 +82,7 @@ try {
       intervalMs: config.twitterIntervalMs,
     },
     {
-      run: () => runTechnicalAnalysis({ db, config }),
+      run: () => runTechnicalAnalysis({ db, config, notifier }),
       intervalMs: config.signalUpdateIntervalMs || 600000  // 10 minutes default
     },
   ];
