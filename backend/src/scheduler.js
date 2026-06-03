@@ -15,6 +15,7 @@ async function runPriceUpdate({ db, buildPriceFn }) {
   try {
     const price = await buildPriceFn();
     setCache(db, 'price', price);
+    setCache(db, 'macro', { btc: { change24h: price.btcChange24h }, eth: { change24h: price.ethChange24h } });
     failureCount.price = 0;
 
     return {
@@ -119,7 +120,7 @@ async function retryFailedNotifications({ db, telegramNotifier, config }) {
       }
 
       // Attempt to send via telegramNotifier
-      const result = await telegramNotifier.send(user.telegramChatId, signalObj, config);
+      const result = await telegramNotifier.send(signalObj, userId);
 
       if (result.success) {
         // Success: delete from failed_notifications table
@@ -302,15 +303,6 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
 
     console.log(`[Technical] Signal: ${signal.signal} (${(signal.confidence * 100).toFixed(0)}%)`);
 
-    return {
-      status: 'success',
-      signal: signal.signal,
-      confidence: signal.confidence,
-      signalChanged: signalChanged,
-      timestamp: Date.now()
-    };
-
-
     // 9. Send notification if signal changed
     if (notifier && signalChanged) {
       setImmediate(async () => {
@@ -321,6 +313,15 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
         }
       });
     }
+
+    return {
+      status: 'success',
+      signal: signal.signal,
+      confidence: signal.confidence,
+      signalChanged: signalChanged,
+      timestamp: Date.now()
+    };
+
   } catch (err) {
     console.error('[Technical Analysis] Failed:', err.message);
     return {
