@@ -61,10 +61,14 @@ describe('Signal Generator', () => {
   it('should generate HOLD for mixed signals', async () => {
     const mixed = {
       ...mockData,
+      prices: Array.from({ length: 200 }, (_, i) => 0.00140 + (Math.sin(i/10) * 0.000001)), // Oscillating
       btcChange24h: 0.1, // Neutral macro
       ethChange24h: -0.2
     };
     const result = await generateSignal(mixed);
-    expect(['BUY', 'HOLD', 'SELL']).toContain(result.signal);
+    expect(result.signal).toBe('HOLD'); // Strict assertion
+    expect(result.score).toBeGreaterThan(-2);
+    expect(result.score).toBeLessThan(2);
+    expect(result.confidence).toBeLessThan(0.75); // HOLD has lower confidence
   });
 });

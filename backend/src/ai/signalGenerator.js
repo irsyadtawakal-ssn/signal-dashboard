@@ -2,10 +2,40 @@ const { calculateMA, calculateRSI, analyzeVolume, analyzeMacro } = require('./te
 
 /**
  * Generate trading signal based on technical analysis
- * @param {object} data - { prices, currentPrice, currentVolume, avgVolume, btcChange24h, ethChange24h }
- * @returns {object} - { signal, confidence, score, indicators, reasoning }
+ * Combines 4 indicators (MA, RSI, Volume, Macro) into a single BUY/HOLD/SELL signal.
+ * @param {object} data - Market data object
+ * @param {number[]} data.prices - Array of historical prices (min 200 for MA200)
+ * @param {number} data.currentPrice - Current OCT price in USD
+ * @param {number} data.currentVolume - Current 24h volume
+ * @param {number} data.avgVolume - Average 24h volume (from last 30 days)
+ * @param {number} data.btcChange24h - BTC 24h change percentage
+ * @param {number} data.ethChange24h - ETH 24h change percentage
+ * @returns {object} Signal object
+ * @returns {string} returns.signal - 'BUY', 'SELL', or 'HOLD'
+ * @returns {number} returns.confidence - Confidence 0.0-0.95 (higher = more confident)
+ * @returns {number} returns.score - Raw score (-3 to +3, used to determine signal)
+ * @returns {object} returns.indicators - Technical indicators used in calculation
+ * @returns {string} returns.reasoning - Multi-line explanation of factors
+ * @returns {string} returns.timestamp - ISO timestamp of calculation
  */
 async function generateSignal(data) {
+  // Validate inputs
+  if (!data || !Array.isArray(data.prices) || data.prices.length < 50) {
+    throw new Error('Invalid input: prices must be an array of at least 50 elements for MA calculation');
+  }
+  if (typeof data.currentPrice !== 'number' || data.currentPrice <= 0) {
+    throw new Error('Invalid input: currentPrice must be a positive number');
+  }
+  if (typeof data.currentVolume !== 'number' || data.currentVolume < 0) {
+    throw new Error('Invalid input: currentVolume must be a non-negative number');
+  }
+  if (typeof data.avgVolume !== 'number' || data.avgVolume <= 0) {
+    throw new Error('Invalid input: avgVolume must be a positive number');
+  }
+  if (typeof data.btcChange24h !== 'number' || typeof data.ethChange24h !== 'number') {
+    throw new Error('Invalid input: btcChange24h and ethChange24h must be numbers');
+  }
+
   const { prices, currentPrice, currentVolume, avgVolume, btcChange24h, ethChange24h } = data;
 
   // Calculate all indicators
@@ -49,17 +79,19 @@ async function generateSignal(data) {
   score += macroAnalysis.score * 0.5;
   reasoning.push(`${macroAnalysis.signal} (BTC: ${btcChange24h}%, ETH: ${ethChange24h}%)`);
 
-  // Determine signal from score (thresholds adjusted for spec max 2.5)
+  // Determine signal from score
   let signal, confidence;
 
   if (score >= 0.8) {
     signal = 'BUY';
+    // Confidence: base 50% + score*20%, capped at 95%
     confidence = Math.min(0.95, 0.5 + score * 0.2);
   } else if (score <= -0.8) {
     signal = 'SELL';
     confidence = Math.min(0.95, 0.5 + Math.abs(score) * 0.2);
   } else {
     signal = 'HOLD';
+    // HOLD confidence uses smaller multiplier (0.1 vs 0.2) for BUY/SELL
     confidence = 0.5 + Math.abs(score) * 0.1;
   }
 
