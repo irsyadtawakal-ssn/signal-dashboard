@@ -142,7 +142,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 /* AI */
 .ai-box{border:1px solid var(--accent);background:rgba(0,229,255,.025);padding:12px 16px;margin-bottom:12px;position:relative}
-.ai-box::before{content:'⚡ AI SIGNAL';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 7px;font-size:8px;color:var(--accent);letter-spacing:2px}
+.ai-box::before{content:'⚡ TECHNICAL ENGINE';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 7px;font-size:8px;color:var(--accent);letter-spacing:2px}
 #ai-txt{font-size:12px;line-height:1.75;color:var(--text);font-family:var(--ui)}
 .ld::after{content:'...';animation:ld 1.4s steps(4) infinite}
 @keyframes ld{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
@@ -381,7 +381,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 </div>
 <!-- HEADER -->
 <header>
-  <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 · DexScreener Chart · Fibonacci · Twitter Feed</small></div>
+  <div class="logo">OCT <em>SIGNAL</em> INTELLIGENCE <small>v3.1 · DexScreener Chart · Fibonacci · Technical Analysis</small></div>
   <div class="hdr-r">
     <div class="live"><div class="dot"></div>LIVE</div>
     <div id="tg-chip" class="tg-chip" style="display:none"></div>
@@ -463,12 +463,14 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     </div>
   </div>
   <div class="scores">
-    <div class="sl" style="margin-bottom:9px">SIGNAL SCORES</div>
-    <div class="srow"><div class="sn">Price Action</div><div class="sbg"><div class="sf" id="bp" style="width:0%;background:var(--accent)"></div></div><div class="snum" id="np">—</div></div>
-    <div class="srow"><div class="sn">Sentiment</div><div class="sbg"><div class="sf" id="bs" style="width:0%;background:var(--green)"></div></div><div class="snum" id="ns">—</div></div>
-    <div class="srow"><div class="sn">Twitter Buzz</div><div class="sbg"><div class="sf" id="bt" style="width:0%;background:var(--tw)"></div></div><div class="snum" id="nt">—</div></div>
+    <div class="sl" style="margin-bottom:9px">TECHNICAL INDICATORS</div>
     <div class="srow"><div class="sn">MA Trend</div><div class="sbg"><div class="sf" id="bm" style="width:0%;background:var(--accent2)"></div></div><div class="snum" id="nm">—</div></div>
-    <div class="srow"><div class="sn">Fib Position</div><div class="sbg"><div class="sf" id="bf" style="width:0%;background:var(--fib-618)"></div></div><div class="snum" id="nf">—</div></div>
+    <div class="srow"><div class="sn">RSI(14)</div><div class="sbg"><div class="sf" id="br" style="width:0%;background:var(--accent)"></div></div><div class="snum" id="nr">—</div></div>
+    <div class="srow"><div class="sn">Volume</div><div class="sbg"><div class="sf" id="bv" style="width:0%;background:var(--green)"></div></div><div class="snum" id="nv">—</div></div>
+    <div class="srow"><div class="sn">Macro</div><div class="sbg"><div class="sf" id="bmc" style="width:0%;background:var(--accent3)"></div></div><div class="snum" id="nmc">—</div></div>
+    <div style="margin-top:8px;padding:7px 0 0;border-top:1px solid var(--border);font-size:8px;color:var(--muted)">
+      MA50: <span id="ind-ma50" style="color:var(--text)">—</span> &nbsp;|&nbsp; MA200: <span id="ind-ma200" style="color:var(--text)">—</span>
+    </div>
   </div>
 </div>
 
@@ -542,45 +544,55 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   </div>
 </div>
 
-<!-- AI ANALYSIS -->
+<!-- TECHNICAL ENGINE STATUS -->
 <div class="ai-box">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-    <button id="analyze-btn" style="background:var(--accent);color:#000;border:none;padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;border-radius:2px">▶ ANALYZE</button>
-    <span id="analyze-status" style="font-size:9px;color:var(--muted)">Belum dianalisa</span>
+  <div id="ai-txt" style="font-size:12px;line-height:1.75;color:var(--text);font-family:var(--ui)">
+    <span style="color:var(--muted)">Loading technical analysis...</span>
   </div>
-  <div id="ai-txt" style="font-size:12px;line-height:1.75;color:var(--muted)">Klik ANALYZE untuk mulai analisis AI.</div>
+  <div style="margin-top:8px;font-size:9px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap">
+    <span>Engine: <span style="color:var(--green)">TECHNICAL ANALYSIS</span></span>
+    <span>Updated: <span id="sig-updated" style="color:var(--accent)">—</span></span>
+    <span>Next: <span id="sig-next" style="color:var(--accent)">~10min</span></span>
+  </div>
 </div>
 
 <!-- MAIN GRID -->
 <div class="main-grid">
 
-  <!-- TWITTER -->
+  <!-- TECHNICAL SIGNALS -->
   <div class="panel">
     <div class="ph">
-      <span>𝕏 TWITTER/X — OCTRA LIVE FEED</span>
+      <span>⚡ TECHNICAL SIGNALS — AUTO ANALYSIS</span>
       <div style="display:flex;gap:6px;align-items:center">
-        <span id="tw-cnt" style="font-size:8px;color:var(--muted)">Loading...</span>
-        <button class="btn" style="font-size:8px;padding:3px 8px">↺</button>
+        <span id="sig-status" style="font-size:8px;color:var(--muted)">Loading...</span>
       </div>
     </div>
-    <div class="tw-search-bar">
-      <input type="text" id="tw-q" placeholder='Keyword: "octra listing", "OCT whale", "FHE"...' value="octra OCT">
-      <button class="btn" style="font-size:8px">SEARCH</button>
+    <!-- Current Signal Big Display -->
+    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;background:var(--s2)">
+      <div style="text-align:center;min-width:90px">
+        <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:4px">SIGNAL</div>
+        <div id="sig-badge" style="font-family:var(--ui);font-size:32px;font-weight:800;color:var(--yellow)">—</div>
+        <div id="sig-conf" style="font-size:9px;color:var(--muted);margin-top:2px">—</div>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="st"><div class="stl">MA50</div><div class="stv" id="sig-ma50" style="font-size:12px">—</div></div>
+        <div class="st"><div class="stl">MA200</div><div class="stv" id="sig-ma200" style="font-size:12px">—</div></div>
+        <div class="st"><div class="stl">RSI(14)</div><div class="stv" id="sig-rsi" style="font-size:12px">—</div></div>
+        <div class="st"><div class="stl">VOLUME</div><div class="stv" id="sig-vol" style="font-size:12px">—</div></div>
+      </div>
     </div>
-    <div class="tw-filter">
-      <div class="twf on" onclick="twFilter('all',this)">ALL</div>
-      <div class="twf" onclick="twFilter('pos',this)">🟢 BULLISH</div>
-      <div class="twf" onclick="twFilter('neg',this)">🔴 BEARISH</div>
-      <div class="twf" onclick="twFilter('whale',this)">🐳 WHALE</div>
+    <!-- Reasoning -->
+    <div style="padding:12px 13px;border-bottom:1px solid var(--border)">
+      <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">ANALYSIS REASONING</div>
+      <div id="sig-reasoning" style="font-size:11px;line-height:1.7;color:var(--text);font-family:var(--ui);white-space:pre-line">Loading...</div>
     </div>
-    <div class="tw-stats-bar" id="tw-stats" style="display:none">
-      <div class="tws"><div class="tws-l">TOTAL</div><div class="tws-v" id="tws-t" style="color:var(--accent)">0</div></div>
-      <div class="tws"><div class="tws-l">BULLISH</div><div class="tws-v" id="tws-p" style="color:var(--green)">0</div></div>
-      <div class="tws"><div class="tws-l">BEARISH</div><div class="tws-v" id="tws-n" style="color:var(--red)">0</div></div>
-      <div class="tws"><div class="tws-l">NEUTRAL</div><div class="tws-v" id="tws-u" style="color:var(--yellow)">0</div></div>
-      <div class="tws"><div class="tws-l">SENTIMENT</div><div class="tws-v" id="tws-a" style="font-size:12px">—</div></div>
+    <!-- Signal History -->
+    <div style="padding:10px 13px">
+      <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:8px">RECENT SIGNAL HISTORY</div>
+      <div id="sig-history" style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;color:var(--muted)">Loading history...</div>
+      </div>
     </div>
-    <div class="pb" id="tw-feed"><div class="tw-loading ld">Fetching tweets Octra</div></div>
   </div>
 
   <!-- RIGHT COL -->
@@ -612,17 +624,16 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 <!-- BOTTOM -->
 <div class="bot-grid">
   <div class="panel">
-    <div class="ph">📡 SENTIMENT</div>
+    <div class="ph">📊 SIGNAL PERFORMANCE — 30 DAY HISTORY</div>
     <div style="padding:12px">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px">
-        <div class="st" style="text-align:center"><div class="stl">BULLISH</div><div class="stv" style="color:var(--green)" id="sbull">—</div></div>
-        <div class="st" style="text-align:center"><div class="stl">NEUTRAL</div><div class="stv" style="color:var(--yellow)" id="sneu">—</div></div>
-        <div class="st" style="text-align:center"><div class="stl">BEARISH</div><div class="stv" style="color:var(--red)" id="sbear">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">BUY SIGNALS</div><div class="stv" style="color:var(--green)" id="hist-buy">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">HOLD SIGNALS</div><div class="stv" style="color:var(--yellow)" id="hist-hold">—</div></div>
+        <div class="st" style="text-align:center"><div class="stl">SELL SIGNALS</div><div class="stv" style="color:var(--red)" id="hist-sell">—</div></div>
       </div>
-      <div style="text-align:center">
-        <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:3px">OVERALL</div>
-        <div style="font-family:var(--ui);font-size:42px;font-weight:800" id="sovr">—</div>
-        <div style="font-size:10px;margin-top:2px" id="slbl">—</div>
+      <div style="font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:8px">DAILY SIGNALS LOG</div>
+      <div id="hist-table" style="display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:10px;color:var(--muted)">Loading...</div>
       </div>
     </div>
   </div>
@@ -646,9 +657,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 // STATE
 // ═══════════════════════════════════
 let CUR_PRICE = null, ETH_PRICE = null;
-let ALL_TWEETS = [], CUR_FILTER = 'all';
 let FIB_DIR = 'up';
 let CUR_INT = '5';
+let LAST_SIGNAL_TIME = null;
 
 const PAIR = '0x4647e1fe715c9e23959022c2416c71867f5a6e80'; // OCT token address → chart USD
 
@@ -758,97 +769,155 @@ function calcFib() {
 }
 
 // ═══════════════════════════════════
-// TWITTER — render helpers
+// TECHNICAL SIGNALS — render helpers
 // ═══════════════════════════════════
-function fallbackTweets(){return[
-  {handle:'@OctraNetwork',name:'Octra Network',text:'⚡ Dev update: EVM compatibility milestone achieved on testnet. 12,400 TPS in stress tests. Mainnet prep underway. Public sandbox live: sandbox.octra.org 🧵',likes:1243,retweets:445,time:'8m ago',sentiment:'positive',tag:'dev',avatar_letter:'O'},
-  {handle:'@oct_ta_desk',name:'OCT TA Desk',text:'$OCT/ETH Fibonacci analysis 5m chart:\n📐 Swing Low: 0.0802\n📐 Swing High: 0.1349\n🟢 61.8% support: 0.1011 ETH\n🟢 50% support: 0.1076 ETH\n🔴 Ext 127.2%: 0.1547 ETH\n🔴 Ext 161.8%: 0.1686 ETH\nCurrent: 0.1349 — AT THE TOP 👀',likes:567,retweets:234,time:'12m ago',sentiment:'neutral',tag:'fib',avatar_letter:'T'},
-  {handle:'@gate_alpha_hunter',name:'Gate Alpha',text:'Multiple sources confirm $OCT listing review active at @gate_io. Usually 2-3 weeks from this stage to live. Price discovery will be 🔥 given thin OTC float.',likes:892,retweets:334,time:'18m ago',sentiment:'positive',tag:'listing',avatar_letter:'G'},
-  {handle:'@whale_oct_tracker',name:'OCT Whale Watch',text:'🐳 Alert: 3.2M $OCT moved from OTC wallet to cold storage 2h ago. Accumulation pattern, not selling. Smart money is patient before listing.',likes:723,retweets:289,time:'25m ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
-  {handle:'@hodler_bandung',name:'Budi | Indonesia',text:'Udah hold $OCT OTC dari 4 bulan lalu. Sekarang chart breakout terus 🚀 Strategi gw: jual 20% di T2 ($0.40), sisa moonbag sampai listing CEX. Pray for us 🙏 #Octra',likes:234,retweets:89,time:'32m ago',sentiment:'positive',tag:'all',avatar_letter:'B'},
-  {handle:'@fhe_crypto_dev',name:'FHE Developer',text:'Deployed first privacy-preserving smart contract on @OctraNetwork testnet. FHE computation on encrypted data without decryption is genuinely working. This is real tech, not vaporware.',likes:445,retweets:167,time:'45m ago',sentiment:'positive',tag:'dev',avatar_letter:'F'},
-  {handle:'@defi_skeptic_x',name:'DeFi Skeptic',text:'$OCT still pre-listing with thin Uniswap liquidity. Easy to pump price with small capital. "Whale accumulation" could just be team wallet shuffling. DYOR, not financial advice.',likes:89,retweets:34,time:'55m ago',sentiment:'negative',tag:'all',avatar_letter:'D'},
-  {handle:'@okx_listing_alpha',name:'OKX Alpha',text:'$OCT on @okx watchlist for Q3 2026. FHE narrative + strong community + active dev = good listing candidate. Their compliance team reviewing. Not confirmed yet but looking good.',likes:634,retweets:245,time:'1h ago',sentiment:'positive',tag:'listing',avatar_letter:'K'},
-  {handle:'@crypto_maria_es',name:'María | Crypto ES',text:'$OCT/ETH subiendo con fuerza 💪 Análisis fibonacci muestra soporte en 0.618 (0.1011 ETH). Si mantiene, próximo objetivo extensión 1.618 = 0.1686 ETH. Acumulando! 🇪🇸',likes:178,retweets:67,time:'1h ago',sentiment:'positive',tag:'fib',avatar_letter:'M'},
-  {handle:'@layer1_researcher',name:'L1 Research',text:'Comparing FHE L1 projects: @OctraNetwork leads in GitHub commits (47 last 30d), testnet stability (99.2% uptime), and community retention. Closest competitor has 23 commits.',likes:512,retweets:198,time:'1h ago',sentiment:'positive',tag:'dev',avatar_letter:'L'},
-  {handle:'@oct_bear_case',name:'Bear Case',text:'$OCT Uniswap volume is $1.5M/day. That\'s literally nothing. When Gate.io lists it, market makers will control price. Don\'t expect smooth price discovery. Prepare for volatility.',likes:112,retweets:56,time:'2h ago',sentiment:'negative',tag:'all',avatar_letter:'B'},
-  {handle:'@whale_watch_2',name:'Whale Alert',text:'🐳 New: OCT/ETH Uniswap pool added $180K liquidity in last 4 hours. Someone is preparing for a big move. Only 1 LP provider — likely team/insider. Watch closely.',likes:834,retweets:312,time:'2h ago',sentiment:'positive',tag:'whale',avatar_letter:'W'},
-  {handle:'@crypto_jakarta',name:'Ahmad | Jakarta',text:'Komunitas Octra Indonesia udah 4500+ member! Proyek ini beneran, gw udah review whitepaper dan roadmap-nya. Tech FHE-nya solid, beda dari kebanyakan proyek hype. $OCT 🇮🇩',likes:267,retweets:98,time:'2h ago',sentiment:'positive',tag:'all',avatar_letter:'A'},
-  {handle:'@listing_monitor',name:'Listing Monitor',text:'Tracking $OCT: Gate.io review stage 2/3 ✓ | OKX initial review ✓ | Coinbase: too early | Binance: too small cap. Gate/OKX listing within 4-8 weeks is my base case.',likes:445,retweets:167,time:'3h ago',sentiment:'positive',tag:'listing',avatar_letter:'L'},
-  {handle:'@neutral_oct_take',name:'Neutral Analysis',text:'$OCT objective view: strong tech ✓, active devs ✓, growing community ✓. BUT: pre-listing = high uncertainty, one LP = thin liquidity, FHE still early adoption. Position accordingly.',likes:134,retweets:52,time:'3h ago',sentiment:'neutral',tag:'all',avatar_letter:'N'},
-  {handle:'@fib_trader_pro',name:'Fib Trader Pro',text:'$OCT/ETH fib extension targets from current base:\n127.2% → 0.1547 ETH ($X)\n161.8% → 0.1686 ETH (golden ext)\n261.8% → 0.2100 ETH\n\nSupports: 0.618 retrace = 0.1011 ETH. This is a clean setup.',likes:389,retweets:145,time:'4h ago',sentiment:'positive',tag:'fib',avatar_letter:'F'},
-  {handle:'@oct_whale_3',name:'Silent Whale',text:'Loaded another bag at 0.0850 ETH range. Average now 0.0920 ETH. $OCT fib 61.8% held perfectly as support twice. Not selling until 161.8% extension minimum. Trust the process.',likes:567,retweets:201,time:'4h ago',sentiment:'positive',tag:'whale',avatar_letter:'S'},
-  {handle:'@crypto_pessimist',name:'Crypto Realist',text:'Hot take: 90% of "pre-listing alpha" tweets about $OCT are from bag holders trying to hype their exit. The actual tech might be good but social media signal is very noisy rn.',likes:78,retweets:45,time:'5h ago',sentiment:'negative',tag:'all',avatar_letter:'C'},
-  {handle:'@privacy_chain_analyst',name:'Privacy Chain',text:'FHE chains in 2026 comparison: $OCT (Octra) leads by multiple metrics. The key differentiator is their hypergraph architecture enabling parallel FHE computation. Real innovation.',likes:334,retweets:123,time:'6h ago',sentiment:'positive',tag:'dev',avatar_letter:'P'},
-  {handle:'@oct_long_term',name:'Long Term Vision',text:'$OCT 12-month thesis: listing → price discovery → EVM launch → dApp ecosystem → real usage. If they execute on roadmap, $3-5 range is conservative. FHE infrastructure will be essential.',likes:456,retweets:178,time:'7h ago',sentiment:'positive',tag:'fib',avatar_letter:'V'},
-];}
+async function fetchTechnicalSignal() {
+  try {
+    const res = await fetch('/api/signals/current');
+    if (!res.ok) return null;
+    return await res.json();
+  } catch(e) { return null; }
+}
 
-function renderTweets(tweets){
-  const filtered = CUR_FILTER==='all'?tweets:
-    CUR_FILTER==='pos'?tweets.filter(t=>t.sentiment==='positive'):
-    CUR_FILTER==='neg'?tweets.filter(t=>t.sentiment==='negative'):
-    tweets.filter(t=>t.tag===CUR_FILTER);
-  if(!filtered.length){document.getElementById('tw-feed').innerHTML='<div class="tw-loading">No tweets for this filter.</div>';return;}
-  const html=filtered.map(t=>{
-    const sc=t.sentiment==='positive'?'pos':t.sentiment==='negative'?'neg':'neu';
-    const sl=t.sentiment==='positive'?'BULLISH':t.sentiment==='negative'?'BEARISH':'NEUTRAL';
-    const tag=t.tag!=='all'?`<span style="font-size:7px;color:var(--muted);border:1px solid var(--border);padding:1px 4px;margin-left:3px">${t.tag.toUpperCase()}</span>`:'';
-    const txt=t.text.replace(/\$OCT/g,'<a href="https://x.com/search?q=%24OCT" target="_blank">$OCT</a>').replace(/#(\w+)/g,'<a href="https://x.com/hashtag/$1" target="_blank">#$1</a>').replace(/@(\w+)/g,'<a href="https://x.com/$1" target="_blank">@$1</a>').replace(/\n/g,'<br>');
-    const c1=avCol1(t.handle), c2=avCol2(t.handle);
-    return `<div class="tweet">
-      <div class="tw-top">
-        <div class="tw-av" style="background:linear-gradient(135deg,${c1},${c2})">${(t.avatar_letter||t.handle[1]).toUpperCase()}</div>
-        <div class="tw-meta">
-          <div style="display:flex;align-items:center"><span class="tw-handle">${t.handle}</span>${tag}</div>
-          <div class="tw-name">${t.name}</div>
-        </div>
-        <div class="tw-time">${t.time}</div>
-      </div>
-      <div class="tw-body">${txt}</div>
-      <div class="tw-foot">
-        <span class="tw-st">❤️ ${t.likes}</span>
-        <span class="tw-st">🔁 ${t.retweets}</span>
-        <a href="https://x.com/search?q=Octra+%24OCT" target="_blank" style="font-size:7px;color:var(--muted);text-decoration:none">view on X →</a>
-        <span class="tw-sent ${sc}">${sl}</span>
-      </div>
+async function fetchSignalHistory() {
+  try {
+    const res = await fetch('/api/signals/daily');
+    if (!res.ok) return [];
+    return await res.json();
+  } catch(e) { return []; }
+}
+
+function renderTechnicalSignal(signal) {
+  if (!signal || signal.error) {
+    document.getElementById('sig-badge').textContent = '—';
+    document.getElementById('sig-reasoning').textContent = 'No signal data available.';
+    document.getElementById('sig-status').textContent = 'No data';
+    return;
+  }
+
+  const colorMap = { BUY: 'var(--green)', SELL: 'var(--red)', HOLD: 'var(--yellow)' };
+  const color = colorMap[signal.signal] || 'var(--yellow)';
+  const conf = Math.round((signal.confidence || 0) * 100);
+  const ind = signal.indicators || {};
+
+  // Signal badge
+  const badge = document.getElementById('sig-badge');
+  badge.textContent = signal.signal || '—';
+  badge.style.color = color;
+
+  document.getElementById('sig-conf').textContent = conf + '% confidence';
+  document.getElementById('sig-conf').style.color = color;
+
+  // Indicators
+  const ma50 = ind.ma50 ? '$' + fmtP(ind.ma50) : '—';
+  const ma200 = ind.ma200 ? '$' + fmtP(ind.ma200) : '—';
+  const rsi = ind.rsi ? ind.rsi.toFixed(1) : '—';
+  const rsiColor = !ind.rsi ? 'var(--muted)' : ind.rsi < 30 ? 'var(--green)' : ind.rsi > 70 ? 'var(--red)' : 'var(--yellow)';
+  const vol = ind.volumeRatio ? ind.volumeRatio.toFixed(2) + 'x' : '—';
+
+  document.getElementById('sig-ma50').textContent = ma50;
+  document.getElementById('sig-ma200').textContent = ma200;
+  document.getElementById('sig-rsi').textContent = rsi;
+  document.getElementById('sig-rsi').style.color = rsiColor;
+  document.getElementById('sig-vol').textContent = vol;
+
+  // Update top indicators bar
+  if (document.getElementById('ind-ma50')) document.getElementById('ind-ma50').textContent = ma50;
+  if (document.getElementById('ind-ma200')) document.getElementById('ind-ma200').textContent = ma200;
+
+  // Score bars (normalized 0-100)
+  const score = signal.score || 0;
+  const scoreNorm = Math.min(100, Math.max(0, ((score + 3) / 6) * 100));
+  const rsiNorm = ind.rsi ? Math.min(100, ind.rsi) : 50;
+  const volNorm = ind.volumeRatio ? Math.min(100, ind.volumeRatio * 50) : 50;
+  const maScore = (ind.ma50 && ind.ma200 && ind.currentPrice) ?
+    (ind.currentPrice > ind.ma50 ? 70 : 30) : 50;
+
+  setBar('m', maScore); if(document.getElementById('nm')) document.getElementById('nm').textContent = maScore > 50 ? '↑' : '↓';
+  setBar('r', rsiNorm); if(document.getElementById('nr')) document.getElementById('nr').textContent = rsi;
+  setBar('v', volNorm); if(document.getElementById('nv')) document.getElementById('nv').textContent = vol;
+  setBar('mc', scoreNorm); if(document.getElementById('nmc')) document.getElementById('nmc').textContent = score > 0 ? '+'+score : score;
+
+  // Reasoning
+  document.getElementById('sig-reasoning').textContent = signal.reasoning || '—';
+
+  // Status & timestamp
+  if (signal.timestamp) {
+    const d = new Date(signal.timestamp);
+    LAST_SIGNAL_TIME = d;
+    document.getElementById('sig-status').textContent = ago(d);
+    document.getElementById('sig-updated').textContent = ago(d);
+  }
+
+  // Also update main signal card
+  const scrd = document.getElementById('scrd');
+  const msig = document.getElementById('msig');
+  const mconf = document.getElementById('mconf');
+  if (scrd) { scrd.className = 'sb sig-card ' + signal.signal; }
+  if (msig) { msig.textContent = signal.signal; msig.className = signal.signal; }
+  if (mconf) { mconf.textContent = conf + '% · Technical Analysis'; mconf.style.color = color; }
+
+  // Update AI box reasoning
+  const aiTxt = document.getElementById('ai-txt');
+  if (aiTxt) aiTxt.innerHTML = `<span style="color:${color};font-weight:700">[${signal.signal}]</span> ${signal.reasoning || ''}`;
+}
+
+function renderSignalHistory(signals) {
+  if (!signals || !signals.length) {
+    document.getElementById('sig-history').innerHTML = '<div style="font-size:10px;color:var(--muted)">No history yet</div>';
+    document.getElementById('hist-table').innerHTML = '<div style="font-size:10px;color:var(--muted)">No history yet</div>';
+    return;
+  }
+
+  // Count signals
+  const buy = signals.filter(s => s.signal === 'BUY').length;
+  const hold = signals.filter(s => s.signal === 'HOLD').length;
+  const sell = signals.filter(s => s.signal === 'SELL').length;
+  if (document.getElementById('hist-buy')) document.getElementById('hist-buy').textContent = buy;
+  if (document.getElementById('hist-hold')) document.getElementById('hist-hold').textContent = hold;
+  if (document.getElementById('hist-sell')) document.getElementById('hist-sell').textContent = sell;
+
+  const colorMap = { BUY: 'var(--green)', SELL: 'var(--red)', HOLD: 'var(--yellow)' };
+
+  // Recent history in signals panel (last 5)
+  const recent = signals.slice(0, 5);
+  document.getElementById('sig-history').innerHTML = recent.map(s => {
+    const c = colorMap[s.signal] || 'var(--muted)';
+    const conf = Math.round((s.confidence || 0) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--s3);border:1px solid var(--border)">
+      <span style="color:${c};font-family:var(--ui);font-weight:700;font-size:11px;min-width:40px">${s.signal}</span>
+      <span style="font-size:8px;color:var(--muted);flex:1">${s.date || '—'}</span>
+      <span style="font-size:9px;color:${c}">${conf}%</span>
+      <span style="font-size:8px;color:var(--muted)">RSI:${s.rsi_14 ? s.rsi_14.toFixed(0) : '—'}</span>
     </div>`;
   }).join('');
-  document.getElementById('tw-feed').innerHTML=html;
-  document.getElementById('tw-cnt').textContent=filtered.length+' tweets';
+
+  // History table in bottom panel (last 10)
+  const hist = signals.slice(0, 10);
+  document.getElementById('hist-table').innerHTML = hist.map(s => {
+    const c = colorMap[s.signal] || 'var(--muted)';
+    const conf = Math.round((s.confidence || 0) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--border)">
+      <span style="color:${c};font-family:var(--ui);font-weight:700;font-size:10px;min-width:40px">${s.signal}</span>
+      <span style="font-size:9px;color:var(--muted);flex:1">${s.date || '—'}</span>
+      <span style="font-size:9px;color:${c}">${conf}%</span>
+      <span style="font-size:8px;color:var(--muted)">RSI ${s.rsi_14 ? s.rsi_14.toFixed(0) : '—'}</span>
+      <span style="font-size:8px;color:var(--muted)">Vol ${s.volume_ratio ? s.volume_ratio.toFixed(1)+'x' : '—'}</span>
+    </div>`;
+  }).join('');
 }
 
-function twFilter(f,el){
-  CUR_FILTER=f;
-  document.querySelectorAll('.twf').forEach(x=>x.classList.remove('on'));
-  el.classList.add('on');
-  renderTweets(ALL_TWEETS);
+async function loadTechnicalSignals() {
+  const [signal, history] = await Promise.all([
+    fetchTechnicalSignal(),
+    fetchSignalHistory()
+  ]);
+  renderTechnicalSignal(signal);
+  renderSignalHistory(history);
 }
 
-function updateTwStats(tweets){
-  const pos=tweets.filter(t=>t.sentiment==='positive').length;
-  const neg=tweets.filter(t=>t.sentiment==='negative').length;
-  const neu=tweets.filter(t=>t.sentiment==='neutral').length;
-  const tot=tweets.length, avg=Math.round(pos/tot*100);
-  document.getElementById('tws-t').textContent=tot;
-  document.getElementById('tws-p').textContent=pos;
-  document.getElementById('tws-n').textContent=neg;
-  document.getElementById('tws-u').textContent=neu;
-  document.getElementById('tws-a').textContent=avg+'%';
-  document.getElementById('tws-a').style.color=avg>60?'var(--green)':avg>40?'var(--yellow)':'var(--red)';
-  document.getElementById('tw-stats').style.display='flex';
-  document.getElementById('sbull').textContent=pos;
-  document.getElementById('sneu').textContent=neu;
-  document.getElementById('sbear').textContent=neg;
-  document.getElementById('sovr').textContent=avg+'%';
-  document.getElementById('sovr').style.color=avg>65?'var(--green)':avg>45?'var(--yellow)':'var(--red)';
-  document.getElementById('slbl').textContent=avg>65?'🔥 BULLISH ZONE':avg>45?'😐 NEUTRAL':'❄️ BEARISH';
-  document.getElementById('slbl').style.color=avg>65?'var(--green)':avg>45?'var(--yellow)':'var(--red)';
-  setBar('bs',avg); document.getElementById('ns').textContent=avg;
-  setBar('bt',avg); document.getElementById('nt').textContent=avg;
-}
-
-function avCol1(h){const c=['#1d9bf0','#a78bfa','#ff6b35','#00e5ff','#00ff88','#ff3366','#ffd700'];return c[h.charCodeAt(1)%c.length]}
-function avCol2(h){const c=['#a78bfa','#00e5ff','#ff3366','#ffd700','#1d9bf0','#00ff88','#ff6b35'];return c[h.charCodeAt(2)%c.length]}
+// Auto-refresh every 10 minutes
+setInterval(loadTechnicalSignals, 600000);
 
 // ═══════════════════════════════════
 // NEWS
@@ -896,21 +965,19 @@ function setBar(id,v){const el=document.getElementById('b'+id);if(el)el.style.wi
 // ═══════════════════════════════════
 // EXPOSE HELPERS FOR app.js GLUE
 // ═══════════════════════════════════
-// setTweets: assign module-scoped ALL_TWEETS (so twFilter works), render + stats.
-window.setTweets = function(tweets){
-  ALL_TWEETS = Array.isArray(tweets) ? tweets : [];
-  renderTweets(ALL_TWEETS);
-  updateTwStats(ALL_TWEETS);
-};
 // setPrice: keep module-scoped CUR_PRICE in sync so calcFib sees it.
 window.setPrice = function(p){
   if (p != null && !isNaN(p)) { CUR_PRICE = p; }
 };
-window.renderTweets = typeof renderTweets === 'function' ? renderTweets : undefined;
 window.renderNews = typeof renderNews === 'function' ? renderNews : undefined;
 window.defAI = typeof defAI === 'function' ? defAI : undefined;
 window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
 window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
+
+// Load technical signals on page load
+document.addEventListener('DOMContentLoaded', loadTechnicalSignals);
+// Also try immediately in case DOM is ready
+if (document.readyState !== 'loading') loadTechnicalSignals();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="js/config.js"></script>
