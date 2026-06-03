@@ -154,6 +154,12 @@ async function send(chatId, signal, config) {
   }
 
   try {
+    // Check if signal changed (for technical analysis) - don't spam notifications
+    if (signal.signalChanged === false) {
+      console.log(`[Telegram] Signal unchanged (${signal.recommendation}), skipping notification`);
+      return { success: true, skipped: true };
+    }
+
     // Create bot instance
     const bot = new TelegramBot(config.botToken);
 
