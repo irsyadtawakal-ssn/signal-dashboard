@@ -18,6 +18,62 @@ function createDb(dbPath) {
   // Initialize Telegram schema (users table and failed_notifications table)
   initializeTelegramSchema(db);
 
+  // Initialize technical analysis schema
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS price_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date DATE UNIQUE,
+      oct_price REAL NOT NULL,
+      oct_change_24h REAL,
+      oct_volume REAL,
+      btc_price REAL,
+      eth_price REAL,
+      btc_change_24h REAL,
+      eth_change_24h REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS technical_signals_daily (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date DATE UNIQUE,
+      signal TEXT NOT NULL,
+      confidence REAL NOT NULL,
+      ma_50 REAL,
+      ma_200 REAL,
+      rsi_14 REAL,
+      volume_ratio REAL,
+      reasoning TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS technical_signals_10min (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp DATETIME UNIQUE,
+      signal TEXT NOT NULL,
+      confidence REAL NOT NULL,
+      score REAL,
+      ma_50 REAL,
+      ma_200 REAL,
+      rsi_14 REAL,
+      volume_ratio REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_technical_signals_daily_date
+    ON technical_signals_daily(date DESC);
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_technical_signals_10min_timestamp
+    ON technical_signals_10min(timestamp DESC);
+  `);
+
   return db;
 }
 
