@@ -3,6 +3,15 @@
  * Pure math calculations (no AI calls)
  */
 
+// Volume thresholds for signal classification
+const VOLUME_HIGH_THRESHOLD = 1.5;      // High volume: > 1.5x average
+const VOLUME_ABOVE_THRESHOLD = 1.0;     // Above average: > 1.0x but <= 1.5x
+const VOLUME_BELOW_THRESHOLD = 0.5;     // Below average: > 0.5x but <= 1.0x
+// Below 0.5x is LOW_VOLUME
+
+// Macro trend threshold
+const MACRO_STRONG_THRESHOLD = 2;       // Strong signal: > ±2% price change
+
 /**
  * Calculate Simple Moving Average
  * @param {number[]} prices - Array of prices
@@ -21,6 +30,9 @@ function calculateMA(prices, period) {
 
 /**
  * Calculate Relative Strength Index (14-period default)
+ * NOTE: This uses a simple average of gains/losses, not Wilder's smoothed moving average.
+ * Acceptable for directional signals (overbought/oversold) but will diverge from
+ * industry-standard RSI values. See TECHNICAL_ANALYSIS.md for details.
  * RSI > 70 = overbought, RSI < 30 = oversold
  * @param {number[]} prices - Array of prices
  * @param {number} period - RSI period (default 14)
@@ -48,9 +60,9 @@ function calculateRSI(prices, period = 14) {
   const avgGain = gains / period;
   const avgLoss = losses / period;
 
-  // Handle division by zero
+  // Handle division by zero (all prices are flat or no variance)
   if (avgLoss === 0) {
-    return avgGain > 0 ? 100 : 50;
+    return avgGain > 0 ? 100 : 50; // 50 = neutral/flat, 100 = only gains
   }
 
   // Calculate RS and RSI
@@ -67,17 +79,17 @@ function calculateRSI(prices, period = 14) {
  * @returns {object} - { signal: string, score: number }
  */
 function analyzeVolume(currentVolume, averageVolume) {
-  if (!averageVolume || averageVolume === 0) {
+  if (!averageVolume || averageVolume === 0 || currentVolume == null) {
     return { signal: 'NORMAL', score: 0 };
   }
 
   const ratio = currentVolume / averageVolume;
 
-  if (ratio > 1.5) {
+  if (ratio > VOLUME_HIGH_THRESHOLD) {
     return { signal: 'HIGH_VOLUME', score: 1 };
-  } else if (ratio > 1.0) {
+  } else if (ratio > VOLUME_ABOVE_THRESHOLD) {
     return { signal: 'ABOVE_AVERAGE', score: 0.5 };
-  } else if (ratio > 0.5) {
+  } else if (ratio > VOLUME_BELOW_THRESHOLD) {
     return { signal: 'BELOW_AVERAGE', score: -0.5 };
   } else {
     return { signal: 'LOW_VOLUME', score: -1 };
@@ -92,7 +104,7 @@ function analyzeVolume(currentVolume, averageVolume) {
  */
 function analyzeMacro(btcChange24h, ethChange24h) {
   // Both positive = bull market
-  if (btcChange24h > 2 && ethChange24h > 2) {
+  if (btcChange24h > MACRO_STRONG_THRESHOLD && ethChange24h > MACRO_STRONG_THRESHOLD) {
     return { signal: 'STRONG_BULL', score: 1 };
   }
   if (btcChange24h > 0 && ethChange24h > 0) {
@@ -100,7 +112,7 @@ function analyzeMacro(btcChange24h, ethChange24h) {
   }
 
   // Both negative = bear market
-  if (btcChange24h < -2 && ethChange24h < -2) {
+  if (btcChange24h < -MACRO_STRONG_THRESHOLD && ethChange24h < -MACRO_STRONG_THRESHOLD) {
     return { signal: 'STRONG_BEAR', score: -1 };
   }
   if (btcChange24h < 0 && ethChange24h < 0) {
