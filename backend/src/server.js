@@ -67,7 +67,7 @@ try {
         }),
       intervalMs: config.newsIntervalMs,
     },
-    {
+    ...(!config.disableTwitter ? [{
       run: () =>
         runCacheUpdate({
           db,
@@ -80,7 +80,7 @@ try {
             }),
         }),
       intervalMs: config.twitterIntervalMs,
-    },
+    }] : []),
     {
       run: () => runTechnicalAnalysis({ db, config, notifier }),
       intervalMs: config.signalUpdateIntervalMs || 600000  // 10 minutes default
