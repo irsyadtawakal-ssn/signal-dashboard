@@ -26,6 +26,10 @@ jobs:
             if git diff --name-only HEAD@{1} HEAD | grep -q '^backend/'; then
               cd backend
               npm ci --omit=dev
+              # Rebuild native bindings (better-sqlite3) — npm ci wipes the
+              # compiled .node binary and the prebuilt may not match this
+              # host's Node ABI, causing a crash-loop on restart.
+              npm rebuild better-sqlite3
               cd ..
               pm2 restart signal-dashboard
             fi
