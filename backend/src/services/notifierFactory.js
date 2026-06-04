@@ -14,6 +14,9 @@ function createNotifier(config, db) {
     return null;
   }
 
+  // Capture config and db in closure for send method
+  const botToken = config.botToken;
+
   return {
     /**
      * Sends a trading signal notification to a user via Telegram
@@ -27,9 +30,9 @@ function createNotifier(config, db) {
      */
     async send(signal, userId) {
       try {
-        // Ensure config is available
-        if (!config || !config.botToken) {
-          throw new Error('Telegram config not available');
+        // Ensure botToken is available
+        if (!botToken) {
+          throw new Error('botToken is required in config');
         }
 
         // Query database to get the user's Telegram chat ID
@@ -46,7 +49,7 @@ function createNotifier(config, db) {
 
         // Dynamically import and call the standalone send function
         const telegramNotifier = await import('./telegramNotifier.js');
-        const result = await telegramNotifier.send(chatId, signal, config);
+        const result = await telegramNotifier.send(chatId, signal, { botToken });
 
         return result;
       } catch (error) {
