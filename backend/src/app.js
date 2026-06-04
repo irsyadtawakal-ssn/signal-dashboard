@@ -23,9 +23,11 @@ function createApp({ db, config, analyzeFn, notifier }) {
     next();
   });
 
-  // Public
+  // Public endpoints — no auth required
   app.use('/api/health', healthRoute());
   app.use('/api/signals', signalsRoute({ db }));
+  // Cache endpoints (price, news, tweets, signal) — public data
+  app.use('/api', cacheRoute({ db }));
 
   // Get both public and protected telegram routes
   const { publicRouter, protectedRouter } = telegramRoute({ db, config });
@@ -35,7 +37,6 @@ function createApp({ db, config, analyzeFn, notifier }) {
   app.use('/api/analyze', requireAuth(config), analyzeRoute({ db, analyzeFn, ttlMs: config.analysisTtlMs, notifier }));
   app.use('/api/admin', requireAuth(config), adminRoute({ config }));
   app.use('/api/telegram', requireAuth(config), protectedRouter);
-  app.use('/api', requireAuth(config), cacheRoute({ db }));
 
   return app;
 }
