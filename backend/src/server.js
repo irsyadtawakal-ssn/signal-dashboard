@@ -87,14 +87,15 @@ try {
     },
   ];
 
-  // Add auto-analysis job if both AI and Telegram are configured
-  if (analyzeFn && notifier && !config.disableTwitter) {
-    baseTasks.push({
-      run: () => runAnalysisUpdate({ db, analyzeFn, ttlMs: config.analysisTtlMs, notifier }),
-      intervalMs: config.analysisScheduleIntervalMs,
-    });
-    console.log(`[Server] Auto-analysis scheduler registered (every ${config.analysisScheduleIntervalMs / 1000 / 60} minutes)`);
-  }
+  // Sentiment analysis disabled - requires Anthropic API credits
+  // Re-enable: uncomment the block below after topping up API credits
+  // if (analyzeFn && notifier && !config.disableTwitter) {
+  //   baseTasks.push({
+  //     run: () => runAnalysisUpdate({ db, analyzeFn, ttlMs: config.analysisTtlMs, notifier }),
+  //     intervalMs: config.analysisScheduleIntervalMs,
+  //   });
+  //   console.log(`[Server] Auto-analysis scheduler registered (every ${config.analysisScheduleIntervalMs / 1000 / 60} minutes)`);
+  // }
 
   // Start scheduler with base tasks
   startScheduler({ tasks: baseTasks });
