@@ -15,7 +15,7 @@ function loadConfig(env = process.env) {
     priceIntervalMs: Number(env.PRICE_INTERVAL_MS) || 300000,
     newsIntervalMs: Number(env.NEWS_INTERVAL_MS) || 3600000,
     cryptopanicToken: env.CRYPTOPANIC_TOKEN || undefined,
-    twitterIntervalMs: Number(env.TWITTER_INTERVAL_MS) || 300000,
+    twitterIntervalMs: Number(env.TWITTER_INTERVAL_MS) || 3600000,
     twitterToken: env.TWITTER_SCRAPER_TOKEN || undefined,
     aiProvider: env.AI_PROVIDER || 'openrouter',
     openrouterApiKey: env.OPENROUTER_API_KEY || undefined,

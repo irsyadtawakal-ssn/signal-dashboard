@@ -12,9 +12,10 @@ function normalizeTweet(t) {
   };
 }
 
-async function fetchTweets({ getJsonFn = getJson, token, keywords = [], limit = 20, baseUrl = DEFAULT_BASE }) {
+async function fetchTweets({ getJsonFn = getJson, token, keywords = [], limit = 20, baseUrl = DEFAULT_BASE, sinceTime = null }) {
   const query = encodeURIComponent(keywords.join(' OR '));
-  const url = `${baseUrl}?query=${query}&queryType=Latest`;
+  let url = `${baseUrl}?query=${query}&queryType=Latest`;
+  if (sinceTime) url += `&start_time=${encodeURIComponent(sinceTime)}`;
   const headers = token ? { 'X-API-Key': token } : {};
 
   const data = await getJsonFn(url, { headers });

@@ -1,6 +1,6 @@
 require('dotenv').config({ override: true });
 const { loadConfig } = require('./config');
-const { createDb } = require('./db');
+const { createDb, getCache } = require('./db');
 const { createApp } = require('./app');
 const { getJson } = require('./http');
 const { fetchOctPrice } = require('./sources/dexscreener');
@@ -72,12 +72,15 @@ try {
         runCacheUpdate({
           db,
           key: 'tweets',
-          produceFn: () =>
-            buildTweets({
+          produceFn: () => {
+            const lastFetch = getCache(db, 'lastTwitterFetchTime');
+            const sinceTime = lastFetch ? new Date(lastFetch.value).toISOString() : null;
+            return buildTweets({
               fetchFn: () =>
-                fetchTweets({ getJsonFn: getJson, token: config.twitterToken, keywords: config.twitterKeywords }),
+                fetchTweets({ getJsonFn: getJson, token: config.twitterToken, keywords: config.twitterKeywords, sinceTime }),
               classifyFn,
-            }),
+            });
+          },
         }),
       intervalMs: config.twitterIntervalMs,
     }] : []),
