@@ -127,6 +127,20 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 .fib-dtab{font-size:8px;padding:6px 10px;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-family:var(--font);letter-spacing:1px;transition:.15s;text-align:center;white-space:normal}
 .fib-dtab.on{border-color:var(--yellow);color:var(--yellow);background:rgba(255,215,0,.06)}
 
+/* TWITTER FEED */
+.twitter-section{border:1px solid var(--border);background:var(--surface);margin-bottom:12px}
+.tweet-card{background:var(--s2);border:1px solid var(--border);padding:12px 14px;border-radius:4px;transition:.2s;cursor:pointer}
+.tweet-card:hover{border-color:var(--tw);background:rgba(29,155,240,.05)}
+.tweet-author{font-size:9px;color:var(--tw);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.tweet-author-at{color:var(--muted);font-weight:400}
+.tweet-text{font-size:11px;line-height:1.5;color:var(--text);margin-bottom:8px;word-break:break-word}
+.tweet-url{color:var(--accent);text-decoration:none;font-size:8px;word-break:break-all}
+.tweet-url:hover{text-decoration:underline}
+.tweet-time{font-size:8px;color:var(--muted);margin-top:6px;border-top:1px solid var(--border);padding-top:6px}
+@media(max-width:600px){
+  #tweets-container{grid-template-columns:1fr!important}
+}
+
 /* TELEGRAM MODAL */
 .tg-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:none;align-items:center;justify-content:center}
 .tg-modal-bg.open{display:flex}
@@ -549,6 +563,22 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
           <tr><td colspan="6" style="padding:16px;text-align:center;color:var(--muted);font-size:11px">Masukkan Swing Low dan Swing High untuk lihat Fibonacci levels</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- TWITTER FEED -->
+<div class="twitter-section">
+  <div class="chart-hdr">
+    <span>🐦 TWITTER FEED — Octra, $OCT, FHE layer1, OCT listing</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="tweets-count" style="font-size:8px;color:var(--muted)">0 tweets</span>
+      <button class="btn" id="tweets-refresh-btn" onclick="loadTweets()">⟳</button>
+    </div>
+  </div>
+  <div id="tweets-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:14px;background:var(--surface)">
+    <div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);font-size:11px">
+      Loading tweets...
     </div>
   </div>
 </div>
@@ -983,8 +1013,48 @@ window.defAI = typeof defAI === 'function' ? defAI : undefined;
 window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
 window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
 
+// Load tweets
+async function loadTweets() {
+  try {
+    const res = await fetch('/api/tweets');
+    if (!res.ok) return;
+    const data = await res.json();
+    const tweets = Array.isArray(data) ? data : (data.tweets || []);
+
+    const container = document.getElementById('tweets-container');
+    const count = document.getElementById('tweets-count');
+
+    if (!tweets.length) {
+      container.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);font-size:11px">No tweets yet. Checking every 5 minutes.</div>';
+      count.textContent = '0 tweets';
+      return;
+    }
+
+    container.innerHTML = tweets.map(t => `
+      <div class="tweet-card" onclick="window.open('${t.url}','_blank')">
+        <div class="tweet-author">
+          <span style="color:var(--tw)">@${t.author}</span>
+        </div>
+        <div class="tweet-text">${t.text}</div>
+        ${t.url ? `<a href="${t.url}" target="_blank" class="tweet-url" onclick="event.stopPropagation()">→ View on Twitter</a>` : ''}
+        <div class="tweet-time">${t.createdAt ? new Date(t.createdAt).toLocaleString() : 'unknown time'}</div>
+      </div>
+    `).join('');
+
+    count.textContent = tweets.length + ' tweet' + (tweets.length !== 1 ? 's' : '');
+  } catch (err) {
+    console.error('Error loading tweets:', err);
+  }
+}
+
+// Auto-refresh tweets every 5 minutes
+setInterval(loadTweets, 5 * 60 * 1000);
+
 // Load technical signals on page load
-document.addEventListener('DOMContentLoaded', loadTechnicalSignals);
+document.addEventListener('DOMContentLoaded', () => {
+  loadTechnicalSignals();
+  loadTweets();
+});
 // Also try immediately in case DOM is ready
 if (document.readyState !== 'loading') loadTechnicalSignals();
 </script>
