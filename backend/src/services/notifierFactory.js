@@ -47,9 +47,10 @@ function createNotifier(config, db) {
 
         const chatId = userRow.telegramChatId;
 
-        // Dynamically import and call the standalone send function
+        // Dynamically import and create a notifier instance
         const telegramNotifier = await import('./telegramNotifier.js');
-        const result = await telegramNotifier.send(chatId, signal, { botToken });
+        const notifier = telegramNotifier.createNotifier({ botToken }, db);
+        const result = await notifier.send(signal, userId);
 
         return result;
       } catch (error) {

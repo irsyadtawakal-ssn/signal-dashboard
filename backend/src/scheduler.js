@@ -179,7 +179,7 @@ async function retryFailedNotifications({ db, telegramNotifier, config }) {
             WHERE id = ?
           `).run(newRetryCount, nextRetryTime, result.error, id);
 
-          console.info(`[Retry] Notification ${id} failed, scheduled retry ${newRetryCount + 1}/${MAX_RETRIES} in ${backoffDelay / 1000 / 60}m`);
+          console.info(`[Retry] Notification ${id} failed (error: ${result.error}), scheduled retry ${newRetryCount + 1}/${MAX_RETRIES} in ${backoffDelay / 1000 / 60}m`);
         }
       }
     }
@@ -279,13 +279,13 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
       WHERE date >= DATE('now', '-30 days')
     `).get();
 
-    const avgVolume = volumeData?.avg_volume || price.octVolume24h;
+    const avgVolume = volumeData?.avg_volume || price.octVolume24h || 0;
 
     // 4. Generate signal
     const signal = await generateSignal({
       prices,
       currentPrice: price.oct,
-      currentVolume: price.octVolume24h,
+      currentVolume: price.octVolume24h || 0,
       avgVolume: avgVolume,
       btcChange24h: macro.btc.change24h,
       ethChange24h: macro.eth.change24h
