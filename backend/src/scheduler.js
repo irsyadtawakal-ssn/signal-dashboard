@@ -308,22 +308,39 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
 
     console.log(`[Technical] Signal: ${signal.signal} (${(signal.confidence * 100).toFixed(0)}%)`);
 
-    // 9. Send notification if signal changed (with rate-limiting to avoid Telegram API burst)
-    if (notifier && signalChanged) {
+    // 9. Send notifications (immediate on change + periodic every 15 min)
+    if (notifier) {
       const signalForNotif = { ...signal, strategy: 'TECHNICAL' };
       const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
-      const delayMs = 100; // 100ms between each notification
-      for (let i = 0; i < users.length; i++) {
-        const user = users[i];
-        setTimeout(() => {
-          setImmediate(async () => {
-            try {
-              await notifier.send(signalForNotif, user.id);
-            } catch (err) {
-              console.error(`[Technical] Notification failed for user ${user.id}:`, err.message);
-            }
-          });
-        }, i * delayMs);
+      const delayMs = 100;
+
+      // Check if we should send periodic notification (15 min = 900,000ms)
+      const lastNotifTime = getCache(db, 'lastTechnicalNotifTime');
+      const now = Date.now();
+      const timeSinceLastNotif = lastNotifTime ? now - lastNotifTime.value : 900001; // default to > 15 min
+      const shouldSendPeriodic = timeSinceLastNotif > 15 * 60 * 1000; // 15 minutes
+
+      // Send if: signal changed OR 15 min has passed since last notification
+      if (signalChanged || shouldSendPeriodic) {
+        for (let i = 0; i < users.length; i++) {
+          const user = users[i];
+          setTimeout(() => {
+            setImmediate(async () => {
+              try {
+                await notifier.send(signalForNotif, user.id);
+              } catch (err) {
+                console.error(`[Technical] Notification failed for user ${user.id}:`, err.message);
+              }
+            });
+          }, i * delayMs);
+        }
+        // Update last notification time
+        setCache(db, 'lastTechnicalNotifTime', now);
+        if (signalChanged) {
+          console.log('[Technical] Signal changed - immediate notification sent');
+        } else {
+          console.log('[Technical] 15 min passed - periodic notification sent');
+        }
       }
     }
 
