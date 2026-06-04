@@ -243,13 +243,13 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
       WHERE date >= DATE('now', '-30 days')
     `).get();
 
-    const avgVolume = volumeData?.avg_volume || price.volume24h;
+    const avgVolume = volumeData?.avg_volume || price.octVolume24h;
 
     // 4. Generate signal
     const signal = await generateSignal({
       prices,
       currentPrice: price.oct,
-      currentVolume: price.volume24h,
+      currentVolume: price.octVolume24h,
       avgVolume: avgVolume,
       btcChange24h: macro.btc.change24h,
       ethChange24h: macro.eth.change24h
