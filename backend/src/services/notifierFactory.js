@@ -27,8 +27,28 @@ function createNotifier(config, db) {
      */
     async send(signal, userId) {
       try {
-        // Use the notifier's send method (which handles DB lookup)
-        return await notifier.send(signal, userId);
+        // Ensure config is available
+        if (!config || !config.botToken) {
+          throw new Error('Telegram config not available');
+        }
+
+        // Query database to get the user's Telegram chat ID
+        const userRow = db.prepare('SELECT telegramChatId FROM users WHERE id = ?').get(userId);
+
+        if (!userRow || !userRow.telegramChatId) {
+          return {
+            skipped: true,
+            reason: 'no_chat_id',
+          };
+        }
+
+        const chatId = userRow.telegramChatId;
+
+        // Dynamically import and call the standalone send function
+        const telegramNotifier = await import('./telegramNotifier.js');
+        const result = await telegramNotifier.send(chatId, signal, config);
+
+        return result;
       } catch (error) {
         // Unexpected error - store for retry if possible
         try {
