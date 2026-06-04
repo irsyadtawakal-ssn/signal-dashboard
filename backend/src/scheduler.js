@@ -169,19 +169,24 @@ async function runAnalysisUpdate({ db, analyzeFn, ttlMs, notifier }) {
     const result = await getAnalysis({ db, analyzeFn, ttlMs, force: true });
     const newSignal = result.recommendation;
     const previousSignal = getPreviousSignal(db);
-    let notificationFired = false;
+    const signalChanged = previousSignal !== newSignal;
 
-    // Send notification to all users every run (periodic report mode)
-    // This sends a status update every scheduler interval regardless of signal changes
-    const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
-    for (const user of users) {
-      setImmediate(async () => {
-        try {
-          await notifier.send(result, user.id);
-        } catch (err) {
-          console.error(`[Scheduler] Periodic notification failed for user ${user.id}:`, err.message);
-        }
-      });
+    // Send notification to all users only if signal changed (avoid duplicate with technical analysis)
+    if (notifier && signalChanged) {
+      const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
+      const delayMs = 100;
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        setTimeout(() => {
+          setImmediate(async () => {
+            try {
+              await notifier.send(result, user.id);
+            } catch (err) {
+              console.error(`[Scheduler] Sentiment notification failed for user ${user.id}:`, err.message);
+            }
+          });
+        }, i * delayMs);
+      }
     }
 
     setCache(db, 'lastSignal', newSignal);
@@ -303,15 +308,23 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
 
     console.log(`[Technical] Signal: ${signal.signal} (${(signal.confidence * 100).toFixed(0)}%)`);
 
-    // 9. Send notification if signal changed
+    // 9. Send notification if signal changed (with rate-limiting to avoid Telegram API burst)
     if (notifier && signalChanged) {
-      setImmediate(async () => {
-        try {
-          await notifier.send(signal);
-        } catch (err) {
-          console.error('[Technical] Notification failed:', err.message);
-        }
-      });
+      const signalForNotif = { ...signal, strategy: 'TECHNICAL' };
+      const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
+      const delayMs = 100; // 100ms between each notification
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        setTimeout(() => {
+          setImmediate(async () => {
+            try {
+              await notifier.send(signalForNotif, user.id);
+            } catch (err) {
+              console.error(`[Technical] Notification failed for user ${user.id}:`, err.message);
+            }
+          });
+        }, i * delayMs);
+      }
     }
 
     return {

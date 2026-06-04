@@ -7,6 +7,40 @@ const https = require('https');
 
 const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
 
+// Shared HTTPS helper to avoid duplication
+function sendHttpsRequest(hostname, path, postData) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname,
+      path,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        try {
+          const response = JSON.parse(data);
+          resolve(response);
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
 /**
  * Creates a notifier that sends Telegram messages
  * @param {Object} config - Config with botToken
@@ -139,50 +173,31 @@ function createNotifier(config, db) {
         return { success: false, error: 'no_chat_id' };
       }
 
-      // Send via Telegram API
-      return new Promise((resolve, reject) => {
-        const url = `${TELEGRAM_API_URL}${botToken}/sendMessage`;
-        const postData = JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'Markdown',
-        });
-
-        const options = {
-          hostname: 'api.telegram.org',
-          path: `/bot${botToken}/sendMessage`,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(postData),
-          },
-        };
-
-        const req = https.request(options, (res) => {
-          let data = '';
-          res.on('data', (chunk) => {
-            data += chunk;
-          });
-          res.on('end', () => {
-            try {
-              const response = JSON.parse(data);
-              if (response.ok) {
-                console.log(`[Telegram] Message sent to ${chatId}`);
-                resolve({ success: true });
-              } else {
-                console.error(`[Telegram] API error: ${response.description}`);
-                resolve({ success: false, error: response.description });
-              }
-            } catch (err) {
-              reject(err);
-            }
-          });
-        });
-
-        req.on('error', reject);
-        req.write(postData);
-        req.end();
+      // Send via Telegram API using shared helper
+      const postData = JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown',
       });
+
+      try {
+        const response = await sendHttpsRequest(
+          'api.telegram.org',
+          `/bot${botToken}/sendMessage`,
+          postData
+        );
+
+        if (response.ok) {
+          console.log(`[Telegram] Message sent to ${chatId}`);
+          return { success: true };
+        } else {
+          console.error(`[Telegram] API error: ${response.description}`);
+          return { success: false, error: response.description };
+        }
+      } catch (err) {
+        console.error('[Telegram] HTTP error:', err.message);
+        throw err;
+      }
     } catch (err) {
       console.error('[Telegram] Send failed:', err.message);
       throw err;
