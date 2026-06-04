@@ -129,7 +129,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 
 /* TWITTER FEED */
 .twitter-section{border:1px solid var(--border);background:var(--surface);margin-bottom:12px}
-.tweets-horizontal-scroll{display:flex;flex-direction:column;gap:8px;padding:14px;background:var(--surface)}
+.tweets-vertical-list{display:flex;flex-direction:column;gap:8px;padding:14px;background:var(--surface);max-height:600px;overflow-y:auto}
+.tweets-vertical-list::-webkit-scrollbar{width:6px}
+.tweets-vertical-list::-webkit-scrollbar-track{background:var(--s3)}
+.tweets-vertical-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.tweets-vertical-list::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 .tweet-card{background:var(--s2);border:1px solid var(--border);padding:12px 14px;border-radius:4px;transition:.2s;cursor:pointer}
 .tweet-card:hover{border-color:var(--tw);background:rgba(29,155,240,.05)}
 .tweet-author{font-size:9px;color:var(--tw);font-weight:700;margin-bottom:6px}
@@ -571,13 +575,17 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     <span>🐦 TWITTER FEED — Octra, $OCT, FHE layer1, OCT listing</span>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="tweets-count" style="font-size:8px;color:var(--muted)">0 tweets</span>
-      <button class="btn" id="tweets-refresh-btn" onclick="loadTweets()">⟳</button>
+      <button class="btn" id="tweets-refresh-btn" onclick="resetTweetsAndLoad()">⟳</button>
     </div>
   </div>
-  <div id="tweets-container" class="tweets-horizontal-scroll">
-    <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px;white-space:nowrap">
+  <div id="tweets-container" class="tweets-vertical-list">
+    <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">
       Loading tweets...
     </div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:12px;padding:14px;background:var(--s3);border-top:1px solid var(--border)">
+    <button class="btn" id="load-more-btn" onclick="loadMoreTweets()" style="display:none">LOAD MORE TWEETS</button>
+    <span id="tweets-pagination" style="font-size:8px;color:var(--muted);align-self:center;display:none"></span>
   </div>
 </div>
 
@@ -1011,42 +1019,86 @@ window.defAI = typeof defAI === 'function' ? defAI : undefined;
 window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
 window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
 
-// Load tweets
-async function loadTweets() {
+// Tweet pagination
+let allTweets = [];
+let currentPage = 0;
+const tweetsPerPage = 20;
+
+async function loadTweetsData() {
   try {
     const res = await fetch('/api/tweets');
-    if (!res.ok) return;
+    if (!res.ok) return [];
     const data = await res.json();
-    const tweets = Array.isArray(data) ? data : (data.tweets || []);
-
-    const container = document.getElementById('tweets-container');
-    const count = document.getElementById('tweets-count');
-
-    if (!tweets.length) {
-      container.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);font-size:11px">No tweets yet. Checking every 5 minutes.</div>';
-      count.textContent = '0 tweets';
-      return;
-    }
-
-    container.innerHTML = tweets.map(t => `
-      <div class="tweet-card" onclick="window.open('${t.url}','_blank')">
-        <div class="tweet-author">
-          <span style="color:var(--tw)">@${t.author}</span>
-        </div>
-        <div class="tweet-text">${t.text}</div>
-        ${t.url ? `<a href="${t.url}" target="_blank" class="tweet-url" onclick="event.stopPropagation()">→ View on Twitter</a>` : ''}
-        <div class="tweet-time">${t.createdAt ? new Date(t.createdAt).toLocaleString() : 'unknown time'}</div>
-      </div>
-    `).join('');
-
-    count.textContent = tweets.length + ' tweet' + (tweets.length !== 1 ? 's' : '');
+    return Array.isArray(data) ? data : (data.tweets || []);
   } catch (err) {
     console.error('Error loading tweets:', err);
+    return [];
   }
 }
 
-// Auto-refresh tweets every 5 minutes
-setInterval(loadTweets, 5 * 60 * 1000);
+function renderTweets(tweets, page = 0) {
+  const container = document.getElementById('tweets-container');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  const pagination = document.getElementById('tweets-pagination');
+  const count = document.getElementById('tweets-count');
+
+  if (!tweets.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">No tweets yet. Checking every 15 minutes.</div>';
+    count.textContent = '0 tweets';
+    loadMoreBtn.style.display = 'none';
+    pagination.style.display = 'none';
+    return;
+  }
+
+  const start = 0;
+  const end = (page + 1) * tweetsPerPage;
+  const displayedTweets = tweets.slice(start, end);
+
+  container.innerHTML = displayedTweets.map(t => `
+    <div class="tweet-card" onclick="window.open('${t.url}','_blank')">
+      <div class="tweet-author">@${t.author}</div>
+      <div class="tweet-text">${t.text}</div>
+      ${t.url ? `<a href="${t.url}" target="_blank" class="tweet-url" onclick="event.stopPropagation()">→ View on Twitter</a>` : ''}
+      <div class="tweet-time">${t.createdAt ? new Date(t.createdAt).toLocaleString() : 'unknown time'}</div>
+    </div>
+  `).join('');
+
+  // Show/hide load more button
+  if (end < tweets.length) {
+    loadMoreBtn.style.display = 'block';
+    pagination.style.display = 'block';
+    pagination.textContent = `Showing ${end} of ${tweets.length}`;
+  } else {
+    loadMoreBtn.style.display = 'none';
+    pagination.textContent = `All ${tweets.length} tweets loaded`;
+    pagination.style.display = 'block';
+  }
+
+  count.textContent = tweets.length + ' tweet' + (tweets.length !== 1 ? 's' : '');
+}
+
+async function loadTweets() {
+  allTweets = await loadTweetsData();
+  currentPage = 0;
+  renderTweets(allTweets, 0);
+}
+
+function loadMoreTweets() {
+  currentPage++;
+  renderTweets(allTweets, currentPage);
+  // Scroll to tweets container
+  document.getElementById('tweets-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetTweetsAndLoad() {
+  loadTweets();
+}
+
+// Auto-refresh tweets every 15 minutes (keep pagination state)
+setInterval(async () => {
+  allTweets = await loadTweetsData();
+  renderTweets(allTweets, currentPage);
+}, 15 * 60 * 1000);
 
 // Load technical signals on page load
 document.addEventListener('DOMContentLoaded', () => {
