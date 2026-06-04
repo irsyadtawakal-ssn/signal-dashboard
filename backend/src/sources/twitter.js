@@ -13,6 +13,7 @@ function normalizeTweet(t) {
 }
 
 async function fetchTweets({ getJsonFn = getJson, token, keywords = [], limit = 20, baseUrl = DEFAULT_BASE, sinceTime = null }) {
+  console.log(`[TwitterAPI] CALL at ${new Date().toISOString()} | sinceTime: ${sinceTime}`);
   const query = encodeURIComponent(keywords.join(' OR '));
   let url = `${baseUrl}?query=${query}&queryType=Latest`;
   if (sinceTime) url += `&start_time=${encodeURIComponent(sinceTime)}`;
