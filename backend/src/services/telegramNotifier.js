@@ -62,9 +62,17 @@ function createNotifier(config, db) {
     const emoji = emojiMap[signal.signal] || '⚪';
     const confidencePercent = Math.round(signal.confidence * 100);
 
+    // Timestamp WIB (UTC+7)
+    const now = new Date();
+    const wibOffset = 7 * 60 * 60 * 1000;
+    const wibTime = new Date(now.getTime() + wibOffset);
+    const timestamp = wibTime.toISOString().replace('T', ' ').substring(0, 16) + ' WIB';
+
     const lines = [
       `${emoji} *TECHNICAL SIGNAL: ${signal.signal}*`,
       `Confidence: ${confidencePercent}%`,
+      ``,
+      `*Harga OCT:* \`$${signal.currentPrice ? signal.currentPrice.toFixed(6) : '-'}\``,
       ``,
       `*Indicators:*`,
       `• MA50: $${signal.indicators.ma50.toFixed(6)}`,
@@ -74,6 +82,8 @@ function createNotifier(config, db) {
       ``,
       `*Analysis:*`,
       signal.reasoning,
+      ``,
+      `🕐 ${timestamp}`,
     ];
 
     return lines.join('\n');

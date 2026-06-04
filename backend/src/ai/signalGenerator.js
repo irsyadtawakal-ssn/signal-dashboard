@@ -77,7 +77,7 @@ async function generateSignal(data) {
 
   // 4. Macro Signal (multiply analysis score by 0.5, max ±0.5)
   score += macroAnalysis.score * 0.5;
-  reasoning.push(`${macroAnalysis.signal} (BTC: ${btcChange24h}%, ETH: ${ethChange24h}%)`);
+  reasoning.push(`${macroAnalysis.signal} (BTC: ${Number(btcChange24h).toFixed(2)}%, ETH: ${Number(ethChange24h).toFixed(2)}%)`);
 
   // Determine signal from score
   let signal, confidence;

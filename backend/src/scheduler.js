@@ -59,6 +59,9 @@ async function runCacheUpdate({ db, key, produceFn }) {
       // Filter new tweets to only include those not already cached
       const uniqueNewTweets = newValue.filter(t => !existingIds.has(t.id));
 
+      // Always update fetch timestamp so next call uses since_time filter
+      setCache(db, 'lastTwitterFetchTime', Date.now());
+
       if (uniqueNewTweets.length > 0) {
         // Combine: new tweets first (latest) + existing tweets
         const combinedTweets = [...uniqueNewTweets, ...existingTweets];
@@ -70,7 +73,7 @@ async function runCacheUpdate({ db, key, produceFn }) {
         setCache(db, key, trimmedTweets);
         console.log(`[Twitter] Added ${uniqueNewTweets.length} new tweets (${existingTweets.length} existing, total: ${trimmedTweets.length})`);
       } else {
-        console.log(`[Twitter] No new tweets (all duplicates)`);
+        console.log(`[Twitter] No new tweets since last fetch`);
       }
 
       failureCount.cache = 0;
@@ -346,7 +349,7 @@ async function runTechnicalAnalysis({ db, config, notifier }) {
 
     // 9. Send notifications (immediate on change + periodic every 15 min)
     if (notifier) {
-      const signalForNotif = { ...signal, strategy: 'TECHNICAL' };
+      const signalForNotif = { ...signal, strategy: 'TECHNICAL', currentPrice: price.oct };
       const users = db.prepare('SELECT id FROM users WHERE telegramChatId IS NOT NULL').all();
       const delayMs = 100;
 
