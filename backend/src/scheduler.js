@@ -46,14 +46,50 @@ async function runPriceUpdate({ db, buildPriceFn }) {
 
 async function runCacheUpdate({ db, key, produceFn }) {
   try {
-    const value = await produceFn();
-    setCache(db, key, value);
+    const newValue = await produceFn();
+
+    // Special handling for tweets: append new tweets to existing cache (pagination)
+    if (key === 'tweets' && Array.isArray(newValue)) {
+      const existingCache = getCache(db, key);
+      const existingTweets = existingCache ? (Array.isArray(existingCache.value) ? existingCache.value : []) : [];
+
+      // Get existing tweet IDs for deduplication
+      const existingIds = new Set(existingTweets.map(t => t.id));
+
+      // Filter new tweets to only include those not already cached
+      const uniqueNewTweets = newValue.filter(t => !existingIds.has(t.id));
+
+      if (uniqueNewTweets.length > 0) {
+        // Combine: new tweets first (latest) + existing tweets
+        const combinedTweets = [...uniqueNewTweets, ...existingTweets];
+
+        // Keep only last 100 tweets to prevent cache bloat
+        const maxTweets = 100;
+        const trimmedTweets = combinedTweets.slice(0, maxTweets);
+
+        setCache(db, key, trimmedTweets);
+        console.log(`[Twitter] Added ${uniqueNewTweets.length} new tweets (${existingTweets.length} existing, total: ${trimmedTweets.length})`);
+      } else {
+        console.log(`[Twitter] No new tweets (all duplicates)`);
+      }
+
+      failureCount.cache = 0;
+      return {
+        status: 'success',
+        timestamp: Date.now(),
+        newTweets: uniqueNewTweets.length,
+        totalTweets: Array.isArray(getCache(db, key)?.value) ? getCache(db, key).value.length : 0
+      };
+    }
+
+    // Default behavior for other keys: overwrite
+    setCache(db, key, newValue);
     failureCount.cache = 0;
 
     return {
       status: 'success',
       timestamp: Date.now(),
-      recordCount: Array.isArray(value) ? value.length : 1
+      recordCount: Array.isArray(newValue) ? newValue.length : 1
     };
   } catch (err) {
     failureCount.cache++;
