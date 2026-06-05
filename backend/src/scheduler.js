@@ -6,6 +6,25 @@ const FAILURE_THRESHOLD = 3;
 const MAX_RETRIES = 3;
 const EXPONENTIAL_BACKOFF_DELAYS = [60000, 300000, 1800000, 3600000]; // [1m, 5m, 30m, 1h]
 
+/**
+ * Telegram errors that will NEVER succeed on retry. Retrying these just wastes
+ * API calls and triggers rate limiting, so they are dropped from the queue
+ * immediately instead of consuming all MAX_RETRIES attempts.
+ */
+function isPermanentTelegramError(message) {
+  if (!message) return false;
+  const m = String(message).toLowerCase();
+  return (
+    m.includes("can't parse entities") ||
+    m.includes('chat not found') ||
+    m.includes('bot was blocked') ||
+    m.includes('user is deactivated') ||
+    m.includes('chat_id is empty') ||
+    m.includes('peer_id_invalid') ||
+    m.includes('bot was kicked')
+  );
+}
+
 let failureCount = {
   price: 0,
   cache: 0
@@ -166,10 +185,16 @@ async function retryFailedNotifications({ db, telegramNotifier, config }) {
         db.prepare('DELETE FROM failed_notifications WHERE id = ?').run(id);
         console.info(`[Retry] Notification ${id} sent successfully, removed from queue (was retry attempt ${retryCount + 1})`);
       } else {
-        // Failure: check if we've reached max retries
-        if (retryCount >= MAX_RETRIES) {
-          // Max retries reached: leave in table but log warning
-          console.warn(`[Retry] Max retries (${MAX_RETRIES}) reached for notification ${id} (userId: ${userId}), error: ${result.error}`);
+        // Permanent errors will never succeed — drop immediately so they
+        // don't get re-queried every minute and trigger rate limiting.
+        if (isPermanentTelegramError(result.error)) {
+          db.prepare('DELETE FROM failed_notifications WHERE id = ?').run(id);
+          console.warn(`[Retry] Permanent error for notification ${id} (userId: ${userId}), removed from queue: ${result.error}`);
+        } else if (retryCount >= MAX_RETRIES) {
+          // Max retries reached: DELETE the row (previously left in table forever,
+          // which caused the queue to be re-retried every minute indefinitely).
+          db.prepare('DELETE FROM failed_notifications WHERE id = ?').run(id);
+          console.warn(`[Retry] Max retries (${MAX_RETRIES}) reached for notification ${id} (userId: ${userId}), giving up and removing from queue. Last error: ${result.error}`);
         } else {
           // Schedule next retry with exponential backoff
           const newRetryCount = retryCount + 1;

@@ -313,14 +313,47 @@ describe('retryFailedNotifications', () => {
     // Run retry job
     await retryFailedNotifications({ db, telegramNotifier, config });
 
-    // Verify notification is still in table (not deleted)
+    // Verify notification is REMOVED from table after max retries.
+    // (Previously rows were left in place, which caused the queue to be
+    // re-retried every minute forever and triggered Telegram rate limiting.)
     const notification = db.prepare('SELECT id FROM failed_notifications WHERE userId = ?').get(userId);
-    expect(notification).toBeDefined();
+    expect(notification).toBeUndefined();
 
     // Verify warning was logged
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('Max retries (3) reached')
     );
+
+    warnSpy.mockRestore();
+  });
+
+  it('drops a permanent error immediately without consuming all retries', async () => {
+    const db = createDb(':memory:');
+    const userId = 'user-perm';
+    const chatId = '111222333';
+    const signal = { recommendation: 'SELL', confidence: 0.7, summary: 'Test', components: {}, generatedAt: new Date().toISOString() };
+
+    db.prepare('INSERT INTO users (id, email, telegramChatId) VALUES (?, ?, ?)').run(userId, 'user@example.com', chatId);
+
+    // Fresh notification (retryCount 0) but the error is permanent
+    db.prepare(`
+      INSERT INTO failed_notifications (userId, signal, errorMessage, retryCount, nextRetryAt)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, JSON.stringify(signal), 'queued', 0, new Date().toISOString());
+
+    const telegramNotifier = {
+      send: vi.fn().mockResolvedValue({ success: false, error: "Bad Request: can't parse entities: ..." })
+    };
+
+    const config = { botToken: 'fake-token' };
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await retryFailedNotifications({ db, telegramNotifier, config });
+
+    // Permanent error → removed immediately (not left for 3 more retries)
+    const notification = db.prepare('SELECT id FROM failed_notifications WHERE userId = ?').get(userId);
+    expect(notification).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Permanent error'));
 
     warnSpy.mockRestore();
   });

@@ -7,6 +7,17 @@ const https = require('https');
 
 const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
 
+/**
+ * Escapes characters that are special in Telegram legacy Markdown so that
+ * free-text fields (e.g. AI reasoning) cannot break message parsing.
+ * Without this, text like "STRONG_BEAR" or "HIGH*VOLUME" causes a
+ * "can't parse entities" 400 error and the notification fails permanently.
+ */
+function escapeMarkdown(text) {
+  if (text == null) return '';
+  return String(text).replace(/([_*`\[])/g, '\\$1');
+}
+
 // Shared HTTPS helper to avoid duplication
 function sendHttpsRequest(hostname, path, postData) {
   return new Promise((resolve, reject) => {
@@ -81,7 +92,7 @@ function createNotifier(config, db) {
       `• Volume Ratio: ${signal.indicators.volumeRatio.toFixed(2)}x`,
       ``,
       `*Analysis:*`,
-      signal.reasoning,
+      escapeMarkdown(signal.reasoning),
       ``,
       `🕐 ${timestamp}`,
     ];
@@ -111,7 +122,7 @@ function createNotifier(config, db) {
 
     if (summary) {
       sections.push('');
-      sections.push(`Summary: ${summary}`);
+      sections.push(`Summary: ${escapeMarkdown(summary)}`);
     }
 
     if (components) {
@@ -123,7 +134,7 @@ function createNotifier(config, db) {
         if (value) {
           const displayKey = key.replace(/([A-Z])/g, ' $1').trim();
           const capitalizedKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
-          sections.push(`• ${capitalizedKey}: ${value}`);
+          sections.push(`• ${capitalizedKey}: ${escapeMarkdown(value)}`);
         }
       });
     }
