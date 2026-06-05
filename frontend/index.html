@@ -583,6 +583,22 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
       <button class="btn" id="tweets-refresh-btn" onclick="resetTweetsAndLoad()">⟳</button>
     </div>
   </div>
+  <div class="tw-filter" id="tw-filter-bar">
+    <div class="twf on" data-filter="all" onclick="setTweetFilter('all',this)">ALL <span id="twc-all">0</span></div>
+    <div class="twf" data-filter="bullish" onclick="setTweetFilter('bullish',this)" style="color:var(--green);border-color:rgba(0,255,136,.3)">● BULLISH <span id="twc-bullish">0</span></div>
+    <div class="twf" data-filter="bearish" onclick="setTweetFilter('bearish',this)" style="color:var(--red);border-color:rgba(255,51,102,.3)">● BEARISH <span id="twc-bearish">0</span></div>
+    <div class="twf" data-filter="whale" onclick="setTweetFilter('whale',this)" style="color:#a78bfa;border-color:rgba(139,92,246,.3)">🐋 WHALE <span id="twc-whale">0</span></div>
+    <div class="twf" data-filter="listing" onclick="setTweetFilter('listing',this)">▦ LISTING <span id="twc-listing">0</span></div>
+    <div class="twf" data-filter="dev" onclick="setTweetFilter('dev',this)">⚙ DEV <span id="twc-dev">0</span></div>
+    <div class="twf" data-filter="ta" onclick="setTweetFilter('ta',this)">◥ TA/FIB <span id="twc-ta">0</span></div>
+  </div>
+  <div style="display:flex;gap:16px;padding:6px 13px;background:var(--s3);border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <span style="font-size:8px;color:var(--muted);letter-spacing:1px">TOTAL <span id="tws-total" style="color:var(--text);font-weight:700">0</span></span>
+    <span style="font-size:8px;color:var(--muted);letter-spacing:1px">BULLISH <span id="tws-bullish" style="color:var(--green);font-weight:700">0</span></span>
+    <span style="font-size:8px;color:var(--muted);letter-spacing:1px">BEARISH <span id="tws-bearish" style="color:var(--red);font-weight:700">0</span></span>
+    <span style="font-size:8px;color:var(--muted);letter-spacing:1px">NEUTRAL <span id="tws-neutral" style="color:var(--yellow);font-weight:700">0</span></span>
+    <span style="font-size:8px;color:var(--muted);letter-spacing:1px">SENTIMENT <span id="tws-sentiment" style="color:var(--accent);font-weight:700">—</span></span>
+  </div>
   <div id="tweets-container" class="tweets-vertical-list">
     <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">
       Loading tweets...
@@ -1024,10 +1040,56 @@ window.defAI = typeof defAI === 'function' ? defAI : undefined;
 window.fmtP = typeof fmtP === 'function' ? fmtP : undefined;
 window.fmtL = typeof fmtL === 'function' ? fmtL : undefined;
 
-// Tweet pagination
+// Tweet pagination & filter
 let allTweets = [];
 let currentPage = 0;
 const tweetsPerPage = 20;
+let activeTweetFilter = 'all';
+
+function getFilteredTweets() {
+  if (activeTweetFilter === 'all') return allTweets;
+  if (activeTweetFilter === 'bullish') return allTweets.filter(t => String(t.sentiment||'').toLowerCase() === 'bullish');
+  if (activeTweetFilter === 'bearish') return allTweets.filter(t => String(t.sentiment||'').toLowerCase() === 'bearish');
+  if (activeTweetFilter === 'whale') return allTweets.filter(t => String(t.sentiment||'').toLowerCase() === 'whale');
+  if (activeTweetFilter === 'listing') return allTweets.filter(t => /listing/i.test(t.text));
+  if (activeTweetFilter === 'dev') return allTweets.filter(t => /\b(dev|developer|testnet|mainnet|update|release|deploy|github)\b/i.test(t.text));
+  if (activeTweetFilter === 'ta') return allTweets.filter(t => /\b(TA|fib|fibonacci|support|resistance|breakout|chart|RSI|MACD|EMA|MA)\b/.test(t.text));
+  return allTweets;
+}
+
+function setTweetFilter(filter, el) {
+  activeTweetFilter = filter;
+  document.querySelectorAll('#tw-filter-bar .twf').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  currentPage = 0;
+  renderTweets(getFilteredTweets(), 0);
+}
+
+function updateTweetCounters() {
+  const total = allTweets.length;
+  const bullish = allTweets.filter(t => String(t.sentiment||'').toLowerCase() === 'bullish').length;
+  const bearish = allTweets.filter(t => String(t.sentiment||'').toLowerCase() === 'bearish').length;
+  const whale = allTweets.filter(t => String(t.sentiment||'').toLowerCase() === 'whale').length;
+  const listing = allTweets.filter(t => /listing/i.test(t.text)).length;
+  const dev = allTweets.filter(t => /\b(dev|developer|testnet|mainnet|update|release|deploy|github)\b/i.test(t.text)).length;
+  const ta = allTweets.filter(t => /\b(TA|fib|fibonacci|support|resistance|breakout|chart|RSI|MACD|EMA|MA)\b/.test(t.text)).length;
+  const neutral = total - bullish - bearish - whale;
+  const sentiment = total > 0 ? Math.round((bullish + whale) / total * 100) : 0;
+
+  document.getElementById('twc-all').textContent = total;
+  document.getElementById('twc-bullish').textContent = bullish;
+  document.getElementById('twc-bearish').textContent = bearish;
+  document.getElementById('twc-whale').textContent = whale;
+  document.getElementById('twc-listing').textContent = listing;
+  document.getElementById('twc-dev').textContent = dev;
+  document.getElementById('twc-ta').textContent = ta;
+
+  document.getElementById('tws-total').textContent = total;
+  document.getElementById('tws-bullish').textContent = bullish;
+  document.getElementById('tws-bearish').textContent = bearish;
+  document.getElementById('tws-neutral').textContent = Math.max(0, neutral);
+  document.getElementById('tws-sentiment').textContent = total > 0 ? sentiment + '%' : '—';
+}
 
 async function loadTweetsData() {
   try {
@@ -1093,12 +1155,13 @@ function renderTweets(tweets, page = 0) {
 async function loadTweets() {
   allTweets = await loadTweetsData();
   currentPage = 0;
-  renderTweets(allTweets, 0);
+  updateTweetCounters();
+  renderTweets(getFilteredTweets(), 0);
 }
 
 function loadMoreTweets() {
   currentPage++;
-  renderTweets(allTweets, currentPage);
+  renderTweets(getFilteredTweets(), currentPage);
   // Scroll to tweets container
   document.getElementById('tweets-container').scrollIntoView({ behavior: 'smooth' });
 }
@@ -1110,7 +1173,8 @@ function resetTweetsAndLoad() {
 // Auto-refresh tweets every 15 minutes (keep pagination state)
 setInterval(async () => {
   allTweets = await loadTweetsData();
-  renderTweets(allTweets, currentPage);
+  updateTweetCounters();
+  renderTweets(getFilteredTweets(), currentPage);
 }, 15 * 60 * 1000);
 
 // Load technical signals on page load
